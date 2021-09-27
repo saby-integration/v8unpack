@@ -1,4 +1,4 @@
-#saby v8unpack
+# saby v8unpack
 
 [![img lib ver](https://img.shields.io/pypi/v/v8unpack.svg "")](https://pypi.python.org/pypi/v8unpack)
 [![img python ver](https://img.shields.io/pypi/pyversions/v8unpack.svg "")](https://pypi.python.org/pypi/v8unpack)
@@ -23,11 +23,11 @@
    комментарии к макету)
  * Атоматически комментируются директивы 8.3 не нужные в 8.2
 
-#Установка
+# Установка
 
     pip install v8unpack
 
-#Использование
+# Использование
 
 ## Распаковка файла 1С
 
@@ -36,13 +36,14 @@
     v8unpack.exe -E d:/sample.cf d:/unpack
 
 из python:
-
+```python
     import v8unpack
     
     if __name__ == '__main__':
         v8unpack.extract('d:/sample.cf', 'd:/unpack')
+```
 
-##Сборка исходников
+## Сборка исходников
 
 из коммандной строки:
 
@@ -50,23 +51,27 @@
 
 из python:
 
+```python
     import v8unpack
-    v8unpack.build('d:/unpack', 'd:/repacked.cf')
 
-##Документация
+    v8unpack.build('d:/unpack', 'd:/repacked.cf')
+```
+
+## Документация
 
 [Переход на сборку из одних исходников](/docs/transition.md)
 
-[Переиспользование кода и модулей](/docs/code.md)
+[Использование](/docs/usage.md)
 
 [История изменений](/docs/history.md)
 
-[Участие](/docs/code.md)
+[Участие](/docs/develop.md)
 
-#Ограничения
+# Ограничения
+
 Типов объектов метаданных в 1С много, свойств у них ещё больше. Можно бесконечно улучшать
 качество и читаемость хранимых данных, до тех пор пока все объекты не будут расшифрованы.
 
 На текущий момент в модуле реализованы только необходимые автору объекты. Если Вам не хватает
 каких либо типов Вы можете самостоятельно их реализовать и добросить в этот репозиторий.
-О том как это сделать можно почитать в разделе [Участие](/docs/code.md) 
+О том как это сделать можно почитать в разделе [Участие](/docs/develop.md) 

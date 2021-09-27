@@ -164,7 +164,7 @@ def create_index(index_file_name, src_dir, dest_dir):
             else:
                 key = os.path.join(_path, entry)
                 if key not in _index:
-                    _index[key] = os.path.join(_dest_dir, _path, entry)
+                    _index[key] = os.path.join(_dest_dir, _path, entry) if _dest_dir else ''
         pass
 
     try:
