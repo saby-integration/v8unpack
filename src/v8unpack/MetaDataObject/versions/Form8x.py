@@ -14,7 +14,6 @@ class Form8x(Simple):
     def __init__(self):
         super().__init__()
         self.form = None
-        self.code = None
         self.elements = None
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header):
@@ -33,20 +32,20 @@ class Form8x(Simple):
         raise NotImplemented()
 
     @classmethod
-    def get_decode_header(cls, header_data):
-        return header_data[0][1][1][1][1]
+    def get_decode_header(cls, header):
+        return cls.get_decode_obj_header(header)[1][1]
+
+    @classmethod
+    def get_decode_obj_header(cls, header):
+        return header[0][1][1]
 
     def encode_object(self, src_dir, file_name, dest_dir, version):
+        super(Form8x, self).encode_object(src_dir, file_name, dest_dir, version)
         try:
             self.form = helper.json_read(src_dir, f'{file_name}.form{version}.json')
         except FileNotFoundError:
             self.form = self.encode_empty_form()
-        try:
-            self.code = helper.txt_read(src_dir, f'{file_name}.1c')
-        except FileNotFoundError:
-            self.code = ''
-
-        self.encode_write(dest_dir)
+        self.encode_data()
 
     def encode_header(self):
         raise NotImplemented()
@@ -59,3 +58,6 @@ class Form8x(Simple):
 
     def encode_write(self, dest_dir):
         raise NotImplemented()
+
+    def write_encode_code(self, dest_dir):
+        pass

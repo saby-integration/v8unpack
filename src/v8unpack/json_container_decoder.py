@@ -2,6 +2,7 @@ import os
 import json
 from base64 import b64decode
 from . import helper
+from .ext_exception import ExtException
 
 READ_PARAM = 1
 BEGIN_READ_STRING_VALUE = 2
@@ -31,8 +32,14 @@ class JsonContainerDecoder:
     def decode(cls, src_dir, file_name, dest_dir=None):
         _src_path = os.path.join(src_dir, file_name)
         self = cls(src_dir=src_dir, file_name=file_name)
-        with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8-sig') as entry_file:  # replace BOM
-            data = self.decode_file(entry_file)
+        try:
+            with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8-sig') as entry_file:  # replace BOM
+                data = self.decode_file(entry_file)
+        except UnicodeDecodeError:
+            with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
+                data = entry_file.read()
+        except Exception as err:
+            raise Exception(f'Json decode {file_name} error: {err}')
         if dest_dir is not None:
             if isinstance(data, list):
                 with open(f'{os.path.join(dest_dir, file_name)}.json', 'w', encoding='utf-8') as entry_file2:
@@ -40,6 +47,9 @@ class JsonContainerDecoder:
             elif isinstance(data, str):
                 encoding = helper.detect_by_bom(_src_path, 'utf-8')
                 with open(f'{os.path.join(dest_dir, file_name)}.txt', 'w', encoding=encoding) as entry_file2:
+                    entry_file2.write(data)
+            elif isinstance(data, bytes):
+                with open(f'{os.path.join(dest_dir, file_name)}.bin', 'wb') as entry_file2:
                     entry_file2.write(data)
             else:
                 raise Exception(f'Не поддерживаемый тип данных {type(data)}')
@@ -169,13 +179,17 @@ class JsonContainerDecoder:
 
     @classmethod
     def encode(cls, src_dir, file_name, dest_dir=None):
-        with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8') as file:
-            data = json.load(file)
-        self = cls(src_dir=src_dir, file_name=file_name)
-        raw_data = self.encode_root_object(data)
-        if dest_dir is not None:
-            cls.write_data(dest_dir, file_name[:-5], raw_data)
-        return raw_data
+        try:
+            # try:
+            with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8') as file:
+                data = json.load(file)
+            self = cls(src_dir=src_dir, file_name=file_name)
+            raw_data = self.encode_root_object(data)
+            if dest_dir is not None:
+                cls.write_data(dest_dir, file_name[:-5], raw_data)
+            return raw_data
+        except Exception as err:
+            raise ExtException(parent=err, detail=file_name) from err
 
     def encode_root_object(self, data):
         raw_data = ''
@@ -205,7 +219,7 @@ class JsonContainerDecoder:
                     j = 72
                     raw_data += f'{elem[0:j]}'
                     while j <= len(elem):
-                        raw_data += f'\n\n{elem[j: j + 64]}'
+                        raw_data += f'\r\n{elem[j: j + 64]}'
                         j += 64
                 else:
                     j = len(elem)
@@ -223,7 +237,7 @@ class JsonContainerDecoder:
                             if _first:
                                 _first = False
                             else:
-                                raw_data += '\n\n'
+                                raw_data += '\r\n'
 
                             if j > 64:
                                 raw_data += elem[:64]
@@ -247,6 +261,35 @@ class JsonContainerDecoder:
     def write_data(dest_dir, file_name, data):
         with open(os.path.join(dest_dir, file_name), 'w', encoding='utf-8-sig') as f:  # replace BOM
             return f.write(data)
+
+
+def json_decode(src_dir, dest_dir, *, pool=None):
+    """
+    Рекурсивно добавляет файлы из директории в контейнер
+
+    :param src_dir: каталог файлов, результатов работы v8unpack -U
+    :type src_dir: string
+    :param dest_dir: каталог файлов, в который будут помещены json файлы
+    :type dest_dir: string
+    :param pool: пул процессов для параллельного выполнения, если не передан будет поднят свой
+    :type: pool: Multiprocessing Pool
+    """
+    tasks = []
+    _decode(src_dir, dest_dir, tasks)
+    helper.run_in_pool(JsonContainerDecoder.decode, tasks, pool=pool)
+
+
+def _decode(src_dir, dest_dir, tasks):
+    entries = sorted(os.listdir(src_dir))
+    helper.clear_dir(dest_dir)
+    for entry in entries:
+        src_entry_path = os.path.join(src_dir, entry)
+        dest_entry_path = os.path.join(dest_dir, entry)
+        if os.path.isdir(src_entry_path):
+            os.mkdir(dest_entry_path)
+            _decode(src_entry_path, dest_entry_path, tasks)
+        else:
+            tasks.append((src_dir, entry, dest_dir))
 
 
 def json_encode(src_dir, dest_dir, *, pool=None):
@@ -281,46 +324,9 @@ def _encode(src_dir, dest_dir, tasks):
                 with open(src_entry_path, 'r', encoding=encoding) as entry_file:
                     with open(dest_entry_path[:-3], 'w', encoding=encoding) as f:
                         f.write(entry_file.read())
+            elif extension == 'bin':
+                with open(src_entry_path, 'rb') as entry_file:
+                    with open(dest_entry_path[:-3], 'wb') as f:
+                        f.write(entry_file.read())
             else:
                 tasks.append((src_dir, entry, dest_dir))
-
-
-def json_decode(src_dir, dest_dir, *, pool=None):
-    """
-    Рекурсивно добавляет файлы из директории в контейнер
-
-    :param src_dir: каталог файлов, результатов работы v8unpack -U
-    :type src_dir: string
-    :param dest_dir: каталог файлов, в который будут помещены json файлы
-    :type dest_dir: string
-    :param pool: пул процессов для параллельного выполнения, если не передан будет поднят свой
-    :type: pool: Multiprocessing Pool
-    """
-    tasks = []
-    _decode(src_dir, dest_dir, tasks)
-    helper.run_in_pool(JsonContainerDecoder.decode, tasks, pool=pool)
-
-
-def _decode(src_dir, dest_dir, tasks):
-    entries = sorted(os.listdir(src_dir))
-    helper.clear_dir(dest_dir)
-    for entry in entries:
-        src_entry_path = os.path.join(src_dir, entry)
-        dest_entry_path = os.path.join(dest_dir, entry)
-        if os.path.isdir(src_entry_path):
-            os.mkdir(dest_entry_path)
-            _decode(src_entry_path, dest_entry_path, tasks)
-        else:
-            tasks.append((src_dir, entry, dest_dir))
-
-#
-# def test_decode_encode(test, src_dir, file_name, temp_dir=None):
-#     _full_path = os.path.join(src_dir, file_name)
-#     with open(_full_path, 'r', encoding='utf-8-sig') as f:  # replace BOM
-#         raw_source = f.read()
-#     data = JsonContainerDecoder.decode(src_dir, file_name, temp_dir)
-#     data2 = JsonContainerDecoder.encode_root_object(data)
-#     test.assertNotEqual(src_dir, temp_dir, 'не нужно перезаписывать исходный файл')
-#     if temp_dir is not None:
-#         JsonContainerDecoder.write_data(temp_dir, file_name, data2)
-#     test.assertEqual(raw_source, data2)

@@ -2,16 +2,19 @@ import os
 import re
 from .. import helper
 from ..metadata_types import MetaDataTypes
+from ..ext_exception import ExtException
 
 
 class MetaObject:
     version = '83'
+    ext_code = {'obj': 0}
     re_meta_data_obj = re.compile(r'^[^.]+\.json$')
     directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
     directive_1c_comment = re.compile('(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
 
     def __init__(self):
         self.header = {}
+        self.code = {}
 
     @classmethod
     def get_decode_header(cls, header_data):
@@ -26,7 +29,10 @@ class MetaObject:
         tasks = []
         includes = self.get_decode_includes(header_data)
         for include in includes:
-            count_include_types = int(include[2])
+            try:
+                count_include_types = int(include[2])
+            except IndexError:
+                raise ExtException(msg='Include types not found', detail=self.__class__.__name__)
             for i in range(count_include_types):
                 _metadata = include[i + 3]
                 _count_obj = int(_metadata[1])
@@ -38,9 +44,11 @@ class MetaObject:
                 except ValueError:
                     # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
                     # continue
-                    msg = f'Неизестный тип метаданных {_metadata_type_uuid} в файле {_metadata[2]}'
-                    raise Exception(msg)
 
+                    if not isinstance(_metadata[2], str):  # вложенный объект
+                        continue
+                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизестный тип вложенных метаданных: {_metadata_type_uuid} в файле {_metadata[2]}'
+                    raise Exception(msg)
                 new_dest_path = os.path.join(dest_path, metadata_type.name)
                 for j in range(_count_obj):
                     obj_uuid = _metadata[j + 2]
@@ -50,7 +58,15 @@ class MetaObject:
 
                         tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
                     elif isinstance(obj_uuid, list):
-                        continue  # можно вставить разбор Реквизитов
+                        if not metadata_type:
+                            continue
+                        if j == 0:
+                            os.mkdir(os.path.join(dest_dir, new_dest_path))
+                        try:
+                            handler = helper.get_class_metadata_object(metadata_type.name)
+                        except Exception as err:
+                            continue
+                        handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
 
         return tasks
 
@@ -88,18 +104,8 @@ class MetaObject:
                 includes.append(entry)
         return includes
 
-    @classmethod
-    def encode_version(cls):
-        return [[
-            [
-                "216",
-                "0",
-                [
-                    "80314",
-                    "0"
-                ]
-            ]
-        ]]
+    def encode_version(self):
+        return self.header['version']
 
     @classmethod
     def get_class_name_without_version(cls):
@@ -119,3 +125,26 @@ class MetaObject:
             if self.version in ['81', '82']:  # комментируем директивы
                 code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
             helper.txt_write(code, dest_dir, filename)
+
+    def decode_code(self, src_dir):
+        for code_name in self.ext_code:
+            _obj_code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
+            if os.path.isdir(_obj_code_dir):
+                self.header[f'code_info_{code_name}'] = helper.json_read(_obj_code_dir, 'info.json')
+                self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text.txt')
+
+    def write_decode_code(self, dest_dir, file_name):
+        for code_name in self.code:
+            helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
+
+    def encode_code(self, src_dir, file_name):
+        for code_name in self.ext_code:
+            if self.header.get(f'code_info_{code_name}'):
+                self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
+
+    def write_encode_code(self, dest_dir):
+        for code_name in self.code:
+            _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
+            os.makedirs(_code_dir)
+            helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
+            self.write_raw_code(self.code[code_name], _code_dir, 'text.txt')

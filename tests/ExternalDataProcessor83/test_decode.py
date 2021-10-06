@@ -13,15 +13,15 @@ class TestDecode(HelperTestDecode):
         self.src_dir = os.path.join(sys.path[0])
         self.src_file = 'ВнешняяОбработка1.epf'
         self.test_dir = os.path.join(sys.path[0], 'tmp')
-        with open(os.path.join(self.test_dir,'index.json'), 'r', encoding='utf-8') as f:
-            self.index = json.load(f)
+        # with open(os.path.join(self.test_dir,'index.json'), 'r', encoding='utf-8') as f:
+        #     self.index = json.load(f)
 
         # self.version = '83'
         self.result = {
-            'count_root_files_stage1': 12,
-            'count_root_files_stage3': 5,
-            'count_root_files_stage4': 2,
-            'count_forms_files': 5,
+            'count_root_files_stage1': 14,
+            'count_root_files_stage3': 7,
+            'count_root_files_stage4': 7,
+            'count_forms_files': 7,
             'count_templates_files': 2
         }
         self.init()

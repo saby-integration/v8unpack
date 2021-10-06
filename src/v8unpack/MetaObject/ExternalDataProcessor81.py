@@ -5,8 +5,7 @@ class ExternalDataProcessor81(ExternalDataProcessor):
     version = '81'
     pass
 
-    @classmethod
-    def encode_version(cls):
+    def encode_version(self):
         return [[
             [
                 "106",

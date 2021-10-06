@@ -1,6 +1,7 @@
 import os
 from .. import helper
 from ..MetaObject import MetaObject
+from ..ext_exception import ExtException
 
 
 class MetaDataObject(MetaObject):
@@ -10,7 +11,6 @@ class MetaDataObject(MetaObject):
     def __init__(self):
         super(MetaDataObject, self).__init__()
         self.path = ''
-        self.code = None
         self.obj_name = None
 
     @classmethod
@@ -29,22 +29,21 @@ class MetaDataObject(MetaObject):
             self = cls()
             self.version = version
             self.decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
+            tasks = self.decode_includes(src_dir, dest_dir, dest_path, header_data)
             self.write_decode_object(dest_dir, dest_path, version)
-            return self.decode_includes(src_dir, dest_dir, dest_path, header_data)
+            return tasks
         except Exception as err:
-            raise Exception(f'{cls.__name__} {err}') from err
+            raise ExtException(
+                parent=err,
+                action=f'{cls.__name__}.decode'
+            ) from err
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         self.set_header_data(header_data)
 
     def write_decode_object(self, dest_dir, dest_path, version):
         helper.json_write(self.header, os.path.join(dest_dir, dest_path), f'{self.header["name"]}.json')
-
-    def decode_code(self, src_dir):
-        _code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.0'
-        if os.path.isdir(_code_dir):
-            self.header['info'] = helper.json_read(_code_dir, 'info.json')
-            self.code = self.read_raw_code(_code_dir, 'text.txt')
+        self.write_decode_code(os.path.join(dest_dir, dest_path), self.header["name"])
 
     @classmethod
     def encode(cls, src_dir, file_name, dest_dir, version):
@@ -53,6 +52,7 @@ class MetaDataObject(MetaObject):
         try:
             self.header = helper.json_read(src_dir, f'{file_name}.json')
             self.encode_object(src_dir, file_name, dest_dir, version)
+            self.write_encode_object(dest_dir)
             return self.encode_includes(src_dir, dest_dir)
         except Exception as err:
             msg = f'{cls.__name__}: {err}'
@@ -62,11 +62,6 @@ class MetaDataObject(MetaObject):
         msg = f'Нет реализации для "{self.__class__.__name__}"'
         raise Exception(msg)
 
-    def encode_code(self, src_dir, dest_dir):
-        if self.header.get('info'):
-            self.code = helper.txt_read(src_dir, f'{self.header["name"]}.1c')
-
-            _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.0'
-            os.makedirs(_code_dir)
-            helper.json_write(self.header['info'], _code_dir, 'info.json')
-            self.write_raw_code(self.code, _code_dir, 'text.txt')
+    def write_encode_object(self, dest_dir):
+        helper.json_write(self.header['data'], dest_dir, f'{self.header["uuid"]}.json')
+        self.write_encode_code(dest_dir)

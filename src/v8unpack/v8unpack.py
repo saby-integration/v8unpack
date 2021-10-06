@@ -1,5 +1,3 @@
-__version__ = '0.0.1'
-
 from datetime import datetime
 import argparse
 import sys
@@ -13,6 +11,7 @@ from .json_container_decoder import json_decode, json_encode
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from . import helper
+from . import __version__
 
 
 def extract(in_filename, out_dir_name, *, temp_dir=None, index=None):
@@ -99,7 +98,7 @@ def build(folder, file, *, temp_dir=None, index=None, version='83'):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='v8unpack',
+        prog=f'v8unpack {__version__}',
         description='Распаковка и сборка бинарных файлов 1С'
     )
     group = parser.add_mutually_exclusive_group(required=True)

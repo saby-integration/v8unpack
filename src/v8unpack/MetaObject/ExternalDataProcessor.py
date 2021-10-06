@@ -1,13 +1,12 @@
-import os
 from ..MetaObject import MetaObject
 from .. import helper
+from .. import __version__
 
 
 class ExternalDataProcessor(MetaObject):
 
     def __init__(self):
         super(ExternalDataProcessor, self).__init__()
-        self.code = None
         self.data = None
 
     @classmethod
@@ -21,7 +20,10 @@ class ExternalDataProcessor(MetaObject):
         self.set_header_data(_header_data)
 
         root = helper.json_read(src_dir, 'root.json')
+        root = helper.json_read(src_dir, 'root.json')
+        self.header['v8unpack'] = __version__
         self.header['file_uuid'] = root[0][1]
+        self.header['version'] = helper.json_read(src_dir, 'version.json')
         self.header['versions'] = helper.json_read(src_dir, 'versions.json')
         self.data['copyinfo'] = helper.json_read(src_dir, 'copyinfo.json')
 
@@ -30,8 +32,7 @@ class ExternalDataProcessor(MetaObject):
         _file_name = self.get_class_name_without_version()
         helper.json_write(self.header, dest_dir, f'{_file_name}.json')
         helper.json_write(self.data, dest_dir, f'{_file_name}.data{self.version}.json')
-        if self.code:
-            helper.txt_write(self.code, dest_dir, f'{_file_name}.1c')
+        self.write_decode_code(dest_dir, cls.__name__)
 
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
         return tasks
@@ -46,12 +47,6 @@ class ExternalDataProcessor(MetaObject):
     def get_decode_header(cls, header_data):
         return header_data[0][3][1][1][3][1]
 
-    def decode_code(self, src_dir):
-        _code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.0'
-        if os.path.isdir(_code_dir):
-            self.header['info'] = helper.json_read(_code_dir, 'info.json')
-            self.code = self.read_raw_code(_code_dir, 'text.txt')
-
     @classmethod
     def encode(cls, src_dir, dest_dir, *, pool=None):
         self = cls()
@@ -64,12 +59,8 @@ class ExternalDataProcessor(MetaObject):
         helper.json_write(self.header['versions'], dest_dir, 'versions.json')
         helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
         helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
-        if self.header.get('info'):
-            _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.0'
-            os.mkdir(_code_dir)
-            helper.json_write(self.header['info'], _code_dir, 'info.json')
-            self.code = helper.txt_read(src_dir, f'{_file_name}.1c')
-            self.write_raw_code(self.code, _code_dir, 'text.txt')
+        self.encode_code(src_dir, cls.__name__)
+        self.write_encode_code(dest_dir)
         tasks = self.encode_includes(src_dir, dest_dir)
         return tasks
 
@@ -79,4 +70,3 @@ class ExternalDataProcessor(MetaObject):
             self.header["file_uuid"],
             ""
         ]]
-

@@ -1,11 +1,11 @@
 from ..MetaDataObject.core.Container import Container
 
 
-class DataProcessor(Container):
-    version = '83'
-
-    def __init__(self):
-        super(DataProcessor, self).__init__()
+class Report(Container):
+    ext_code = {
+        'mgr': '2',
+        'obj': '0',
+    }
 
     @classmethod
     def get_decode_header(cls, header_data):

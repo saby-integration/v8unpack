@@ -1,5 +1,5 @@
-from ..MetaDataObject.core.Simple import Simple
+from ..MetaDataObject.core.SimpleWithInfo import SimpleWithInfo
 
 
-class Role(Simple):
+class Role(SimpleWithInfo):
     pass

@@ -10,23 +10,17 @@ class Form82(Form8x):
         _code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.0'
         if os.path.isdir(_code_dir):
             self.form = helper.json_read(_code_dir, 'form.json')
-            self.code = helper.txt_read(_code_dir, 'module.txt')
+            self.code['obj'] = helper.txt_read(_code_dir, 'module.txt')
 
     def decode_data(self, src_dir, uuid):
         pass
-        # form_dir = os.path.join(src_dir, f'{uuid}.0')
-        # self.form = helper.json_read(form_dir, 'form.json')
-        # try:
-        #     self.code = helper.txt_read(form_dir, 'module.txt')
-        # except FileNotFoundError:
-        #     self.code = ''
 
-    def encode_write(self, dest_dir):
+    def write_encode_object(self, dest_dir):
         form_dir = os.path.join(dest_dir, f'{self.header["uuid"]}.0')
         os.makedirs(form_dir, exist_ok=True)
         helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
         helper.json_write(self.form, form_dir, 'form.json')
-        helper.txt_write(self.code, form_dir, 'module.txt')
+        helper.txt_write(self.code['obj'], form_dir, 'module.txt')
 
     def encode_header(self):
         return [[
@@ -950,5 +944,4 @@ class Form82(Form8x):
             "0",
             "1",
             "1"
-        ]
-        ]
+        ]]
