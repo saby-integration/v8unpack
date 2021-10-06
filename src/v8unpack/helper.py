@@ -86,10 +86,10 @@ def str_decode(data: str) -> str:
     return data[1:-1]
 
 
-def get_pool(pool: Pool = None) -> Pool:
+def get_pool(pool: Pool = None, processes=None) -> Pool:
     if pool is not None:
         return pool
-    return Pool(processes=cpu_count())
+    return Pool(processes=cpu_count() if processes is None else 1)
 
 
 def close_pool(local_pool: Pool, pool: Pool = None) -> None:
@@ -100,7 +100,7 @@ def close_pool(local_pool: Pool, pool: Pool = None) -> None:
 
 def run_in_pool(method, list_args, pool=None):
     _pool = get_pool(pool)
-    msg = f'pool {method}({len(list_args)})'
+    # msg = f'pool {method}({len(list_args)})'
     result = _pool.starmap(method, list_args)
     close_pool(_pool, pool)
     return result
@@ -112,6 +112,10 @@ def list_merge(*args):
         if lst:
             result.extend(lst)
     return result
+
+
+def get_class_metadata_object(name):
+    return get_class(f'v8unpack.MetaDataObject.{name}.{name}')
 
 
 def get_class(kls):

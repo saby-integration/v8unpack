@@ -7,8 +7,21 @@ class Form83(Form8x):
 
     def decode_data(self, src_dir, uuid):
         self.form = helper.json_read(src_dir, f'{uuid}.0.json')
-        self.code = helper.str_decode(self.form[0][2])
-        self.form[0][2] = 'Код в отдельном файле'
+        try:
+            _code = helper.str_decode(self.form[0][2])
+            if _code:
+                self.code['obj'] = _code
+                self.header['code_info_obj'] = 'Код в отдельном файле'
+                self.form[0][2] = 'Код в отдельном файле'
+        except IndexError:
+            pass  # todo код расширения не достается
+
+        try:
+            _header_obj = self.get_decode_obj_header(self.header['data'])
+            self.header['Включать в содержание справки'] = _header_obj[1][2]
+            self.header['Расширенное представление'] = _header_obj[2]
+        except IndexError:
+            pass
 
     def encode_header(self):
         return [[
@@ -18,9 +31,7 @@ class Form83(Form8x):
                 [
                     "0",
                     self.encode_header_title(),
-                    [
-                        "0"
-                    ]
+                    self.header.get('Расширенное представление', ['0'])
                 ]
             ],
             "0"
@@ -28,43 +39,46 @@ class Form83(Form8x):
 
     def encode_header_title(self):
         return [
-                    "13",
-                    [
-                        self.header['h0'],
-                        [
-                            self.header['h1_0'],
-                            "0",
-                            self.header['uuid']
-                        ],
-                        helper.str_encode(self.header['name']),
-                        helper.encode_name2(self.header),
-                        helper.str_encode(self.header['comment']),
-                        *self.header['h5'],
-                    ],
+            "13",
+            [
+                self.header['h0'],
+                [
+                    self.header['h1_0'],
                     "0",
-                    "1",
-                    [
-                        "2",
-                        [
-                            "\"#\"",
-                            "1708fdaa-cbce-4289-b373-07a5a74bee91",
-                            "1"
-                        ],
-                        [
-                            "\"#\"",
-                            "1708fdaa-cbce-4289-b373-07a5a74bee91",
-                            "2"
-                        ]
-                    ]
+                    self.header['uuid']
+                ],
+                helper.str_encode(self.header['name']),
+                helper.encode_name2(self.header),
+                helper.str_encode(self.header['comment']),
+                *self.header['h5'],
+            ],
+            self.header['Включать в содержание справки'],
+            "1",
+            [
+                "2",
+                [
+                    "\"#\"",
+                    "1708fdaa-cbce-4289-b373-07a5a74bee91",
+                    "1"
+                ],
+                [
+                    "\"#\"",
+                    "1708fdaa-cbce-4289-b373-07a5a74bee91",
+                    "2"
                 ]
+            ]
+        ]
 
     def encode_data(self):
-        self.form[0][2] = helper.str_encode(self.code)
+        try:
+            self.form[0][2] = helper.str_encode(self.code.pop('obj', ""))
+        except IndexError:
+            pass
         return self.form
 
-    def encode_write(self, dest_dir):
+    def write_encode_object(self, dest_dir):
         helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
-        helper.json_write(self.encode_data(), dest_dir, f'{self.header["uuid"]}.0.json')
+        helper.json_write(self.form, dest_dir, f'{self.header["uuid"]}.0.json')
 
     def encode_empty_form(self):
         return [[

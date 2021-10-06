@@ -13,9 +13,9 @@ class TestDecode(HelperTestDecode):
         self.test_dir = os.path.join(sys.path[0], 'tmp')
         # self.version = '81'
         self.result = {
-            'count_root_files_stage1': 18,
-            'count_root_files_stage3': 7,
-            'count_root_files_stage4': 7,
+            'count_root_files_stage1': 37,
+            'count_root_files_stage3': 9,
+            'count_root_files_stage4': 9,
         }
         self.init()
         pass

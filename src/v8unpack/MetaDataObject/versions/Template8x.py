@@ -10,6 +10,7 @@ class TmplType(Enum):
     base64 = "1"
     html = "3"
     text = "4"
+    scheme = "6"
     extension = "9"
     # todo добавить остальные типы макетов и их сериализацию
 
@@ -32,7 +33,7 @@ class Template8x(Simple):
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header):
         super(Template8x, self).decode_object(src_dir, uuid, dest_dir, dest_path, version, header)
-        self.tmpl_type = TmplType(header[0][1][1])
+        self.tmpl_type = TmplType(self.get_template_type(header))
         self.header['type'] = self.tmpl_type.name
 
         _dest_dir = os.path.join(dest_dir, dest_path)
@@ -45,8 +46,23 @@ class Template8x(Simple):
     def get_decode_header(cls, header_data):
         return header_data[0][1][2]
 
+    @classmethod
+    def get_template_type(cls, header_data):
+        return header_data[0][1][1]
+
+    def decode_code(self, src_dir):
+        return
+
     def decode_includes(self, src_dir, dest_dir, dest_path, header):
         return []
+
+    def decode_scheme_data(self, src_dir, dest_dir, write):
+        try:
+            self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0.bin')
+        except FileNotFoundError:
+            return
+        if write:
+            helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
 
     def decode_table_data(self, src_dir, dest_dir, write):
         self.decode_text_data(src_dir, dest_dir, write)
@@ -98,7 +114,8 @@ class Template8x(Simple):
 
         self.raw_header = self.encode_header()
         try:
-            getattr(self, f'encode_{self.tmpl_type.name}_data')(src_dir, dest_dir)
+            handler = f'encode_{self.tmpl_type.name}_data'
+            getattr(self, handler)(src_dir, dest_dir)
         except AttributeError:
             raise Exception(f'Не реализованный тип макета {self.header["type"]}')
 
@@ -106,6 +123,13 @@ class Template8x(Simple):
 
     def encode_table_data(self, src_dir, dest_dir):
         self.encode_text_data(src_dir, dest_dir)
+
+    def encode_scheme_data(self, src_dir, dest_dir):
+        try:
+            raw_data = helper.bin_read(src_dir, f'{self.header["name"]}.bin')
+            helper.bin_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
+        except FileNotFoundError:
+            pass
 
     def encode_text_data(self, src_dir, dest_dir):
         try:

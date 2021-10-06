@@ -6,4 +6,3 @@ class CommonForms(MetaDataObject):
     versions = {
         '83': CommonForm83
     }
-

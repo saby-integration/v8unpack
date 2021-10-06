@@ -1,5 +1,6 @@
 from ..MetaObject import MetaObject
 from .. import helper
+from .. import __version__
 
 
 class Configuration83(MetaObject):
@@ -13,12 +14,14 @@ class Configuration83(MetaObject):
         self = cls()
         self.header = {}
         root = helper.json_read(src_dir, 'root.json')
+        self.header['v8unpack'] = __version__
         self.header["file_uuid"] = root[0][1]
         self.header["root_data"] = root
 
         _header_data = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
         self.set_header_data(_header_data)
 
+        self.header['version'] = helper.json_read(src_dir, 'version.json')
         self.header['versions'] = helper.json_read(src_dir, 'versions.json')
 
         helper.json_write(self.header, dest_dir, f'{cls.get_class_name_without_version()}.json')
@@ -56,15 +59,5 @@ class Configuration83(MetaObject):
         tasks = self.encode_includes(src_dir, dest_dir)
         return tasks
 
-    @classmethod
-    def encode_version(cls):
-        return [[
-            [
-                "216",
-                "0",
-                [
-                    "80315",
-                    "0"
-                ]
-            ]
-        ]]
+    def encode_version(self):
+        return self.header['version']

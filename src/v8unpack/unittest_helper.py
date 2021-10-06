@@ -1,5 +1,4 @@
 import os
-import logging
 from .container_reader import extract
 from .container_writer import build
 from .json_container_decoder import json_decode, json_encode
@@ -10,20 +9,18 @@ from . import helper
 import unittest
 
 
-# os.environ['PYTHONTRACEMALLOC'] = '1'
-
-
 class HelperTestDecode(unittest.TestCase):
     pool = None
+    processes = None
 
-    # @classmethod
-    # def setUpClass(cls) -> None:
-    #     cls.pool = helper.get_pool()
-    #     # cls.maxDiff = None
-    #
-    # @classmethod
-    # def tearDownClass(cls) -> None:
-    #     helper.close_pool(cls.pool)
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.pool = helper.get_pool()
+        # cls.maxDiff = None
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        helper.close_pool(cls.pool)
 
     def setUp(self) -> None:
         self.src_dir = ''  # абсолютный путь до папки с исходным файлом
@@ -60,26 +57,26 @@ class HelperTestDecode(unittest.TestCase):
         extract(os.path.join(self.src_dir, self.src_file), self.decode_dir_stage1)
         if self.result:
             files = os.listdir(self.decode_dir_stage1)
-            self.assertEqual(len(files), self.result['count_root_files_stage1'])
+            self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
 
     def decode_stage2(self):
         json_decode(self.decode_dir_stage1, self.decode_dir_stage2, pool=self.pool)
         if self.result:
             files = os.listdir(self.decode_dir_stage2)
-            self.assertEqual(len(files), self.result['count_root_files_stage1'])
+            self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
 
     def decode_stage3(self):
         decode(self.decode_dir_stage2, self.decode_dir_stage3, pool=self.pool)
         if self.result:
             files = os.listdir(self.decode_dir_stage3)
-            self.assertEqual(len(files), self.result['count_root_files_stage3'])
+            self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
     def decode_stage4(self):
         helper.clear_dir(os.path.normpath(self.decode_dir_stage4))
         FileOrganizer.unpack(self.decode_dir_stage3, self.decode_dir_stage4, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.decode_dir_stage4)
-            self.assertEqual(len(files), self.result['count_root_files_stage4'])
+            self.assertEqual(len(files), self.result['count_root_files_stage4'], 'count_root_files_stage4')
             pass
 
     def encode_stage4(self):
@@ -87,7 +84,7 @@ class HelperTestDecode(unittest.TestCase):
         FileOrganizer.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.encode_dir_stage3)
-            self.assertEqual(len(files), self.result['count_root_files_stage3'])
+            self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
     def encode_stage3(self):
         encode(self.encode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool)
@@ -132,10 +129,14 @@ class HelperTestDecode(unittest.TestCase):
             if os.path.isdir(path_decode_entry):
                 include_problems += self._assert_stage(path_decode_entry, path_encode_entry)
             else:
-                with open(path_decode_entry, 'r', encoding='utf-8') as file:
+                with open(path_decode_entry, 'rb') as file:
                     decode_data = file.read()
-                with open(path_encode_entry, 'r', encoding='utf-8') as file:
-                    encode_data = file.read()
+                try:
+                    with open(path_encode_entry, 'rb') as file:
+                        encode_data = file.read()
+                except FileNotFoundError:
+                    encode_data = None
+
                 if decode_data != encode_data:
                     problems += f'\n      {entry}'
         if problems:
