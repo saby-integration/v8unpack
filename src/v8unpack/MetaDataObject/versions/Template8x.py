@@ -86,7 +86,7 @@ class Template8x(Simple):
         if data[0][1] and data[0][1][0]:
             self.data = b64decode(data[0][1][0][8:])
             data[0][1][0] = '"данные в отдельном файле"'
-            extension = self.header['comment'] if self.header['comment'] else 'bin'
+            extension = helper.get_extension_from_comment(self.header['comment'])
             if write:
                 helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.{extension}')
 
@@ -142,7 +142,7 @@ class Template8x(Simple):
         self.encode_base64_data(src_dir, dest_dir)
 
     def encode_base64_data(self, src_dir, dest_dir):
-        extension = self.header['comment'] if self.header['comment'] else 'bin'
+        extension = helper.get_extension_from_comment(self.header['comment'])
         bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
         self._encode_bin_data(bin_data, dest_dir)
 
