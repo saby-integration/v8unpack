@@ -60,12 +60,12 @@ class MetaObject:
                     elif isinstance(obj_uuid, list):
                         if not metadata_type:
                             continue
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
                         try:
                             handler = helper.get_class_metadata_object(metadata_type.name)
                         except Exception as err:
                             continue
+                        if j == 0:
+                            os.mkdir(os.path.join(dest_dir, new_dest_path))
                         handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
 
         return tasks
