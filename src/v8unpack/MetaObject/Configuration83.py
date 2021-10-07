@@ -50,6 +50,7 @@ class Configuration83(MetaObject):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
+        helper.check_version(__version__, self.header.get('v8unpack', ''))
 
         helper.json_write(self.header["root_data"], dest_dir, 'root.json')
         helper.json_write(self.encode_version(), dest_dir, 'version.json')

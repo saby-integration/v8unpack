@@ -45,6 +45,7 @@ class ConfigurationExtension83(Configuration83):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
+        helper.check_version(__version__, self.header.get('v8unpack', ''))
         root = [
             ["0", self.encode_version()],
             self.header['copyinfo'],

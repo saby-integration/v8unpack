@@ -187,3 +187,14 @@ def get_extension_from_comment(comment: str) -> str:
     if comment:
         return comment.split(" ")[-1]
     return "bin"
+
+
+def check_version(v8_version: str, src_version: str) -> None:
+    _v8 = v8_version.split(".")
+    _src = src_version.split(".")
+    if len(_v8) != 3:
+        raise AssertionError(f'Не правильный номер версии v8unpack "{v8_version}"')
+    if len(_src) != 3:
+        raise AssertionError(f'Не правильная версия исходников "{src_version}"')
+    if (int(_v8[0]), int(_v8[1])) != (int(_src[0]), int(_src[1])):
+        raise AssertionError("Версия исходников {_src[0]}.{_src[1]} не соответствует версии v8unpack {_v8[0]}.{_v8[1]}")
