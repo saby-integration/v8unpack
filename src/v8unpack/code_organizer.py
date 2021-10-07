@@ -1,5 +1,6 @@
 import os
 from . import helper
+from .index import get as get_from_index
 
 
 class CodeOrganizer:
@@ -12,12 +13,11 @@ class CodeOrganizer:
         return cls.unpack(*params)
 
     @classmethod
-    def unpack(cls, src_dir, path, obj_name, dest_dir, index):
+    def unpack(cls, src_dir, path, file_name, dest_dir, index):
         self = cls()
         self.code_areas = {'root': dict(data='')}
         _path = ['']
         _include_path = ['root']
-        file_name = f'{obj_name}.1c'
         with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
             line = file.readline()
             while line:
@@ -27,7 +27,7 @@ class CodeOrganizer:
                             key = line[17:].strip()
                             # if key in self.code_areas:
                             #     raise Exception(
-                            #         f'В {path}{obj_name} ссылка на один и тот же файл у разных областей {key}')
+                            #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
                             self.code_areas[_include_path[-1]]['data'] += line
                             self.code_areas[key] = dict(data='')
                             _include_path.append(key)
@@ -49,13 +49,13 @@ class CodeOrganizer:
         for elem in self.code_areas:
             _file = self.code_areas[elem]
             if elem == 'root':
-                _file['file_name'] = obj_name
+                _file['file_name'] = file_name
                 _file['path'] = self.get_dest_path(dest_dir, path, file_name, index)
             else:
-                _file['path'], _file['file_name'] = self.parse_include_path(elem, path, obj_name)
+                _file['path'], _file['file_name'] = self.parse_include_path(elem, path, file_name)
             _file['dest_path'] = os.path.join(dest_dir, _file['path'])
 
-            helper.txt_write(_file['data'], _file['dest_path'], f"{_file['file_name']}.1c")
+            helper.txt_write(_file['data'], _file['dest_path'], _file['file_name'])
 
         return self
 
@@ -64,35 +64,35 @@ class CodeOrganizer:
         return cls.pack(*params)
 
     @classmethod
-    def pack(cls, src_dir, path, obj_name, dest_dir, dest_path):
+    def pack(cls, src_dir, path, file_name, dest_dir, dest_path):
         self = cls()
-        self.data = self.pack_file(src_dir, path, obj_name)
-        helper.txt_write(self.data, os.path.join(dest_dir, dest_path), f'{obj_name}.1c')
+        self.data = self.pack_file(src_dir, path, file_name)
+        helper.txt_write(self.data, os.path.join(dest_dir, dest_path), file_name)
         return self
         pass
 
     @classmethod
-    def pack_file(cls, src_dir, path, obj_name):
+    def pack_file(cls, src_dir, path, file_name):
         data = ''
-        with open(os.path.join(src_dir, path, f'{obj_name}.1c'), 'r', encoding='utf-8') as file:
+        with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
             line = file.readline()
             while line:
                 data += line
                 if line[0] == '#':
                     if line.startswith('#Область include'):
                         include_path = line[17:].strip()
-                        _path, _file_name = cls.parse_include_path(include_path, path, obj_name)
+                        _path, _file_name = cls.parse_include_path(include_path, path, file_name)
                         data += cls.pack_file(src_dir, _path, _file_name)
                 line = file.readline()
             return data
 
     @staticmethod
-    def parse_include_path(include_path, path, obj_name):
+    def parse_include_path(include_path, path, file_name):
         tmp = include_path.split('_')
         size_tmp = len(tmp)
         if size_tmp == 0:
-            raise Exception(f'{path} {obj_name} в include не указан путь')
-        _file_name = tmp[-1]
+            raise Exception(f'{path} {file_name} в include не указан путь')
+        _file_name = f'{tmp[-1]}.1c'
         _path = '..'  # include не должен лежать внутри папки с сиходниками
         if size_tmp > 1:
             tmp = ['..' if elem == '' else elem for elem in tmp[:-1]]
@@ -100,11 +100,10 @@ class CodeOrganizer:
         return _path, _file_name
 
     @staticmethod
-    def get_dest_path(dest_dir, path, file_name, index):
+    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict):
         if index:
             try:
-                _key = os.path.join(path, file_name)
-                _res = index[_key]
+                _res = get_from_index(index, path, file_name)
             except KeyError:
                 return path
             _path = os.path.dirname(_res)
