@@ -180,3 +180,10 @@ def create_index(index_file_name, src_dir, dest_dir):
     _create_index(index, src_dir, dest_dir, '')
     with open(index_file_name, 'w+', encoding='utf-8') as f:
         json.dump(index, f, ensure_ascii=False, indent=2)
+
+
+def get_extension_from_comment(comment: str) -> str:
+    comment = comment.strip()
+    if comment:
+        return comment.split(" ")[-1]
+    return "bin"

@@ -20,7 +20,7 @@ class CommonPicture(Simple):
                 return
             if self.raw_data[0][2] and self.raw_data[0][2][0][0]:
                 self.data = b64decode(self.raw_data[0][2][0][0][8:])
-                extension = self.header['comment'] if self.header['comment'] else 'bin'
+                extension = helper.get_extension_from_comment(self.header['comment'])
                 _dest_dir = os.path.join(dest_dir, dest_path)
                 if dest_dir:
                     helper.bin_write(self.data, _dest_dir, f'{self.header["name"]}.{extension}')
@@ -30,7 +30,7 @@ class CommonPicture(Simple):
     def encode_object(self, src_dir, file_name, dest_dir, version):
         super(CommonPicture, self).encode_object(src_dir, file_name, dest_dir, version)
 
-        extension = self.header['comment'] if self.header['comment'] else 'bin'
+        extension = helper.get_extension_from_comment(self.header['comment'])
         bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
         self.raw_data = [
             [

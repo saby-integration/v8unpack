@@ -16,6 +16,7 @@ from . import __version__
 
 def extract(in_filename, out_dir_name, *, temp_dir=None, index=None):
     begin0 = datetime.now()
+    print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ", end='')
 
     helper.clear_dir(os.path.normpath(out_dir_name))
@@ -58,6 +59,7 @@ def extract(in_filename, out_dir_name, *, temp_dir=None, index=None):
 
 def build(folder, file, *, temp_dir=None, index=None, version='83'):
     begin0 = datetime.now()
+    print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ")
     if temp_dir is None:
         temp_dir = tempfile.mkdtemp()
