@@ -14,6 +14,7 @@ setuptools.setup(
     author_email='1338833@gmail.com',
     description='Unpacking binaries 1C to JSON for GIT',
     long_description=long_description,
+    long_description_content_type="text/markdown",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
