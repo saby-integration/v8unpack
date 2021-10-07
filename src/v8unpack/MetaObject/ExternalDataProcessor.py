@@ -53,6 +53,7 @@ class ExternalDataProcessor(MetaObject):
         helper.clear_dir(dest_dir)
         _file_name = self.get_class_name_without_version()
         self.header = helper.json_read(src_dir, f'{_file_name}.json')
+        helper.check_version(__version__, self.header.get('v8unpack', ''))
         self.data = helper.json_read(src_dir, f'{_file_name}.data{self.version}.json')
         helper.json_write(self.encode_root(), dest_dir, 'root.json')
         helper.json_write(self.encode_version(), dest_dir, 'version.json')
