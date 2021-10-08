@@ -106,15 +106,16 @@ class CodeOrganizer:
                 _res = get_from_index(index, path, file_name)
             except KeyError:
                 return path
-            _path = os.path.dirname(_res)
-            _file = os.path.basename(_res)
-            if _file != file_name:
-                raise Exception(f'Имена файлов в индексе должны быть одинаковые. {_file} != {file_name}')
-            _path = os.path.join('..', _path)
-            try:
-                os.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
-            except FileExistsError:
-                pass
-            return _path
+            if _res:
+                _path = os.path.dirname(_res)
+                _file = os.path.basename(_res)
+                if _file != file_name:
+                    raise Exception(f'Имена файлов в индексе должны быть одинаковые. {_file} != {file_name}')
+                _path = os.path.join('..', _path)
+                try:
+                    os.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
+                except FileExistsError:
+                    pass
+                return _path
 
         return path

@@ -30,8 +30,11 @@ def extract(in_filename, out_dir_name, *, temp_dir=None, index=None):
     stage3_dir = os.path.join(temp_dir, 'decode_stage_3')
 
     if index:
-        with open(index, 'r', encoding='utf-8') as f:
-            index = json.load(f)
+        try:
+            with open(index, 'r', encoding='utf-8') as f:
+                index = json.load(f)
+        except FileNotFoundError:
+            index = None
 
     pool = helper.get_pool()
 
@@ -73,8 +76,11 @@ def build(folder, file, *, temp_dir=None, index=None, version='83'):
     pool = helper.get_pool()
 
     if index:
-        with open(index, 'r', encoding='utf-8') as f:
-            index = json.load(f)
+        try:
+            with open(index, 'r', encoding='utf-8') as f:
+                index = json.load(f)
+        except FileNotFoundError:
+            index = None
 
     begin1 = datetime.now()
     print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
