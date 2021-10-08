@@ -113,12 +113,12 @@ def main():
                        help='собрать файл 1С, где '
                             'src - путь до папки с исходниками, '
                             'file - путь до бинарного файла')
-    group.add_argument('-I', nargs=3, metavar=('file', 'src', 'dest'),
+    group.add_argument('-I', nargs=1, metavar='src',
                        help='сформировать index, где '
-                            'file - путь до файла с индексом, '
-                            'src - путь до папки с исходниками, '
-                            'dest - путь до общей папки')
+                            'src - путь до папки с исходниками'
+                       )
     parser.add_argument('--temp', help='путь до временной папки')
+    parser.add_argument('--core', help='название общей папки добавляемой в индекс по умолчанию')
     parser.add_argument('--index', help='путь до json файла с словарем копирования,'
                                         'структура файла: {путь исходника: путь общей папки}')
     parser.add_argument('--version', default='83', help="версия сборки 81/82/83,"
@@ -138,7 +138,7 @@ def main():
         build(args.B[0], args.B[1], index=args.index, temp_dir=args.temp, version=args.version)
 
     if args.I is not None:
-        create_index(args.I[0], args.I[1], args.I[2])
+        create_index(args.index, args.I[0], args.core)
 
 
 if __name__ == '__main__':

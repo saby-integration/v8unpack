@@ -24,5 +24,3 @@ class Template83(Template8x):
             ],
             "0"
         ]]
-
-
