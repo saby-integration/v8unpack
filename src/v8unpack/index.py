@@ -11,7 +11,7 @@ def get(index: dict, path: str, file_name: str):
     return _index[file_name]
 
 
-def create_index(index_file_name, src_dir, dest_dir):
+def create_index(index_file_name: str, src_dir: str, dest_dir: str):
     def _create_index(_index, _src_dir, _dest_dir, _path):
         entries = os.listdir(os.path.join(_src_dir, _path))
         for entry in entries:

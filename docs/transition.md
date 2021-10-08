@@ -49,7 +49,7 @@ build.cmd
 
 update_index.cmd - для формирования и обновления индекса
 
-    v8unpack.exe -I index.json src core
+    v8unpack.exe -I src --index index.json -core core
 
 index.json
 
