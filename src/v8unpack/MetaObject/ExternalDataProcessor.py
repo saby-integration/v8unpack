@@ -32,7 +32,7 @@ class ExternalDataProcessor(MetaObject):
         _file_name = self.get_class_name_without_version()
         helper.json_write(self.header, dest_dir, f'{_file_name}.json')
         helper.json_write(self.data, dest_dir, f'{_file_name}.data{self.version}.json')
-        self.write_decode_code(dest_dir, cls.__name__)
+        self.write_decode_code(dest_dir, 'ExternalDataProcessor')
 
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
         return tasks
@@ -48,7 +48,7 @@ class ExternalDataProcessor(MetaObject):
         return header_data[0][3][1][1][3][1]
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, pool=None):
+    def encode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         helper.clear_dir(dest_dir)
         _file_name = self.get_class_name_without_version()
@@ -60,7 +60,7 @@ class ExternalDataProcessor(MetaObject):
         helper.json_write(self.header['versions'], dest_dir, 'versions.json')
         helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
         helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
-        self.encode_code(src_dir, cls.__name__)
+        self.encode_code(src_dir, 'ExternalDataProcessor')
         self.write_encode_code(dest_dir)
         tasks = self.encode_includes(src_dir, dest_dir)
         return tasks

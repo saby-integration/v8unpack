@@ -6,6 +6,7 @@ from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .json_container_decoder import JsonContainerDecoder
 from . import helper
+import sys
 import unittest
 
 
@@ -15,22 +16,26 @@ class HelperTestDecode(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.pool = helper.get_pool()
+        if cls.pool is not None:
+            cls.pool = helper.get_pool()
         # cls.maxDiff = None
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        helper.close_pool(cls.pool)
+    # @classmethod
+    # def tearDownClass(cls) -> None:
+    #     helper.close_pool(cls.pool)
 
     def setUp(self) -> None:
-        self.src_dir = ''  # абсолютный путь до папки с исходным файлом
+        self.src_dir = os.path.join(sys.path[0])  # абсолютный путь до папки с исходным файлом
         self.src_file = ''  # имя исходного файла
         self.test_dir = ''  # абсолютный путь до временной папки c файлами промежуточных стадий
         self.result = None
-        self.version = '83'
+        self.version = '803'
         self.index = None
 
     def init(self):
+        if not self.test_dir:
+            self.test_dir = os.path.join(self.src_dir, 'tmp')
+
         os.makedirs(self.test_dir, exist_ok=True)
 
         self.decode_dir_stage0 = self.get_decode_folder(0)
@@ -44,6 +49,13 @@ class HelperTestDecode(unittest.TestCase):
         self.encode_dir_stage1 = self.get_encode_folder(1)
         self.encode_dir_stage2 = self.get_encode_folder(2)
         self.encode_dir_stage3 = self.get_encode_folder(3)
+
+        try:
+            with open(os.path.join(self.test_dir, 'index.json'), 'r', encoding='utf-8') as f:
+                import json
+                self.index = json.load(f)
+        except FileNotFoundError:
+            self.index = {}
 
         pass
 
@@ -66,7 +78,7 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
 
     def decode_stage3(self):
-        decode(self.decode_dir_stage2, self.decode_dir_stage3, pool=self.pool)
+        decode(self.decode_dir_stage2, self.decode_dir_stage3, pool=self.pool, version=self.version)
         if self.result:
             files = os.listdir(self.decode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')

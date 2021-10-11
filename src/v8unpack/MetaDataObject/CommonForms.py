@@ -1,8 +1,8 @@
 from ..MetaDataObject import MetaDataObject
-from ..MetaDataObject.versions.CommonForm83 import CommonForm83
+from ..MetaDataObject.versions.CommonForm803 import CommonForm803
 
 
 class CommonForms(MetaDataObject):
     versions = {
-        '83': CommonForm83
+        '803': CommonForm803
     }

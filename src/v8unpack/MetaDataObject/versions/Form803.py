@@ -2,8 +2,8 @@ from .Form8x import Form8x
 from ... import helper
 
 
-class Form83(Form8x):
-    ver = '83'
+class Form803(Form8x):
+    ver = '803'
 
     def decode_data(self, src_dir, uuid):
         self.form = helper.json_read(src_dir, f'{uuid}.0.json')

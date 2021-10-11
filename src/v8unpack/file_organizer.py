@@ -47,6 +47,8 @@ class FileOrganizer:
     @classmethod
     def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, path: list):
         for entry in index:
+            if not index[entry]:
+                continue
             if isinstance(index[entry], dict):
                 path.append(entry)
                 cls._pack_index(src_dir, dest_dir, tasks, index[entry], path)
@@ -59,13 +61,13 @@ class FileOrganizer:
                     tasks.append((src_dir, _src_path, entry, dest_dir, _dest_path))
                 else:
                     _dest_full_path = os.path.join(dest_dir, *path, entry)
+                    _src_path = os.path.join(src_dir, '..', index[entry])
                     try:
-                        _src_path = os.path.join(src_dir, '..', index[entry])
                         shutil.copy(_src_path, _dest_full_path)
                     except FileNotFoundError:
                         _dest_dir = os.path.dirname(_dest_full_path)
                         os.makedirs(_dest_dir, exist_ok=True)
-                        shutil.copy(os.path.join(src_dir, '..', index[entry]), _dest_full_path)
+                        shutil.copy(_src_path, _dest_full_path)
             else:
                 raise Exception('Некорректный формат файла индекса')
 

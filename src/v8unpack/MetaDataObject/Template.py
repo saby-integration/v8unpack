@@ -1,13 +1,13 @@
 from ..MetaDataObject import MetaDataObject
-from ..MetaDataObject.versions.Template83 import Template83
-from ..MetaDataObject.versions.Template82 import Template82
-from ..MetaDataObject.versions.Template81 import Template81
+from ..MetaDataObject.versions.Template803 import Template803
+from ..MetaDataObject.versions.Template802 import Template802
+from ..MetaDataObject.versions.Template801 import Template801
 
 
 class Template(MetaDataObject):
 
     versions = {
-        '81': Template81,
-        '82': Template82,
-        '83': Template83
+        '801': Template801,
+        '802': Template802,
+        '803': Template803
     }

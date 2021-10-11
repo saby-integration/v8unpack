@@ -7,17 +7,14 @@ from v8unpack import helper
 
 
 class TestDecode(HelperTestDecode):
+
     def setUp(self):
         super(TestDecode, self).setUp()
-        self.src_dir = os.path.join(sys.path[0])
+        self.src_dir = os.path.dirname(__file__)
+
         self.src_file = 'ВнешняяОбработка1.epf'
-        self.test_dir = os.path.join(sys.path[0], 'tmp')
 
-        with open(os.path.join(self.test_dir,'index.json'), 'r', encoding='utf-8') as f:
-            import json
-            self.index = json.load(f)
-
-        # self.version = '83'
+        # self.version = '803'
         self.result = {
             'count_root_files_stage1': 14,
             'count_root_files_stage3': 5,
@@ -62,9 +59,9 @@ class TestDecode(HelperTestDecode):
 
     @unittest.skip
     def test_create_index(self):
-        from v8unpack.index import create_index
-        create_index(os.path.join(sys.path[0], 'tmp', 'index.json'), self.decode_dir_stage4,
-                            'decodeCodeSubmodule')
+        from v8unpack.index import update_index
+        update_index(self.decode_dir_stage4, os.path.join(sys.path[0], 'tmp', 'index.json'),
+                     'decodeCodeSubmodule')
 
 
 if __name__ == '__main__':
