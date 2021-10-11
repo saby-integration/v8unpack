@@ -13,7 +13,7 @@ class TestDecode(HelperTestDecode):
         self.src_dir = os.path.dirname(__file__)
 
         self.src_file = 'Расширение1.cfe'
-        self.version = '803'
+        self.version = None
         # self.result = {
         #     'count_root_files_stage1': 13,
         #     'count_root_files_stage3': 5,

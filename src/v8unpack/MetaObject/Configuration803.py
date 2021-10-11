@@ -10,7 +10,7 @@ class Configuration803(MetaObject):
         self.counter = {}
 
     @classmethod
-    def decode(cls, src_dir, dest_dir):
+    def decode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         self.header = {}
         root = helper.json_read(src_dir, 'root.json')

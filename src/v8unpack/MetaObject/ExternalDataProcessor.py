@@ -10,7 +10,7 @@ class ExternalDataProcessor(MetaObject):
         self.data = None
 
     @classmethod
-    def decode(cls, src_dir, dest_dir):
+    def decode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         self.header = {}
         self.data = {}
