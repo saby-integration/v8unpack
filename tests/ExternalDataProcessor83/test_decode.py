@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import shutil
 import unittest
 from v8unpack.unittest_helper import HelperTestDecode
@@ -13,14 +12,16 @@ class TestDecode(HelperTestDecode):
         self.src_dir = os.path.join(sys.path[0])
         self.src_file = 'ВнешняяОбработка1.epf'
         self.test_dir = os.path.join(sys.path[0], 'tmp')
-        # with open(os.path.join(self.test_dir,'index.json'), 'r', encoding='utf-8') as f:
-        #     self.index = json.load(f)
+
+        with open(os.path.join(self.test_dir,'index.json'), 'r', encoding='utf-8') as f:
+            import json
+            self.index = json.load(f)
 
         # self.version = '83'
         self.result = {
             'count_root_files_stage1': 14,
-            'count_root_files_stage3': 7,
-            'count_root_files_stage4': 7,
+            'count_root_files_stage3': 5,
+            'count_root_files_stage4': 0,
             'count_forms_files': 7,
             'count_templates_files': 2
         }
@@ -38,7 +39,7 @@ class TestDecode(HelperTestDecode):
         self.assert_external_data_processor_decode_stage3()
 
     def test_04_decode_stage4(self):
-        shutil.rmtree(os.path.join(sys.path[0], 'decodeCodeSubmodule'), ignore_errors=True)
+        shutil.rmtree(os.path.join(self.test_dir, 'decodeCodeSubmodule'), ignore_errors=True)
         super(TestDecode, self).decode_stage4()
 
     def test_05_encode_stage4(self):
@@ -61,7 +62,8 @@ class TestDecode(HelperTestDecode):
 
     @unittest.skip
     def test_create_index(self):
-        helper.create_index(os.path.join(sys.path[0], 'tmp', 'index.json'), self.decode_dir_stage4,
+        from v8unpack.index import create_index
+        create_index(os.path.join(sys.path[0], 'tmp', 'index.json'), self.decode_dir_stage4,
                             'decodeCodeSubmodule')
 
 

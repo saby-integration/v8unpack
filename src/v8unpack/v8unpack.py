@@ -11,6 +11,7 @@ from .json_container_decoder import json_decode, json_encode
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from . import helper
+from .index import create_index
 from . import __version__
 
 
@@ -60,7 +61,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None):
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, version='803'):
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
-    print(f"{helper.str_time(begin0)} Начали        ")
+    print(f"{helper.str_time(begin0)} Начали        ", end='')
     if temp_dir is None:
         temp_dir = tempfile.mkdtemp()
         helper.clear_dir(os.path.normpath(temp_dir))
@@ -138,7 +139,7 @@ def main():
         build(args.B[0], args.B[1], index=args.index, temp_dir=args.temp, version=args.version)
 
     if args.I is not None:
-        helper.create_index(args.I[0], args.I[1], args.I[2])
+        create_index(args.I[0], args.I[1], args.I[2])
 
 
 if __name__ == '__main__':

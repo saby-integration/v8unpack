@@ -89,7 +89,9 @@ def str_decode(data: str) -> str:
 def get_pool(pool: Pool = None, processes=None) -> Pool:
     if pool is not None:
         return pool
-    return Pool(processes=cpu_count() if processes is None else 1)
+    if processes is None:
+        processes = cpu_count()
+    return Pool(processes=processes)
 
 
 def close_pool(local_pool: Pool, pool: Pool = None) -> None:
@@ -156,30 +158,6 @@ def detect_by_bom(path, default):
 
 def str_time(value, _format='%H:%M:%S.%f'):
     return value.strftime(_format)
-
-
-def create_index(index_file_name, src_dir, dest_dir):
-    def _create_index(_index, _src_dir, _dest_dir, _path):
-        entries = os.listdir(os.path.join(_src_dir, _path))
-        for entry in entries:
-            new_path = os.path.join(_path, entry)
-            if os.path.isdir(os.path.join(_src_dir, new_path)):
-                _create_index(_index, _src_dir, _dest_dir, new_path)
-            else:
-                key = os.path.join(_path, entry)
-                if key not in _index:
-                    _index[key] = os.path.join(_dest_dir, _path, entry) if _dest_dir else ''
-        pass
-
-    try:
-        with open(index_file_name, 'r', encoding='utf-8') as f:
-            index = json.load(f)
-    except FileNotFoundError:
-        index = {}
-
-    _create_index(index, src_dir, dest_dir, '')
-    with open(index_file_name, 'w+', encoding='utf-8') as f:
-        json.dump(index, f, ensure_ascii=False, indent=2)
 
 
 def get_extension_from_comment(comment: str) -> str:
