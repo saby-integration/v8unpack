@@ -27,6 +27,8 @@ class ConfigurationExtension83(Configuration83):
         self.header['data'] = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
         _form_header = self.get_decode_header(self.header['data'])
         helper.decode_header(self.header, _form_header)
+        self.header['compatibility_version'] = self.header['data'][0][3][1][1][43]
+
         self.decode_code(src_dir)
 
         for i in self.info:  # хз что это

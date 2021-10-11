@@ -14,7 +14,7 @@ from . import helper
 from . import __version__
 
 
-def extract(in_filename, out_dir_name, *, temp_dir=None, index=None):
+def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None):
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ", end='')
@@ -57,7 +57,7 @@ def extract(in_filename, out_dir_name, *, temp_dir=None, index=None):
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def build(folder, file, *, temp_dir=None, index=None, version='83'):
+def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, version='803'):
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ")
@@ -77,7 +77,7 @@ def build(folder, file, *, temp_dir=None, index=None, version='83'):
 
     begin1 = datetime.now()
     print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
-    FileOrganizer.pack(folder, encode_dir_stage3, pool=pool, index=index)
+    FileOrganizer.pack(in_dir_name, encode_dir_stage3, pool=pool, index=index)
 
     begin2 = datetime.now()
     print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
@@ -89,7 +89,7 @@ def build(folder, file, *, temp_dir=None, index=None, version='83'):
 
     begin4 = datetime.now()
     print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Запаковываем  ", end='')
-    container_build(encode_dir_stage1, file)
+    container_build(encode_dir_stage1, out_file_name)
 
     end = datetime.now()
     print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
@@ -120,9 +120,10 @@ def main():
     parser.add_argument('--temp', help='путь до временной папки')
     parser.add_argument('--index', help='путь до json файла с словарем копирования,'
                                         'структура файла: {путь исходника: путь общей папки}')
-    parser.add_argument('--version', default='83', help="версия сборки 81/82/83,"
-                                                        " по умолчанию 83, "
-                                                        "для разборки не требуется")
+    parser.add_argument('--version', default='803',
+                        help="версия сборки 801/802/803, по умолчанию 803, "
+                             " для сборки расширений указывается версия режима совместимости "
+                             "например для 8.3.6 это 80306, для разборки не требуется")
 
     if len(sys.argv) == 1:
         parser.print_help()
