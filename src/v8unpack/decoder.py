@@ -1,18 +1,18 @@
 from . import helper
-from .MetaObject.ExternalDataProcessor81 import ExternalDataProcessor81
-from .MetaObject.ExternalDataProcessor82 import ExternalDataProcessor82
-from .MetaObject.ExternalDataProcessor83 import ExternalDataProcessor83
-from .MetaObject.ConfigurationExtension83 import ConfigurationExtension83
-from .MetaObject.Configuration83 import Configuration83
+from .MetaObject.ExternalDataProcessor801 import ExternalDataProcessor801
+from .MetaObject.ExternalDataProcessor802 import ExternalDataProcessor802
+from .MetaObject.ExternalDataProcessor803 import ExternalDataProcessor803
+from .MetaObject.ConfigurationExtension803 import ConfigurationExtension803
+from .MetaObject.Configuration803 import Configuration803
 import os
 from .ext_exception import ExtException
 from .metadata_types import MetaDataTypes
 
 available_types = {
-    'ExternalDataProcessor81': ExternalDataProcessor81,
-    'ExternalDataProcessor82': ExternalDataProcessor82,
-    'ExternalDataProcessor83': ExternalDataProcessor83,
-    'Configuration83': Configuration83
+    'ExternalDataProcessor801': ExternalDataProcessor801,
+    'ExternalDataProcessor802': ExternalDataProcessor802,
+    'ExternalDataProcessor803': ExternalDataProcessor803,
+    'Configuration803': Configuration803
 }
 
 
@@ -27,26 +27,27 @@ class Decoder:
                 header = helper.json_read(src_dir, f'{root[0][1]}.json')
                 obj_type = MetaDataTypes(header[0][3][0])
                 if _tmp == 2:
-                    obj_version = '82'
+                    obj_version = '802'
                 elif _tmp == 3:
-                    obj_version = '83'
+                    obj_version = '803'
                 else:
                     raise Exception(f'Not supported version {_tmp}')
                 return available_types[f'{obj_type.name}{obj_version}']
             elif version[0][0][0] == "106":
-                return ExternalDataProcessor81()
+                return ExternalDataProcessor801()
         if os.path.isfile(os.path.join(src_dir, 'configinfo.json')):
             version = helper.json_read(src_dir, 'configinfo.json')
             if version[0][1][0] == "216":
                 if len(version[0][1]) == 3 and version[0][1][2][0] in ['80314', '80315']:  # todo понять в чем отличия
-                    return ConfigurationExtension83()
+                    return ConfigurationExtension803()
         raise Exception('Не удалось опеределить парсер')
 
     @classmethod
-    def decode(cls, src_dir, dest_dir, *, pool=None):
+    def decode(cls, src_dir, dest_dir, *, pool=None, version=None):
         decoder = cls.detect_version(src_dir)
         helper.clear_dir(dest_dir)
-        tasks = decoder.decode(src_dir, dest_dir)  # возвращает список вложенных объектов MetaDataObject
+        tasks = decoder.decode(src_dir, dest_dir,
+                               version=version)  # возвращает список вложенных объектов MetaDataObject
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
             tasks_list = helper.run_in_pool(cls.decode_include, tasks, pool)
             tasks = helper.list_merge(*tasks_list)
@@ -62,28 +63,29 @@ class Decoder:
             raise ExtException(parent=err, action=f'{cls.__name__}.decode_include')
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, pool=None, version='83'):
+    def encode(cls, src_dir, dest_dir, *, pool=None, version=None):
         helper.clear_dir(dest_dir)
-        encoder = cls.get_encoder(src_dir, version)
-        tasks = encoder.encode(src_dir, dest_dir)  # возвращает список вложенных объектов MetaDataObject
+        encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])
+        tasks = encoder.encode(src_dir, dest_dir,
+                               version=version)  # возвращает список вложенных объектов MetaDataObject
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
             tasks_list = helper.run_in_pool(cls.encode_include, tasks, pool)
             tasks = helper.list_merge(*tasks_list)
 
     @classmethod
-    def get_encoder(cls, src_dir, version):
+    def get_encoder(cls, src_dir, version='803'):
         if os.path.isfile(os.path.join(src_dir, 'ExternalDataProcessor.json')):
             versions = {
-                '81': ExternalDataProcessor81,
-                '82': ExternalDataProcessor82,
-                '83': ExternalDataProcessor83,
+                '801': ExternalDataProcessor801,
+                '802': ExternalDataProcessor802,
+                '803': ExternalDataProcessor803,
             }
             return versions[version]
-        if version == '83':
+        if version == '803':
             if os.path.isfile(os.path.join(src_dir, 'ConfigurationExtension.json')):
-                return ConfigurationExtension83
+                return ConfigurationExtension803
             if os.path.isfile(os.path.join(src_dir, 'Configuration.json')):
-                return Configuration83
+                return Configuration803
         raise FileNotFoundError(f'Не найдены файлы для сборки версии {version} ({src_dir})')
 
     @classmethod
@@ -97,9 +99,9 @@ class Decoder:
             raise ExtException(parent=err, dump=dict(include=include_type)) from err
 
 
-def encode(src_dir, dest_dir, *, pool=None, version='83'):
+def encode(src_dir, dest_dir, *, pool=None, version='803'):
     Decoder.encode(src_dir, dest_dir, pool=pool, version=version)
 
 
-def decode(src_dir, dest_dir, *, pool=None):
-    Decoder.decode(src_dir, dest_dir, pool=pool)
+def decode(src_dir, dest_dir, *, pool=None, version=None):
+    Decoder.decode(src_dir, dest_dir, pool=pool, version=version)

@@ -1,12 +1,12 @@
 from ..MetaDataObject import MetaDataObject
-from ..MetaDataObject.versions.Form83 import Form83
-from ..MetaDataObject.versions.Form82 import Form82
-from ..MetaDataObject.versions.Form81 import Form81
+from ..MetaDataObject.versions.Form803 import Form803
+from ..MetaDataObject.versions.Form802 import Form802
+from ..MetaDataObject.versions.Form801 import Form801
 
 
 class Form(MetaDataObject):
     versions = {
-        '81': Form81,
-        '82': Form82,
-        '83': Form83
+        '801': Form801,
+        '802': Form802,
+        '803': Form803
     }

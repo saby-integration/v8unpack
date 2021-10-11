@@ -1,9 +1,9 @@
 from ..MetaDataObject import MetaDataObject
-from ..MetaDataObject.versions.CommonTemplate83 import CommonTemplate83
+from ..MetaDataObject.versions.CommonTemplate803 import CommonTemplate803
 
 
 class CommonTemplate(MetaDataObject):
 
     versions = {
-        '83': CommonTemplate83
+        '803': CommonTemplate803
     }

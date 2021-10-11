@@ -86,7 +86,7 @@ def str_decode(data: str) -> str:
     return data[1:-1]
 
 
-def get_pool(pool: Pool = None, processes=None) -> Pool:
+def get_pool(*, pool: Pool = None, processes=None) -> Pool:
     if pool is not None:
         return pool
     if processes is None:
@@ -101,7 +101,7 @@ def close_pool(local_pool: Pool, pool: Pool = None) -> None:
 
 
 def run_in_pool(method, list_args, pool=None):
-    _pool = get_pool(pool)
+    _pool = get_pool(pool=pool)
     # msg = f'pool {method}({len(list_args)})'
     result = _pool.starmap(method, list_args)
     close_pool(_pool, pool)
