@@ -1,8 +1,8 @@
 from .ExternalDataProcessor import ExternalDataProcessor
 
 
-class ExternalDataProcessor81(ExternalDataProcessor):
-    version = '81'
+class ExternalDataProcessor801(ExternalDataProcessor):
+    version = '801'
     pass
 
     def encode_version(self):

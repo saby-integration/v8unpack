@@ -1,8 +1,8 @@
 from ..MetaDataObject import MetaDataObject
-from ..MetaDataObject.versions.DocumentForm83 import DocumentForm83
+from ..MetaDataObject.versions.DocumentForm803 import DocumentForm803
 
 
 class DocumentForm(MetaDataObject):
     versions = {
-        '83': DocumentForm83
+        '803': DocumentForm803
     }

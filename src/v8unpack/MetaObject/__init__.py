@@ -6,7 +6,7 @@ from ..ext_exception import ExtException
 
 
 class MetaObject:
-    version = '83'
+    version = '803'
     ext_code = {'obj': 0}
     re_meta_data_obj = re.compile(r'^[^.]+\.json$')
     directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
@@ -116,13 +116,13 @@ class MetaObject:
     def read_raw_code(self, src_dir, file_name):
         code = helper.txt_read(src_dir, file_name)
         if code:
-            if self.version in ['81', '82']:  # убираем комментрии у директив
+            if self.version in ['801', '802']:  # убираем комментрии у директив
                 code = self.directive_1c_comment.sub('\g<n>\g<d>', code)
         return code
 
     def write_raw_code(self, code, dest_dir, filename):
         if code:
-            if self.version in ['81', '82']:  # комментируем директивы
+            if self.version in ['801', '802']:  # комментируем директивы
                 code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
             helper.txt_write(code, dest_dir, filename)
 

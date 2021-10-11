@@ -2,7 +2,7 @@ from .Template8x import Template8x
 from ... import helper
 
 
-class Template83(Template8x):
+class Template802(Template8x):
     def encode_header(self):
         return [[
             "1",
@@ -18,11 +18,8 @@ class Template83(Template8x):
                     ],
                     helper.str_encode(self.header['name']),
                     helper.encode_name2(self.header),
-                    helper.str_encode(self.header['comment']),
-                    *self.header['h5']
+                    helper.str_encode(self.header['comment'])
                 ]
             ],
             "0"
         ]]
-
-

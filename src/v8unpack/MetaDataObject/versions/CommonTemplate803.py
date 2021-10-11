@@ -1,7 +1,7 @@
-from .Template83 import Template83
+from .Template803 import Template803
 
 
-class CommonTemplate83(Template83):
+class CommonTemplate803(Template803):
     @classmethod
     def get_decode_header(cls, header_data):
         return header_data[0][1][1]

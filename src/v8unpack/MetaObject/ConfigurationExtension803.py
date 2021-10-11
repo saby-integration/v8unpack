@@ -1,9 +1,9 @@
-from ..MetaObject.Configuration83 import Configuration83
+from ..MetaObject.Configuration803 import Configuration803
 from .. import helper
 from .. import __version__
 
 
-class ConfigurationExtension83(Configuration83):
+class ConfigurationExtension803(Configuration803):
     info = ['6', '8']
     ext_code = {
         'con': '5',
@@ -12,10 +12,10 @@ class ConfigurationExtension83(Configuration83):
     }
 
     def __init__(self):
-        super(ConfigurationExtension83, self).__init__()
+        super(ConfigurationExtension803, self).__init__()
 
     @classmethod
-    def decode(cls, src_dir, dest_dir):
+    def decode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         self.header = {}
         root = helper.json_read(src_dir, 'configinfo.json')
@@ -27,6 +27,12 @@ class ConfigurationExtension83(Configuration83):
         self.header['data'] = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
         _form_header = self.get_decode_header(self.header['data'])
         helper.decode_header(self.header, _form_header)
+        if version is None:
+            self.header['compatibility_version'] = self.header['data'][0][3][1][1][43]
+        else:
+            self.header['compatibility_version'] = version
+            self.header['data'][0][3][1][1][43] = version
+
         self.decode_code(src_dir)
 
         for i in self.info:  # хз что это
@@ -41,10 +47,12 @@ class ConfigurationExtension83(Configuration83):
         return tasks
 
     @classmethod
-    def encode(cls, src_dir, dest_dir):
+    def encode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
+        if version is not None:
+            self.header['data'][0][3][1][1][43] = version
         helper.check_version(__version__, self.header.get('v8unpack', ''))
         root = [
             ["0", self.encode_version()],
