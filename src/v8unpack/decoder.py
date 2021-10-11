@@ -63,9 +63,9 @@ class Decoder:
             raise ExtException(parent=err, action=f'{cls.__name__}.decode_include')
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, pool=None, version='803'):
+    def encode(cls, src_dir, dest_dir, *, pool=None, version=None):
         helper.clear_dir(dest_dir)
-        encoder = cls.get_encoder(src_dir, version[:3])
+        encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])
         tasks = encoder.encode(src_dir, dest_dir,
                                version=version)  # возвращает список вложенных объектов MetaDataObject
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
@@ -73,7 +73,7 @@ class Decoder:
             tasks = helper.list_merge(*tasks_list)
 
     @classmethod
-    def get_encoder(cls, src_dir, version):
+    def get_encoder(cls, src_dir, version='803'):
         if os.path.isfile(os.path.join(src_dir, 'ExternalDataProcessor.json')):
             versions = {
                 '801': ExternalDataProcessor801,
