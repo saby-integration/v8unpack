@@ -1,5 +1,5 @@
 from .ExternalDataProcessor import ExternalDataProcessor
 
 
-class ExternalDataProcessor83(ExternalDataProcessor):
+class ExternalDataProcessor803(ExternalDataProcessor):
     pass

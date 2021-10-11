@@ -1,9 +1,9 @@
-from .Form82 import Form82
+from .Form802 import Form802
 from ... import helper
 
 
-class Form81(Form82):
-    ver = '81'
+class Form801(Form802):
+    ver = '801'
 
     @classmethod
     def get_decode_header(cls, header_data):

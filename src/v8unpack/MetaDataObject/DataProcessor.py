@@ -2,7 +2,7 @@ from ..MetaDataObject.core.Container import Container
 
 
 class DataProcessor(Container):
-    version = '83'
+    version = '803'
 
     def __init__(self):
         super(DataProcessor, self).__init__()

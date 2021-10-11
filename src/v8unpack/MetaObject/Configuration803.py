@@ -3,10 +3,10 @@ from .. import helper
 from .. import __version__
 
 
-class Configuration83(MetaObject):
+class Configuration803(MetaObject):
 
     def __init__(self):
-        super(Configuration83, self).__init__()
+        super(Configuration803, self).__init__()
         self.counter = {}
 
     @classmethod
@@ -46,7 +46,7 @@ class Configuration83(MetaObject):
         ]
 
     @classmethod
-    def encode(cls, src_dir, dest_dir):
+    def encode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
