@@ -32,20 +32,28 @@ class JsonContainerDecoder:
     def decode(cls, src_dir, file_name, dest_dir=None):
         _src_path = os.path.join(src_dir, file_name)
         self = cls(src_dir=src_dir, file_name=file_name)
+        encoding = None
         try:
             with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8-sig') as entry_file:  # replace BOM
                 data = self.decode_file(entry_file)
         except UnicodeDecodeError:
-            with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
-                data = entry_file.read()
+            try:
+                with open(os.path.join(src_dir, file_name), 'r', encoding='windows-1251') as entry_file:  # replace BOM
+                    data = self.decode_file(entry_file)
+                    encoding = 'windows-1251'
+            except UnicodeDecodeError:
+                with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
+                    data = entry_file.read()
         except Exception as err:
-            raise Exception(f'Json decode {file_name} error: {err}')
+            raise ExtException(parent=err, message='Json decode {file_name} error: {err}')
+
         if dest_dir is not None:
             if isinstance(data, list):
                 with open(f'{os.path.join(dest_dir, file_name)}.json', 'w', encoding='utf-8') as entry_file2:
                     json.dump(data, entry_file2, ensure_ascii=False, indent=2)
             elif isinstance(data, str):
-                encoding = helper.detect_by_bom(_src_path, 'utf-8')
+                if encoding is None:
+                    encoding = helper.detect_by_bom(_src_path, 'utf-8')
                 with open(f'{os.path.join(dest_dir, file_name)}.txt', 'w', encoding=encoding) as entry_file2:
                     entry_file2.write(data)
             elif isinstance(data, bytes):
@@ -283,13 +291,16 @@ def _decode(src_dir, dest_dir, tasks):
     entries = sorted(os.listdir(src_dir))
     helper.clear_dir(dest_dir)
     for entry in entries:
-        src_entry_path = os.path.join(src_dir, entry)
-        dest_entry_path = os.path.join(dest_dir, entry)
-        if os.path.isdir(src_entry_path):
-            os.mkdir(dest_entry_path)
-            _decode(src_entry_path, dest_entry_path, tasks)
-        else:
-            tasks.append((src_dir, entry, dest_dir))
+        try:
+            src_entry_path = os.path.join(src_dir, entry)
+            dest_entry_path = os.path.join(dest_dir, entry)
+            if os.path.isdir(src_entry_path):
+                os.mkdir(dest_entry_path)
+                _decode(src_entry_path, dest_entry_path, tasks)
+            else:
+                tasks.append((src_dir, entry, dest_dir))
+        except Exception as err:
+            raise ExtException(parent=err, detail=f'{entry} {src_dir}', action='json_decode')
 
 
 def json_encode(src_dir, dest_dir, *, pool=None):
@@ -312,21 +323,30 @@ def json_encode(src_dir, dest_dir, *, pool=None):
 def _encode(src_dir, dest_dir, tasks):
     entries = os.listdir(src_dir)
     for entry in entries:
-        src_entry_path = os.path.join(src_dir, entry)
-        dest_entry_path = os.path.join(dest_dir, entry)
-        if os.path.isdir(src_entry_path):
-            os.mkdir(dest_entry_path)
-            _encode(src_entry_path, dest_entry_path, tasks)
-        else:
-            extension = entry.split('.')[-1]
-            if extension == 'txt':
-                encoding = helper.detect_by_bom(src_entry_path, 'utf-8')
-                with open(src_entry_path, 'r', encoding=encoding) as entry_file:
-                    with open(dest_entry_path[:-3], 'w', encoding=encoding) as f:
-                        f.write(entry_file.read())
-            elif extension == 'bin':
-                with open(src_entry_path, 'rb') as entry_file:
-                    with open(dest_entry_path[:-3], 'wb') as f:
-                        f.write(entry_file.read())
+        try:
+            src_entry_path = os.path.join(src_dir, entry)
+            dest_entry_path = os.path.join(dest_dir, entry)
+            if os.path.isdir(src_entry_path):
+                os.mkdir(dest_entry_path)
+                _encode(src_entry_path, dest_entry_path, tasks)
             else:
-                tasks.append((src_dir, entry, dest_dir))
+                extension = entry.split('.')[-1]
+                if extension == 'txt':
+                    encoding = helper.detect_by_bom(src_entry_path, 'utf-8')
+                    try:
+                        with open(src_entry_path, 'r', encoding=encoding) as entry_file:
+                            with open(dest_entry_path[:-3], 'w', encoding=encoding) as f:
+                                f.write(entry_file.read())
+                    except UnicodeDecodeError:
+                        encoding = 'windows-1251'
+                        with open(src_entry_path, 'r', encoding=encoding) as entry_file:
+                            with open(dest_entry_path[:-3], 'w', encoding=encoding) as f:
+                                f.write(entry_file.read())
+                elif extension == 'bin':
+                    with open(src_entry_path, 'rb') as entry_file:
+                        with open(dest_entry_path[:-3], 'wb') as f:
+                            f.write(entry_file.read())
+                else:
+                    tasks.append((src_dir, entry, dest_dir))
+        except Exception as err:
+            raise ExtException(parent=err, detail=f'{entry} {src_dir}', action='json_encode')
