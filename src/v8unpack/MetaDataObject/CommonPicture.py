@@ -31,21 +31,24 @@ class CommonPicture(Simple):
         super(CommonPicture, self).encode_object(src_dir, file_name, dest_dir, version)
 
         extension = helper.get_extension_from_comment(self.header['comment'])
-        bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
-        self.raw_data = [
-            [
-                "1",
+        try:
+            bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
+            self.raw_data = [
                 [
-                    "0",
-                    "0",
-                    "-1",
-                    "-1"
-                ],
-                [
+                    "1",
                     [
-                        "#base64:" + b64encode(bin_data).decode(encoding='utf-8')
+                        "0",
+                        "0",
+                        "-1",
+                        "-1"
+                    ],
+                    [
+                        [
+                            "#base64:" + b64encode(bin_data).decode(encoding='utf-8')
+                        ]
                     ]
                 ]
             ]
-        ]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+            helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+        except FileNotFoundError:
+            pass
