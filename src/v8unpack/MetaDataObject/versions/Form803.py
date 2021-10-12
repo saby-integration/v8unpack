@@ -1,15 +1,19 @@
 from .Form8x import Form8x
 from ... import helper
+import re
 
 
 class Form803(Form8x):
     ver = '803'
+    double_quotes = re.compile('("")')
+    quotes = re.compile('(")')
 
     def decode_data(self, src_dir, uuid):
         self.form = helper.json_read(src_dir, f'{uuid}.0.json')
         try:
             _code = helper.str_decode(self.form[0][2])
             if _code:
+                _code = self.double_quotes.sub('"', _code)
                 self.code['obj'] = _code
                 self.header['code_info_obj'] = 'Код в отдельном файле'
                 self.form[0][2] = 'Код в отдельном файле'
@@ -71,7 +75,9 @@ class Form803(Form8x):
 
     def encode_data(self):
         try:
-            self.form[0][2] = helper.str_encode(self.code.pop('obj', ""))
+            _code = self.code.pop('obj', "")
+            _code = self.quotes.sub('""', _code)
+            self.form[0][2] = helper.str_encode(_code)
         except IndexError:
             pass
         return self.form

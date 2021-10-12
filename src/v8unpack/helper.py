@@ -18,8 +18,8 @@ def json_write(data, path, file_name):
         json.dump(data, file, ensure_ascii=False, indent=2)
 
 
-def txt_read(path, file_name):
-    return txt_read_detect_encoding(path, file_name, encoding='utf-8')[0]
+def txt_read(path, file_name, encoding='utf-8'):
+    return txt_read_detect_encoding(path, file_name, encoding=encoding)[0]
 
 
 def txt_read_detect_encoding(path, file_name, encoding='utf-8'):
@@ -139,7 +139,7 @@ def get_class(kls):
         raise Exception(f'get_class({kls}: {str(e)}')
 
 
-def detect_by_bom(path, default):
+def detect_by_bom(path, default=None):
     boms = (
         ('utf-8-sig', BOM_UTF8),
         ('utf-32', BOM_UTF32_LE),
