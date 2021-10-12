@@ -100,18 +100,18 @@ class HelperTestDecode(unittest.TestCase):
 
     def encode_stage3(self):
         encode(self.encode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool)
+        self.assert_stage(self.decode_dir_stage2, self.encode_dir_stage2)
         if self.result:
             files = os.listdir(self.encode_dir_stage2)
             self.assertEqual(len(files), self.result['count_root_files_stage1'])
-        self.assert_stage(self.decode_dir_stage2, self.encode_dir_stage2)
 
     def encode_stage2(self):
         json_encode(self.encode_dir_stage2, self.encode_dir_stage1, pool=self.pool)
+        self.assert_stage(self.decode_dir_stage1, self.encode_dir_stage1)
         if self.result:
             files = os.listdir(self.encode_dir_stage1)
             self.assertEqual(len(files), self.result['count_root_files_stage1'])
 
-        self.assert_stage(self.decode_dir_stage1, self.encode_dir_stage1)
 
     def encode_stage1(self):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage0))

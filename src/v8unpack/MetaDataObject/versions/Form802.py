@@ -10,7 +10,11 @@ class Form802(Form8x):
         _code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.0'
         if os.path.isdir(_code_dir):
             self.form = helper.json_read(_code_dir, 'form.json')
-            self.code['obj'] = helper.txt_read(_code_dir, 'module.txt')
+            try:
+                self.code['obj'] = helper.txt_read(_code_dir, 'module.txt')
+            except UnicodeDecodeError:
+                self.code['obj'] = helper.txt_read(_code_dir, 'module.txt', encoding='cp1251')
+                self.header['code_obj_encoding'] = 'cp1251'  # можно безболезненно поменять на utf-8-sig
             self.header[f'code_info_obj'] = 1
 
     def decode_data(self, src_dir, uuid):
@@ -22,7 +26,8 @@ class Form802(Form8x):
             _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.0'
             os.makedirs(_code_dir, exist_ok=True)
             helper.json_write(self.form, _code_dir, 'form.json')
-            helper.txt_write(self.code['obj'], _code_dir, 'module.txt')
+            _encoding = self.header.get('code_obj_encoding', 'utf-8')
+            helper.txt_write(self.code['obj'], _code_dir, 'module.txt', encoding=_encoding)
 
     def encode_header(self):
         return [[
@@ -950,3 +955,4 @@ class Form802(Form8x):
 
     def encode_data(self):
         pass
+
