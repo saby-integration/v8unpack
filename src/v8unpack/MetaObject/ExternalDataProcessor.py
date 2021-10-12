@@ -20,10 +20,9 @@ class ExternalDataProcessor(MetaObject):
         self.set_header_data(_header_data)
 
         root = helper.json_read(src_dir, 'root.json')
-        root = helper.json_read(src_dir, 'root.json')
         self.header['v8unpack'] = __version__
         self.header['file_uuid'] = root[0][1]
-        self.header['version'] = helper.json_read(src_dir, 'version.json')
+        self.data['version'] = helper.json_read(src_dir, 'version.json')
         self.header['versions'] = helper.json_read(src_dir, 'versions.json')
         self.data['copyinfo'] = helper.json_read(src_dir, 'copyinfo.json')
 
@@ -54,7 +53,10 @@ class ExternalDataProcessor(MetaObject):
         _file_name = self.get_class_name_without_version()
         self.header = helper.json_read(src_dir, f'{_file_name}.json')
         helper.check_version(__version__, self.header.get('v8unpack', ''))
-        self.data = helper.json_read(src_dir, f'{_file_name}.data{self.version}.json')
+        try:
+            self.data = helper.json_read(src_dir, f'{_file_name}.data{self.version}.json')
+        except FileNotFoundError:
+            self.data = self.encode_empty_data()
         helper.json_write(self.encode_root(), dest_dir, 'root.json')
         helper.json_write(self.encode_version(), dest_dir, 'version.json')
         helper.json_write(self.header['versions'], dest_dir, 'versions.json')
@@ -71,3 +73,28 @@ class ExternalDataProcessor(MetaObject):
             self.header["file_uuid"],
             ""
         ]]
+
+    def encode_empty_data(self):
+        return {
+            "copyinfo": [
+                [
+                    "4",
+                    [
+                        "0"
+                    ],
+                    [
+                        "0"
+                    ],
+                    [
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0"
+                    ]
+                ]
+            ]
+        }

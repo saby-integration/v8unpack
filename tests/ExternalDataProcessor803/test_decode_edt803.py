@@ -7,14 +7,15 @@ from v8unpack import helper
 
 
 class TestDecode(HelperTestDecode):
+    processes = 1
 
     def setUp(self):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)
 
-        self.src_file = 'ВнешняяОбработка1.epf'
+        self.src_file = 'ВнешняяОбработка803.epf'
 
-        # self.version = '803'
+        self.version = '803'
         self.result = {
             'count_root_files_stage1': 14,
             'count_root_files_stage3': 5,
@@ -54,7 +55,7 @@ class TestDecode(HelperTestDecode):
     @unittest.skip
     def test_extract(self):
         from v8unpack.v8unpack import extract, build
-        extract('ВнешняяОбработка1.epf', 'src')
+        extract('ВнешняяОбработка803.epf', 'src')
         build('src', 'ВнешняяОбработка.build.epf')
 
     @unittest.skip

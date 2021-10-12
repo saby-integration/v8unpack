@@ -2,4 +2,5 @@ from .ExternalDataProcessor import ExternalDataProcessor
 
 
 class ExternalDataProcessor803(ExternalDataProcessor):
-    pass
+    def encode_version(self):
+        return self.data['version']
