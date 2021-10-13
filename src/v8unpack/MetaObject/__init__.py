@@ -113,8 +113,8 @@ class MetaObject:
             return cls.__name__[:len(cls.version) * -1]
         return cls.__name__
 
-    def read_raw_code(self, src_dir, file_name):
-        code = helper.txt_read(src_dir, file_name)
+    def read_raw_code(self, src_dir, file_name, encoding='utf-8'):
+        code = helper.txt_read(src_dir, file_name, encoding=encoding)
         if code:
             if self.version in ['801', '802']:  # убираем комментрии у директив
                 code = self.directive_1c_comment.sub('\g<n>\g<d>', code)
