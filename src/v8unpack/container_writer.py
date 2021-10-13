@@ -8,7 +8,9 @@ from struct import pack, calcsize
 
 # INT32_MAX
 END_MARKER = 2147483647
-DEFAULT_BLOCK_SIZE = 512
+DEFAULT_BLOCK_SIZE = 512  # 0x200
+# Для формата старше 8.3.15
+DEFAULT_BLOCK_SIZE64 = 65536  # 0x1000
 # Размер буффера передачи данных из потока в поток
 BUFFER_CHUNK_SIZE = 512
 
@@ -190,7 +192,7 @@ def add_entries(container, folder, nested=False):
     """
     Рекурсивно добавляет файлы из директории в контейнер
 
-    :param container: объет файла контейнера
+    :param container: объект файла контейнера
     :type container: BufferedReader
     :param folder: каталог файлов, которые надо поместить в контейнер
     :type folder: string
@@ -212,7 +214,7 @@ def add_entries(container, folder, nested=False):
 
 def build(folder, filename):
     """
-    Запакоывает каталог в контейнер включая вложенные каталоги.
+    Запаковывает каталог в контейнер включая вложенные каталоги.
     Сахар для ContainerWriter.
 
     :param folder: каталог с данными, запаковываемыми в контейнер

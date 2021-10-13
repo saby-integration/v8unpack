@@ -6,8 +6,10 @@ import zlib
 import os
 from . import helper
 
-# INT32_MAX
+# INT32_MAX 7fffffff
 END_MARKER = 2147483647
+# INT64_MAX ffffffffffffffff для конфигураций старше 8.3.15
+END_MARKER_64 = 18446744073709551615
 Header = collections.namedtuple('Header', 'first_empty_block_offset, default_block_size')
 Block = collections.namedtuple('Block', 'doc_size, current_block_size, next_block_offset, data')
 Document = collections.namedtuple('Document', 'size, data')
@@ -213,7 +215,7 @@ class ContainerReader(object):
         file_path = os.path.join(path, filename)
         with open(file_path, 'wb') as f:
             if deflate:
-                # wbits = -15 т.к. у архивированных файлов нет заголовоков
+                # wbits = -15 т.к. у архивированных файлов нет заголовков
                 decompressor = zlib.decompressobj(-15)
                 for chunk in file_obj.data:
                     decomressed_chunk = decompressor.decompress(chunk)
