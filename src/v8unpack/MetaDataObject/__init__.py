@@ -35,6 +35,7 @@ class MetaDataObject(MetaObject):
         except Exception as err:
             raise ExtException(
                 parent=err,
+                message=str(err),
                 action=f'{cls.__name__}.decode'
             ) from err
 

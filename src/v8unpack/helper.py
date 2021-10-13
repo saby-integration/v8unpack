@@ -1,6 +1,7 @@
 import shutil
 import json
 import os
+from .ext_exception import ExtException
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from multiprocessing import Pool, cpu_count
 
@@ -18,7 +19,7 @@ def json_write(data, path, file_name):
         json.dump(data, file, ensure_ascii=False, indent=2)
 
 
-def txt_read(path, file_name, encoding='utf-8'):
+def txt_read(path, file_name, encoding='utf-8-sig'):
     return txt_read_detect_encoding(path, file_name, encoding=encoding)[0]
 
 
@@ -31,7 +32,7 @@ def txt_read_detect_encoding(path, file_name, encoding='utf-8'):
 
 
 def txt_write(data, path, file_name, encoding='utf-8'):
-    if not data:
+    if data is None:
         return
     _path = os.path.join(path, file_name)
     os.makedirs(path, exist_ok=True)
@@ -103,7 +104,11 @@ def close_pool(local_pool: Pool, pool: Pool = None) -> None:
 def run_in_pool(method, list_args, pool=None):
     _pool = get_pool(pool=pool)
     # msg = f'pool {method}({len(list_args)})'
-    result = _pool.starmap(method, list_args)
+    try:
+        result = _pool.starmap(method, list_args)
+    except Exception as err:
+        close_pool(_pool, pool)
+        raise ExtException(parent=err, detail=method, action='run_in_pool')
     close_pool(_pool, pool)
     return result
 
