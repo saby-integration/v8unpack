@@ -120,11 +120,11 @@ class MetaObject:
                 code = self.directive_1c_comment.sub('\g<n>\g<d>', code)
         return code
 
-    def write_raw_code(self, code, dest_dir, filename):
-        if code:
+    def write_raw_code(self, code, dest_dir, filename, encoding='uft-8'):
+        if code is not None:
             if self.version in ['801', '802']:  # комментируем директивы
                 code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
-            helper.txt_write(code, dest_dir, filename)
+            helper.txt_write(code, dest_dir, filename, encoding=encoding)
 
     def decode_code(self, src_dir):
         for code_name in self.ext_code:
@@ -133,6 +133,9 @@ class MetaObject:
                 self.header[f'code_info_{code_name}'] = helper.json_read(_obj_code_dir, 'info.json')
                 self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text.txt')
 
+                encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text.txt'), 'utf-8')
+                self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
+
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
             helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
@@ -140,11 +143,15 @@ class MetaObject:
     def encode_code(self, src_dir, file_name):
         for code_name in self.ext_code:
             if self.header.get(f'code_info_{code_name}'):
-                self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
+                try:
+                    self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
+                except FileNotFoundError:
+                    self.code[code_name] = ''
 
     def write_encode_code(self, dest_dir):
         for code_name in self.code:
             _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
             os.makedirs(_code_dir)
             helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
-            self.write_raw_code(self.code[code_name], _code_dir, 'text.txt')
+            self.write_raw_code(self.code[code_name], _code_dir, 'text.txt',
+                                encoding=self.header.get(f'code_encoding_{code_name}', 'utf-8'))
