@@ -15,7 +15,7 @@ class Form802(Form8x):
                 encoding = helper.detect_by_bom(os.path.join(_code_dir, 'module.txt'), 'utf-8')
             except UnicodeDecodeError:
                 encoding = 'windows-1251'
-                self.code['obj'] = helper.txt_read(_code_dir, 'module.txt', encoding=encoding)
+                self.code['obj'] = self.read_raw_code(_code_dir, 'module.txt', encoding=encoding)
             self.header['code_encoding_obj'] = encoding  # можно безболезненно поменять на utf-8-sig
             self.header[f'code_info_obj'] = 1
 
@@ -29,7 +29,7 @@ class Form802(Form8x):
             os.makedirs(_code_dir, exist_ok=True)
             helper.json_write(self.form, _code_dir, 'form.json')
             _encoding = self.header.get('code_encoding_obj', 'utf-8-sig')
-            helper.txt_write(self.code['obj'], _code_dir, 'module.txt', encoding=_encoding)
+            self.write_raw_code(self.code['obj'], _code_dir, 'module.txt', encoding=_encoding)
 
     def encode_header(self):
         return [[
