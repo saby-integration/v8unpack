@@ -40,7 +40,7 @@ class Decoder:
             if version[0][1][0] == "216":
                 if len(version[0][1]) == 3 and version[0][1][2][0] in ['80314', '80315']:  # todo понять в чем отличия
                     return ConfigurationExtension803()
-        raise Exception('Не удалось опеределить парсер')
+        raise Exception('Не удалось определить парсер')
 
     @classmethod
     def decode(cls, src_dir, dest_dir, *, pool=None, version=None):
