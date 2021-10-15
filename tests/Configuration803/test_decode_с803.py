@@ -13,9 +13,9 @@ class TestDecode(HelperTestDecode):
         self.src_file = '1Cv8_const.cf'
         # self.version = '801'
         self.result = {
-            'count_root_files_stage1': 38,
-            'count_root_files_stage3': 9,
-            'count_root_files_stage4': 9,
+            'count_root_files_stage1': 40,
+            'count_root_files_stage3': 10,
+            'count_root_files_stage4': 10   ,
         }
         self.init()
         pass
