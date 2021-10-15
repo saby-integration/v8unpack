@@ -47,7 +47,7 @@ class MetaObject:
 
                     if not isinstance(_metadata[2], str):  # вложенный объект
                         continue
-                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизестный тип вложенных метаданных: {_metadata_type_uuid} в файле {_metadata[2]}'
+                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} в файле {_metadata[2]}'
                     raise Exception(msg)
                 new_dest_path = os.path.join(dest_path, metadata_type.name)
                 for j in range(_count_obj):
