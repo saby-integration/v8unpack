@@ -10,12 +10,13 @@ class TestDecode(HelperTestDecode):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)
 
-        self.src_file = '1Cv8_const.cf'
+        #self.src_file = '1Cv8_const.cf'
+        self.src_file = '1Cv8_sessionpar.cf'
         # self.version = '801'
         self.result = {
-            'count_root_files_stage1': 40,
-            'count_root_files_stage3': 10,
-            'count_root_files_stage4': 10   ,
+            'count_root_files_stage1': 41,
+            'count_root_files_stage3': 11,
+            'count_root_files_stage4': 11   ,
         }
         self.init()
         pass
