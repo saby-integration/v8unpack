@@ -28,7 +28,7 @@ class MetaDataTypes(Enum):
     Subsystem = '37f2fa9a-b276-11d4-9435-004095e12fc7'                # Подсистемы
     Role = '09736b02-9cac-4e3f-b4f7-d3e9576ab948'                     # Роли
     Language = '9cd510ce-abfc-11d4-9434-004095e12fc7'                 # Языки
-    # SessionParameters = '24c43748-c938-45d0-8d14-01424a72b11e'      # Параметры сеанса
+    SessionParameters = '24c43748-c938-45d0-8d14-01424a72b11e'        # Параметры сеанса
     Enums = "f6a80749-5ad7-400b-8519-39dc5dff2542"                    # Перечисления
     # ChartOfCharacteristicTypes = '82a1b659-b220-4d94-a9bd-14d757b95a48' # План видов характеристик
     # ChartOfCalculationTypes = '30b100d6-b29f-47ac-aec7-cb8ca8a54767'    # План видов расчета
