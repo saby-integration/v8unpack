@@ -52,7 +52,7 @@ class MetaDataTypes(Enum):
     # SettingsStorage = '46b4cd97-fd13-4eaa-aba2-3bddd7699218'            # Хранилище настроек
     # Interface = '39bddf6a-0c3c-452b-921c-d99cfa1c2f1b'                  # Интерфейсы
     # WSReference = 'd26096fb-7a5d-4df9-af63-47d04771fa9b'                # WS-ссылки
-    # Constant = '0195e80c-b157-11d4-9435-004095e12fc7'                   # Константы
+    Constants = '0195e80c-b157-11d4-9435-004095e12fc7'                     # Константы
     # DocumentJournal = '5aee69df-0513-4c6c-9815-103102471712'            # Журналы документов
     # BusinessProcess = 'fcd3404e-1523-48ce-9bc0-ecdb822684a1'            # Бизнес-процессы
     # Task = '3e63355c-1378-4953-be9b-1deb5fb6bec5'                       # Задачи
