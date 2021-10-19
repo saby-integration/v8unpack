@@ -29,10 +29,10 @@ class Decoder:
                 if _tmp == 2:
                     obj_version = '802'
                 elif _tmp == 3:
-                    obj_version = '803'
+                    obj_version = version[0][0][2][0]
                 else:
                     raise Exception(f'Not supported version {_tmp}')
-                return available_types[f'{obj_type.name}{obj_version}']
+                return available_types[f'{obj_type.name}{obj_version[:3]}']
             elif version[0][0][0] == "106":
                 return ExternalDataProcessor801()
         if os.path.isfile(os.path.join(src_dir, 'configinfo.json')):
