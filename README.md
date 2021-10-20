@@ -65,13 +65,13 @@ if __name__ == '__main__':
 
 ## Документация
 
-[Переход на сборку из одних исходников](https://github.com/saby/v8unpack/blob/main/docs/transition.md)
+[Переход на сборку из одних исходников](https://github.com/saby-integration/v8unpack/blob/main/docs/transition.md)
 
-[Использование](https://github.com/saby/v8unpack/blob/main/docs/usage.md)
+[Использование](https://github.com/saby-integration/v8unpack/blob/main/docs/usage.md)
 
-[История изменений](https://github.com/saby/v8unpack/blob/main/docs/history.md)
+[История изменений](https://github.com/saby-integration/v8unpack/blob/main/docs/history.md)
 
-[Участие](https://github.com/saby/v8unpack/blob/main/docs/develop.md)
+[Участие](https://github.com/saby-integration/v8unpack/blob/main/docs/develop.md)
 
 ## Алгоритм работы
 Утилита распаковывает и запаковывет бинарник 1С в 4 этапа:
@@ -81,12 +81,12 @@ if __name__ == '__main__':
 3.	Декодирование заголовков и разбивка по типам метаданных
 4.	Организация кода и структуры хранения
 
-![Алгоритм работы](https://github.com/saby/v8unpack/blob/main/docs/stage.png)
+![Алгоритм работы](https://github.com/saby-integration/v8unpack/blob/main/docs/stage.png)
 
 ## Ограничения
 
 Разметка форм и свойства объектов по прежнему является не читаемыми, но в этом виде проще проводить их 
 анализ и при желании дополнить парсер.
 
-На текущий момент [утилита покрывает только нужные нам типы метаданных](https://github.com/saby/v8unpack/blob/main/src/v8unpack/metadata_types.py), 
-мы будем рады [любому участию в проекте](https://github.com/saby/v8unpack/blob/main/docs/develop.md).
+На текущий момент [утилита покрывает только нужные нам типы метаданных](https://github.com/saby-integration/v8unpack/blob/main/src/v8unpack/metadata_types.py), 
+мы будем рады [любому участию в проекте](https://github.com/saby-integration/v8unpack/blob/main/docs/develop.md).
