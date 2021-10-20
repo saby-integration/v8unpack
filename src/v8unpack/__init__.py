@@ -1,4 +1,4 @@
-__version__ = '0.6.3'
+__version__ = '0.6.5'
 
 from .v8unpack import main, extract, build
 from .index import update_index
