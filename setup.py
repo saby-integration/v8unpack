@@ -8,7 +8,7 @@ setuptools.setup(
     name='v8unpack',
     version=__version__,
     test_requires=[],
-    url='https://github.com/saby/v8unpack',
+    url='https://github.com/saby-integration/v8unpack',
     license='MIT',
     author='Razgovorov Mikhail',
     author_email='1338833@gmail.com',
