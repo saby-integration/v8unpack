@@ -30,7 +30,7 @@ class MetaDataTypes(Enum):
     Language = '9cd510ce-abfc-11d4-9434-004095e12fc7'                 # Языки
     SessionParameters = '24c43748-c938-45d0-8d14-01424a72b11e'        # Параметры сеанса
     Enums = "f6a80749-5ad7-400b-8519-39dc5dff2542"                    # Перечисления
-    # ChartOfCharacteristicTypes = '82a1b659-b220-4d94-a9bd-14d757b95a48' # План видов характеристик
+    ChartOfCharacteristicTypes = '82a1b659-b220-4d94-a9bd-14d757b95a48' # План видов характеристик
     # ChartOfCalculationTypes = '30b100d6-b29f-47ac-aec7-cb8ca8a54767'    # План видов расчета
     # ExchangePlan = '857c4a91-e5f4-4fac-86ec-787626f1c108'               # План обмена
     # ChartOfAccounts = '238e7e88-3c5f-48b2-8a3b-81ebbecb20ed'            # План счетов
