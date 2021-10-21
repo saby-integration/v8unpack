@@ -45,7 +45,7 @@ class JsonContainerDecoder:
                 with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
                     data = entry_file.read()
         except Exception as err:
-            raise ExtException(parent=err, message='Json decode {file_name} error: {err}')
+            raise ExtException(parent=err, message=f'Json decode {file_name} error: {err}')
 
         if dest_dir is not None:
             if isinstance(data, list):
