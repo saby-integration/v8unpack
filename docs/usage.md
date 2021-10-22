@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
 из командной строки:
 
-    v8unpack.exe -I src --index index.json -core core
+    v8unpack.exe -I src --index index.json --core core
 
 из python:
 
