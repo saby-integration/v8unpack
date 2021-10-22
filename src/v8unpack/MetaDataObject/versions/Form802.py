@@ -11,8 +11,8 @@ class Form802(Form8x):
         if os.path.isdir(_code_dir):
             self.form = helper.json_read(_code_dir, 'form.json')
             try:
-                self.code['obj'] = self.read_raw_code(_code_dir, 'module.txt')
                 encoding = helper.detect_by_bom(os.path.join(_code_dir, 'module.txt'), 'utf-8')
+                self.code['obj'] = self.read_raw_code(_code_dir, 'module.txt', encoding=encoding)
             except UnicodeDecodeError:
                 encoding = 'windows-1251'
                 self.code['obj'] = self.read_raw_code(_code_dir, 'module.txt', encoding=encoding)
