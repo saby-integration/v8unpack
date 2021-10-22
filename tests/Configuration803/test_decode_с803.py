@@ -9,7 +9,6 @@ class TestDecode(HelperTestDecode):
     def setUp(self):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)
-
         self.src_file = '1Cv8.cf'
         # self.version = '801'
         self.result = {
