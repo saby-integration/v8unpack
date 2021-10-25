@@ -1,10 +1,11 @@
+import os
+
 from . import helper
+from .MetaObject.Configuration803 import Configuration803
+from .MetaObject.ConfigurationExtension803 import ConfigurationExtension803
 from .MetaObject.ExternalDataProcessor801 import ExternalDataProcessor801
 from .MetaObject.ExternalDataProcessor802 import ExternalDataProcessor802
 from .MetaObject.ExternalDataProcessor803 import ExternalDataProcessor803
-from .MetaObject.ConfigurationExtension803 import ConfigurationExtension803
-from .MetaObject.Configuration803 import Configuration803
-import os
 from .ext_exception import ExtException
 from .metadata_types import MetaDataTypes
 
@@ -91,7 +92,8 @@ class Decoder:
     @classmethod
     def encode_include(cls, include_type, encode_params):
         try:
-            handler = helper.get_class(f'v8unpack.MetaDataObject.{include_type}.{include_type}')
+
+            handler = helper.get_class_metadata_object(include_type)
             handler = handler.get_version(encode_params[3])
             tasks = handler.encode(*encode_params)
             return tasks

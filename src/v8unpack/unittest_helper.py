@@ -1,13 +1,14 @@
 import os
+import sys
+import unittest
+
+from . import helper
 from .container_reader import extract
 from .container_writer import build
-from .json_container_decoder import json_decode, json_encode
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .json_container_decoder import JsonContainerDecoder
-from . import helper
-import sys
-import unittest
+from .json_container_decoder import json_decode, json_encode
 
 
 class HelperTestDecode(unittest.TestCase):
@@ -28,6 +29,7 @@ class HelperTestDecode(unittest.TestCase):
         self.src_dir = os.path.join(sys.path[0])  # абсолютный путь до папки с исходным файлом
         self.src_file = ''  # имя исходного файла
         self.test_dir = ''  # абсолютный путь до временной папки c файлами промежуточных стадий
+        self.dest_dir = ''
         self.result = None
         self.version = '803'
         self.index = None
@@ -43,7 +45,7 @@ class HelperTestDecode(unittest.TestCase):
         self.decode_dir_stage1 = self.get_decode_folder(1)
         self.decode_dir_stage2 = self.get_decode_folder(2)
         self.decode_dir_stage3 = self.get_decode_folder(3)
-        self.decode_dir_stage4 = self.get_decode_folder(4)
+        self.decode_dir_stage4 = self.dest_dir if self.dest_dir else self.get_decode_folder(4)
 
         self.encode_dir_stage0 = self.get_encode_folder(0)
         self.encode_dir_stage1 = self.get_encode_folder(1)
@@ -111,7 +113,6 @@ class HelperTestDecode(unittest.TestCase):
         if self.result:
             files = os.listdir(self.encode_dir_stage1)
             self.assertEqual(len(files), self.result['count_root_files_stage1'])
-
 
     def encode_stage1(self):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage0))

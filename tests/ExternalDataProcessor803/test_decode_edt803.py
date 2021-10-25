@@ -12,14 +12,14 @@ class TestDecode(HelperTestDecode):
     def setUp(self):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)
-
+        self.dest_dir = os.path.join(self.src_dir, 'src')
         self.src_file = 'ВнешняяОбработка803.epf'
 
         self.version = '803'
         self.result = {
             'count_root_files_stage1': 14,
             'count_root_files_stage3': 5,
-            'count_root_files_stage4': 0,
+            'count_root_files_stage4': 5,
             'count_forms_files': 7,
             'count_templates_files': 2
         }

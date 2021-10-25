@@ -1,8 +1,9 @@
 import os
 from base64 import b64decode, b64encode
-from ... import helper
-from ..core.Simple import Simple
 from enum import Enum
+
+from ..core.Simple import Simple
+from ... import helper
 
 
 class TmplType(Enum):

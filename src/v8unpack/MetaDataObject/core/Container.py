@@ -1,6 +1,7 @@
 import os
-from ...MetaDataObject import MetaDataObject
+
 from .. import helper
+from ...MetaDataObject import MetaDataObject
 from ...ext_exception import ExtException
 
 
@@ -38,3 +39,14 @@ class Container(MetaDataObject):
     def encode_object(self, src_dir, file_name, dest_dir, version):
         self.encode_code(src_dir, self.__class__.__name__)
         return []
+
+    @classmethod
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version):
+        """
+        возвращает список задач на парсинг объектов этого типа
+        """
+        entries = os.listdir(src_dir)
+        for entry in entries:
+            if os.path.isdir(os.path.join(src_dir, entry)):
+                new_src_dir = os.path.join(src_dir, entry)
+                tasks.append([include, [new_src_dir, include, dest_dir, version]])

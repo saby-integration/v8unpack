@@ -1,8 +1,9 @@
 import os
 import re
+
 from .. import helper
-from ..metadata_types import MetaDataTypes
 from ..ext_exception import ExtException
+from ..metadata_types import MetaDataTypes
 
 
 class MetaObject:
@@ -76,22 +77,6 @@ class MetaObject:
 
     def encode_includes(self, src_dir, dest_dir):
         tasks = []
-        includes = self.get_encode_includes(src_dir)
-        for include in includes:
-            entries = os.listdir(os.path.join(src_dir, include))
-            for entry in entries:
-                new_src_dir = os.path.join(src_dir, include)
-                if self.re_meta_data_obj.fullmatch(entry):
-                    tasks.append([include, [new_src_dir, entry[:-5], dest_dir, self.version]])
-                    continue
-                if os.path.isdir(os.path.join(new_src_dir, entry)):
-                    new_src_dir = os.path.join(new_src_dir, entry)
-                    tasks.append([include, [new_src_dir, include, dest_dir, self.version]])
-                    continue
-        return tasks
-
-    @classmethod
-    def get_encode_includes(cls, src_dir: str) -> list:
         includes = []
         entries = sorted(os.listdir(src_dir))
         for entry in entries:
@@ -102,7 +87,21 @@ class MetaObject:
                 except KeyError:
                     raise Exception(f'Обнаружен не поддерживаемый тип метаданных {entry}')
                 includes.append(entry)
-        return includes
+
+        for include in includes:
+            _handler = helper.get_class_metadata_object(include)
+            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, include, tasks, self.version)
+        return tasks
+
+    @classmethod
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version):
+        """
+        возвращает список задач на парсинг объектов этого типа
+        """
+        entries = os.listdir(src_dir)
+        for entry in entries:
+            if cls.re_meta_data_obj.fullmatch(entry):
+                tasks.append([include, [src_dir, entry[:-5], dest_dir, version]])
 
     def encode_version(self):
         return self.header['version']

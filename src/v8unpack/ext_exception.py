@@ -1,7 +1,7 @@
 import json
-from os import path
 import sys
 import traceback
+from os import path
 
 
 # 3xxx - Ошибки в нашем коде
