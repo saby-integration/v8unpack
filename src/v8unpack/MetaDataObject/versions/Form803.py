@@ -1,6 +1,7 @@
+import re
+
 from .Form8x import Form8x
 from ... import helper
-import re
 
 
 class Form803(Form8x):

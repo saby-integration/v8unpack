@@ -1,18 +1,19 @@
-from datetime import datetime
 import argparse
-import sys
-import os
-import tempfile
-import shutil
 import json
+import os
+import shutil
+import sys
+import tempfile
+from datetime import datetime
+
+from . import __version__
+from . import helper
 from .container_reader import extract as container_extract
 from .container_writer import build as container_build
-from .json_container_decoder import json_decode, json_encode
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
-from . import helper
 from .index import update_index
-from . import __version__
+from .json_container_decoder import json_decode, json_encode
 
 
 def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None):

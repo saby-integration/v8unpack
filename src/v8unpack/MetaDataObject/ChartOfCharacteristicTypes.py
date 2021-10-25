@@ -1,5 +1,6 @@
 from ..MetaDataObject.core.Simple import Simple
 
+
 class ChartOfCharacteristicTypes(Simple):
     ext_code = {
         'mgr': '16',  # модуль менеджера Плана видов характеристик

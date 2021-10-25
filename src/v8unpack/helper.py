@@ -1,9 +1,10 @@
-import shutil
 import json
 import os
-from .ext_exception import ExtException
+import shutil
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from multiprocessing import Pool, cpu_count
+
+from .ext_exception import ExtException
 
 
 def json_read(path, file_name):

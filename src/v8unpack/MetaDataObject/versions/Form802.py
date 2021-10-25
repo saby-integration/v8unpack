@@ -1,4 +1,5 @@
 import os
+
 from .Form8x import Form8x
 from ... import helper
 
@@ -957,4 +958,3 @@ class Form802(Form8x):
 
     def encode_data(self):
         pass
-

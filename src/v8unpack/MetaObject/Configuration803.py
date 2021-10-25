@@ -1,6 +1,6 @@
-from ..MetaObject import MetaObject
-from .. import helper
 from .. import __version__
+from .. import helper
+from ..MetaObject import MetaObject
 
 
 class Configuration803(MetaObject):

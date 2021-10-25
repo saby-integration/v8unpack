@@ -1,8 +1,9 @@
-__version__ = '0.6.7'
+__version__ = '0.6.8'
 
-from .v8unpack import main, extract, build
-from .index import update_index
 import sys
+
+from .index import update_index
+from .v8unpack import main, extract, build
 
 if __name__ == '__main__':
     sys.exit(main())

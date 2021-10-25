@@ -1,6 +1,6 @@
-from ..MetaObject.Configuration803 import Configuration803
-from .. import helper
 from .. import __version__
+from .. import helper
+from ..MetaObject.Configuration803 import Configuration803
 
 
 class ConfigurationExtension803(Configuration803):

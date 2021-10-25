@@ -1,7 +1,8 @@
 import os
-from .code_organizer import CodeOrganizer
 import shutil
+
 from . import helper
+from .code_organizer import CodeOrganizer
 
 
 class FileOrganizer:

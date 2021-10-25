@@ -12,3 +12,5 @@ dist/
 docs/_build/
 tmp/
 temp/
+tests/*/src/
+tests/*/core/
