@@ -34,7 +34,7 @@ class TestDecode(HelperTestDecode):
         super(TestDecode, self).decode_stage3()
 
     def test_04_decode_stage4(self):
-        shutil.rmtree(os.path.join(sys.path[0], 'decodeCodeSubmodule'), ignore_errors=True)
+        # shutil.rmtree(os.path.join(sys.path[0], 'decodeCodeSubmodule'), ignore_errors=True)
         super(TestDecode, self).decode_stage4()
 
     def test_05_encode_stage4(self):
