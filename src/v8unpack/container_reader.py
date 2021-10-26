@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from struct import pack, unpack, calcsize
 import collections
 import datetime
-import zlib
 import os
+import zlib
+from struct import pack, unpack, calcsize
+
 from . import helper
 
 # INT32_MAX 7fffffff

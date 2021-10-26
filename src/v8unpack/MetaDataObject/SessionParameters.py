@@ -1,5 +1,6 @@
 from ..MetaDataObject.core.Simple import Simple
 
+
 class SessionParameters(Simple):
     @classmethod
     def get_decode_header(cls, header_data):

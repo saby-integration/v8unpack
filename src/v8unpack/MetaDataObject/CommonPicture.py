@@ -1,8 +1,9 @@
-from ..MetaDataObject.core.Simple import Simple
-from .. import helper
-from ..ext_exception import ExtException
 import os
 from base64 import b64decode, b64encode
+
+from .. import helper
+from ..MetaDataObject.core.Simple import Simple
+from ..ext_exception import ExtException
 
 
 class CommonPicture(Simple):
