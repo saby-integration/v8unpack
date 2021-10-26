@@ -1,4 +1,5 @@
 import os
+
 from .. import helper
 from ..MetaObject import MetaObject
 from ..ext_exception import ExtException
@@ -66,4 +67,3 @@ class MetaDataObject(MetaObject):
     def write_encode_object(self, dest_dir):
         helper.json_write(self.header['data'], dest_dir, f'{self.header["uuid"]}.json')
         self.write_encode_code(dest_dir)
-

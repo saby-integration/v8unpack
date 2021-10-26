@@ -1,5 +1,5 @@
-from ..MetaDataObject.core.Container import Container
 from .. import helper
+from ..MetaDataObject.core.Container import Container
 
 
 class Subsystem(Container):

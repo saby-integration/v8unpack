@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
-import os
 import io
+import os
 import tempfile
 import zlib
 from struct import pack, calcsize
@@ -66,6 +66,7 @@ class ContainerWriter(object):
     :param file: объект файла контейнера
     :type file: BufferedReader
     """
+
     def __init__(self, file):
         self.file = file
         self.toc = []
@@ -224,4 +225,3 @@ def build(folder, filename):
     """
     with open(filename, 'w+b') as f, ContainerWriter(f) as container:
         add_entries(container, folder)
-
