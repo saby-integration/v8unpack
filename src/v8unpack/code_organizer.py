@@ -64,10 +64,10 @@ class CodeOrganizer:
         return cls.pack(*params)
 
     @classmethod
-    def pack(cls, src_dir, path, file_name, dest_dir, dest_path):
+    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name):
         self = cls()
-        self.data = self.pack_file(src_dir, path, file_name)
-        helper.txt_write(self.data, os.path.join(dest_dir, dest_path), file_name)
+        self.data = self.pack_file(src_dir, src_path, src_file_name)
+        helper.txt_write(self.data, os.path.join(dest_dir, dest_path), dest_file_name)
         return self
         pass
 

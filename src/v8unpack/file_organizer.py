@@ -29,12 +29,15 @@ class FileOrganizer:
                 dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, path, entry, index)
                 if dest_entry_path:
                     os.makedirs(os.path.join(dest_dir, dest_entry_path), exist_ok=True)
-                new_dest = os.path.join(dest_dir, dest_entry_path, dest_file_name)
-                cls._unpack_file(src_entry_path, new_dest, descent)
+                dest_path = os.path.join(dest_dir, dest_entry_path)
+                src_path = os.path.join(src_dir, path)
+                cls._unpack_file(src_path, entry, dest_path, dest_file_name, descent)
 
     @classmethod
-    def _unpack_file(cls, src_entry_path, new_dest, descent=None):
-        shutil.copy(src_entry_path, new_dest)
+    def _unpack_file(cls, src_path, src_file_name, dest_path, dest_file_name, descent=None):
+        _src_path = os.path.join(src_path, src_file_name)
+        _dest_path = os.path.join(dest_path, dest_file_name)
+        shutil.copy(_src_path, _dest_path)
 
     @classmethod
     def pack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
@@ -63,16 +66,13 @@ class FileOrganizer:
                 if entry[-3:] == '.1c':
                     _src_path = os.path.join('..', os.path.dirname(index[entry]))
                     _dest_path = os.path.join(*path)
-                    tasks.append((src_dir, _src_path, entry, dest_dir, _dest_path))
+                    tasks.append((src_dir, _src_path, os.path.basename(index[entry]), dest_dir, _dest_path, entry))
                 else:
-                    _dest_full_path = os.path.join(dest_dir, *path, entry)
-                    _src_path = os.path.join(src_dir, '..', index[entry])
-                    try:
-                        shutil.copy(_src_path, _dest_full_path)
-                    except FileNotFoundError:
-                        _dest_dir = os.path.dirname(_dest_full_path)
-                        os.makedirs(_dest_dir, exist_ok=True)
-                        shutil.copy(_src_path, _dest_full_path)
+                    _dest_path = os.path.join(dest_dir, *path)
+                    _src_full_path = os.path.join(src_dir, '..', index[entry])
+                    _src_path = os.path.dirname(_src_full_path)
+                    _src_file_name = os.path.basename(_src_full_path)
+                    cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
             else:
                 raise Exception('Некорректный формат файла индекса')
 
@@ -91,3 +91,17 @@ class FileOrganizer:
                 tasks.append((src_dir, path, entry, dest_dir, path))
             else:
                 shutil.copy(src_entry_path, os.path.join(dest_dir, path, entry))
+                _dest_path = os.path.join(dest_dir, path)
+                _src_path = os.path.join(src_dir, path)
+                cls._pack_file(_src_path, entry, _dest_path, entry, descent)
+
+    @classmethod
+    def _pack_file(cls, src_path, src_file_name, dest_path, dest_file_name, descent=None):
+        _src_path = os.path.join(src_path, src_file_name)
+        _dest_path = os.path.join(dest_path, dest_file_name)
+        try:
+            shutil.copy(_src_path, _dest_path)
+        except FileNotFoundError:
+            _dest_dir = os.path.dirname(_dest_path)
+            os.makedirs(_dest_dir, exist_ok=True)
+            shutil.copy(_src_path, _dest_path)
