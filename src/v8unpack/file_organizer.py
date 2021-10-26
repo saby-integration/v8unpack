@@ -10,7 +10,7 @@ class FileOrganizer:
     @classmethod
     def unpack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         tasks = []
-        cls._unpack(src_dir, dest_dir, '', tasks, index)
+        cls._unpack(src_dir, dest_dir, '', tasks, index, descent)
         helper.run_in_pool(CodeOrganizer.unpack, tasks, pool=pool)
 
     @classmethod
@@ -21,7 +21,7 @@ class FileOrganizer:
 
             if os.path.isdir(src_entry_path):
                 new_path = os.path.join(path, entry)
-                cls._unpack(src_dir, dest_dir, new_path, tasks, index)
+                cls._unpack(src_dir, dest_dir, new_path, tasks, index, descent)
                 continue
             if entry[-3:] == '.1c':
                 tasks.append((src_dir, path, entry, dest_dir, index))
@@ -43,14 +43,14 @@ class FileOrganizer:
     def pack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         helper.clear_dir(dest_dir)
         tasks = []
-        cls.pack_index(src_dir, dest_dir, tasks, index)
-        cls._pack(src_dir, dest_dir, '', tasks, index)
+        cls.pack_index(src_dir, dest_dir, tasks, index, descent)
+        cls._pack(src_dir, dest_dir, '', tasks, index, descent)
         helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool)
 
     @classmethod
     def pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, descent=None):
         if index:
-            cls._pack_index(src_dir, dest_dir, tasks, index, [''], descent=None)
+            cls._pack_index(src_dir, dest_dir, tasks, index, [''], descent)
 
     @classmethod
     def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, path: list, descent=None):
@@ -59,7 +59,7 @@ class FileOrganizer:
                 continue
             if isinstance(index[entry], dict):
                 path.append(entry)
-                cls._pack_index(src_dir, dest_dir, tasks, index[entry], path)
+                cls._pack_index(src_dir, dest_dir, tasks, index[entry], path, descent)
                 path.pop()
                 pass
             elif isinstance(index[entry], str):

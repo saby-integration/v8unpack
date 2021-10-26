@@ -98,9 +98,13 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage4'], 'count_root_files_stage4')
             pass
 
-    def encode_stage4(self):
+    def encode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage3))
-        FileOrganizer.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
+        if descent:
+            FileOrganizerCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
+                                 pool=self.pool, index=self.index, descent=descent)
+        else:
+            FileOrganizer.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.encode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
