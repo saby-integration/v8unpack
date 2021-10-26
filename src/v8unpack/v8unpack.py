@@ -69,7 +69,8 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, version='803', descent=None):
+def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
+          version='803', descent=None, release=None):
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ", end='')
@@ -101,7 +102,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, ve
 
     begin2 = datetime.now()
     print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
-    encode(encode_dir_stage3, encode_dir_stage2, version=version, pool=pool)
+    encode(encode_dir_stage3, encode_dir_stage2, version=version, pool=pool, release=release)
 
     begin3 = datetime.now()
     print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')
@@ -145,9 +146,14 @@ def main():
                         help="версия сборки, для сборки обработок указывается версия платформы 801/802/803, "
                              " для сборки расширений указывается версия режима совместимости, "
                              "например для 8.3.6 это 80306, подробности в документации на github")
-    parser.add_argument('--descent', default='80306',
-                        help="включает режим наследования при сборке и разборке"
+    parser.add_argument('--descent',
+                        help="включает режим наследования при сборке и разборке,"
+                             "четырех значный формат 3.0.75.100 (не более 3 знаков на каждый разряд)"
                              "подробности в инструкции - раздел разработка расширений")
+    parser.add_argument('--release',
+                        help="номер версии собираемого продукта, "
+                             "для обработки добавяется в функцию GetVersion модуля обработки, "
+                             "для расширений устанавливается в соответствующий реквизит ")
 
     if len(sys.argv) == 1:
         parser.print_help()
