@@ -8,13 +8,13 @@ from .code_organizer import CodeOrganizer
 class FileOrganizer:
 
     @classmethod
-    def unpack(cls, src_dir, dest_dir, *, pool=None, index=None):
+    def unpack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         tasks = []
         cls._unpack(src_dir, dest_dir, '', tasks, index)
         helper.run_in_pool(CodeOrganizer.unpack, tasks, pool=pool)
 
     @classmethod
-    def _unpack(cls, src_dir, dest_dir, path, tasks, index):
+    def _unpack(cls, src_dir, dest_dir, path, tasks, index, descent=None):
         entries = os.listdir(os.path.join(src_dir, path))
         for entry in entries:
             src_entry_path = os.path.join(src_dir, path, entry)
@@ -26,14 +26,18 @@ class FileOrganizer:
             if entry[-3:] == '.1c':
                 tasks.append((src_dir, path, entry, dest_dir, index))
             else:
-                dest_entry_path = CodeOrganizer.get_dest_path(dest_dir, path, entry, index)
+                dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, path, entry, index)
                 if dest_entry_path:
                     os.makedirs(os.path.join(dest_dir, dest_entry_path), exist_ok=True)
-                new_dest = os.path.join(dest_dir, dest_entry_path, entry)
-                shutil.copy(src_entry_path, new_dest)
+                new_dest = os.path.join(dest_dir, dest_entry_path, dest_file_name)
+                cls._unpack_file(src_entry_path, new_dest, descent)
 
     @classmethod
-    def pack(cls, src_dir, dest_dir, *, pool=None, index=None):
+    def _unpack_file(cls, src_entry_path, new_dest, descent=None):
+        shutil.copy(src_entry_path, new_dest)
+
+    @classmethod
+    def pack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         helper.clear_dir(dest_dir)
         tasks = []
         cls.pack_index(src_dir, dest_dir, tasks, index)
@@ -41,12 +45,12 @@ class FileOrganizer:
         helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool)
 
     @classmethod
-    def pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict):
+    def pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, descent=None):
         if index:
-            cls._pack_index(src_dir, dest_dir, tasks, index, [''])
+            cls._pack_index(src_dir, dest_dir, tasks, index, [''], descent=None)
 
     @classmethod
-    def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, path: list):
+    def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, path: list, descent=None):
         for entry in index:
             if not index[entry]:
                 continue
@@ -73,7 +77,7 @@ class FileOrganizer:
                 raise Exception('Некорректный формат файла индекса')
 
     @classmethod
-    def _pack(cls, src_dir, dest_dir, path, tasks, index):
+    def _pack(cls, src_dir, dest_dir, path, tasks, index, descent=None):
         if path:
             os.makedirs(os.path.join(dest_dir, path), exist_ok=True)
         entries = os.listdir(os.path.join(src_dir, path))
