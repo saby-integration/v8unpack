@@ -50,8 +50,7 @@ class CodeOrganizer:
         for elem in self.code_areas:
             _file = self.code_areas[elem]
             if elem == 'root':
-                _file['file_name'] = file_name
-                _file['path'] = self.get_dest_path(dest_dir, path, file_name, index)
+                _file['path'], _file['file_name'] = self.get_dest_path(dest_dir, path, file_name, index)
             else:
                 _file['path'], _file['file_name'] = self.parse_include_path(elem, path, file_name)
             _file['dest_path'] = os.path.join(dest_dir, _file['path'])
@@ -110,13 +109,11 @@ class CodeOrganizer:
             if _res:
                 _path = os.path.dirname(_res)
                 _file = os.path.basename(_res)
-                if _file != file_name:
-                    raise Exception(f'Имена файлов в индексе должны быть одинаковые. {_file} != {file_name}')
                 _path = os.path.join('..', _path)
                 try:
                     os.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
                 except FileExistsError:
                     pass
-                return _path
+                return _path, _file
 
-        return path
+        return path, file_name
