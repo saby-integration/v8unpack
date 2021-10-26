@@ -12,11 +12,12 @@ from .container_reader import extract as container_extract
 from .container_writer import build as container_build
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
+from .file_organizer_ce import FileOrganizerCE
 from .index import update_index
 from .json_container_decoder import json_decode, json_encode
 
 
-def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None):
+def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None, descent=None):
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ", end='')
@@ -55,7 +56,10 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
     begin4 = datetime.now()
     print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Организуем    ", end='')
-    FileOrganizer.unpack(stage3_dir, out_dir_name, pool=pool, index=index)
+    if descent:
+        FileOrganizerCE.unpack(stage3_dir, out_dir_name, pool=pool, index=index, descent=version)
+    else:
+        FileOrganizer.unpack(stage3_dir, out_dir_name, pool=pool, index=index)
 
     end = datetime.now()
     print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
@@ -65,7 +69,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, version='803'):
+def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, version='803', descent=None):
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ", end='')
@@ -90,7 +94,10 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None, ve
 
     begin1 = datetime.now()
     print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
-    FileOrganizer.pack(in_dir_name, encode_dir_stage3, pool=pool, index=index)
+    if descent:
+        FileOrganizerCE.pack(in_dir_name, encode_dir_stage3, pool=pool, index=index, descent=descent)
+    else:
+        FileOrganizer.pack(in_dir_name, encode_dir_stage3, pool=pool, index=index)
 
     begin2 = datetime.now()
     print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
@@ -135,9 +142,12 @@ def main():
     parser.add_argument('--index', help='путь до json файла с словарем копирования,'
                                         'структура файла: {путь исходника: путь общей папки}')
     parser.add_argument('--version', default='803',
-                        help="версия сборки, для сборки обработок 801/802/803, "
-                             " для сборки расширений версия режима совместимости "
+                        help="версия сборки, для сборки обработок указывается версия платформы 801/802/803, "
+                             " для сборки расширений указывается версия режима совместимости, "
                              "например для 8.3.6 это 80306, подробности в документации на github")
+    parser.add_argument('--descent', default='80306',
+                        help="включает режим наследования при сборке и разборке"
+                             "подробности в инструкции - раздел разработка расширений")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -146,10 +156,12 @@ def main():
     args = parser.parse_args()
 
     if args.E is not None:
-        extract(args.E[0], args.E[1], index=args.index, temp_dir=args.temp)
+        extract(args.E[0], args.E[1],
+                index=args.index, temp_dir=args.temp, version=args.version)
 
     if args.B is not None:
-        build(args.B[0], args.B[1], index=args.index, temp_dir=args.temp, version=args.version)
+        build(args.B[0], args.B[1], index=args.index, temp_dir=args.temp,
+              version=args.version, compatible=args.compatible)
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
