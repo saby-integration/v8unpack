@@ -88,7 +88,7 @@ class FileOrganizer:
                 cls._pack(src_dir, dest_dir, os.path.join(path, entry), tasks, index)
                 continue
             if entry[-3:] == '.1c':
-                tasks.append((src_dir, path, entry, dest_dir, path))
+                tasks.append((src_dir, path, entry, dest_dir, path, entry))
             else:
                 shutil.copy(src_entry_path, os.path.join(dest_dir, path, entry))
                 _dest_path = os.path.join(dest_dir, path)
