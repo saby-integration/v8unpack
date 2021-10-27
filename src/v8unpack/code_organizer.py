@@ -105,7 +105,8 @@ class CodeOrganizer:
             try:
                 _res = get_from_index(index, path, file_name)
             except KeyError:
-                return path
+                _res = None
+
             if _res:
                 _path = os.path.dirname(_res)
                 _file = os.path.basename(_res)
