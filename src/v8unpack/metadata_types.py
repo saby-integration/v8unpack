@@ -46,9 +46,9 @@ class MetaDataTypes(Enum):
     # FilterCriterion = '3e7bfcc0-067d-11d6-a3c7-0050bae0a776'            # Критерии отбора
     # EventSubscription = '4e828da6-0f44-4b5b-b1c0-a2b3cfe7bdcc'          # Подписки на события
     # ScheduledJob = '11bdaf85-d5ad-4d91-bb24-aa0eee139052'               # Регламентные задания
-    # FunctionalOption = 'af547940-3268-434f-a3e7-e47d6d2638c3'           # Функциональные опции
+    FunctionalOption = 'af547940-3268-434f-a3e7-e47d6d2638c3'             # Функциональные опции
     # FunctionalOptionsParameter = '30d554db-541e-4f62-8970-a1c6dcfeb2bc' # Параметры функциональных опций
-    # DefinedType = 'c045099e-13b9-4fb6-9d50-fca00202971e'                # Определяемые типы
+    DefinedType = 'c045099e-13b9-4fb6-9d50-fca00202971e'                  # Определяемые типы
     # SettingsStorage = '46b4cd97-fd13-4eaa-aba2-3bddd7699218'            # Хранилище настроек
     # Interface = '39bddf6a-0c3c-452b-921c-d99cfa1c2f1b'                  # Интерфейсы
     # WSReference = 'd26096fb-7a5d-4df9-af63-47d04771fa9b'                # WS-ссылки

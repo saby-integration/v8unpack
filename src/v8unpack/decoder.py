@@ -39,8 +39,10 @@ class Decoder:
         if os.path.isfile(os.path.join(src_dir, 'configinfo.json')):
             version = helper.json_read(src_dir, 'configinfo.json')
             if version[0][1][0] == "216":
-                if len(version[0][1]) == 3 and version[0][1][2][0] in ['80314', '80315']:  # todo понять в чем отличия
-                    return ConfigurationExtension803()
+                if len(version[0][1]) == 3:
+                    obj_version = version[0][1][2][0]
+                    if obj_version[:3] == '803':
+                        return ConfigurationExtension803()
         raise Exception('Не удалось определить парсер')
 
     @classmethod
