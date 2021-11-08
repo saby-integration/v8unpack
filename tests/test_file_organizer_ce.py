@@ -33,21 +33,21 @@ class TestFileOrganizerCE(unittest.TestCase):
         helper.clear_dir(self.temp_dir)
         self.copy_data_to_temp('test.1c', ['3000070060', '3000075100', '3000088001'], '')
 
-        FileOrganizerCE._unpack_file(self.data_dir, 'test.1c', self.temp_dir, 'test.1c', descent=3000088001)
+        FileOrganizerCE.unpack_file(self.data_dir, 'test.1c', self.temp_dir, 'test.1c', descent=3000088001)
 
         self.assertEqual(
             os.path.getsize(os.path.join(self.data_dir, 'test.1c')),
             os.path.getsize(os.path.join(self.temp_dir, 'test.3000088001.1c'))
         )
 
-        FileOrganizerCE._unpack_file(self.data_dir, 'test.1c', self.temp_dir, 'test.1c', descent=3000075101)
+        FileOrganizerCE.unpack_file(self.data_dir, 'test.1c', self.temp_dir, 'test.1c', descent=3000075101)
         self.assertEqual(
             os.path.getsize(os.path.join(self.data_dir, 'test.1c')),
             os.path.getsize(os.path.join(self.temp_dir, 'test.3000075101.1c'))
         )
 
         self.copy_data_to_temp('test.obj.1c', ['3000070060'])
-        FileOrganizerCE._unpack_file(self.data_dir, 'test.obj.1c', self.temp_dir, 'test.obj.1c', descent=3000070061)
+        FileOrganizerCE.unpack_file(self.data_dir, 'test.obj.1c', self.temp_dir, 'test.obj.1c', descent=3000070061)
         self.assertRaises(
             FileNotFoundError,
             lambda: os.path.getsize(os.path.join(self.temp_dir, 'test.obj.3000070061.1c'))

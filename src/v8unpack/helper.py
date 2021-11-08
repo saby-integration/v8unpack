@@ -109,7 +109,7 @@ def run_in_pool(method, list_args, pool=None):
         result = _pool.starmap(method, list_args)
     except Exception as err:
         close_pool(_pool, pool)
-        raise ExtException(parent=err, detail=method, action='run_in_pool')
+        raise ExtException(parent=err, detail=method, action='run_in_pool') from err
     close_pool(_pool, pool)
     return result
 
@@ -195,7 +195,11 @@ def get_near_descent_file_name(path, file_name, descent):
     startswith = '.'.join(name[0:-1])
     endswith = name[-1]
     size = len(name)
-    entities = os.listdir(path)
+    try:
+        entities = os.listdir(path)
+    except FileNotFoundError:
+        os.makedirs(path, exist_ok=True)
+        entities = []
     descents = []
     for entity in entities:
         if entity.startswith(startswith) and entity.endswith(endswith):
