@@ -109,7 +109,7 @@ def run_in_pool(method, list_args, pool=None):
         result = _pool.starmap(method, list_args)
     except Exception as err:
         close_pool(_pool, pool)
-        raise ExtException(parent=err, detail=method, action='run_in_pool')
+        raise ExtException(parent=err, detail=method, action='run_in_pool') from err
     close_pool(_pool, pool)
     return result
 
@@ -182,3 +182,39 @@ def check_version(v8_version: str, src_version: str) -> None:
         raise AssertionError(f'Не правильная версия исходников "{src_version}"')
     if (int(_v8[0]), int(_v8[1])) != (int(_src[0]), int(_src[1])):
         raise AssertionError("Версия исходников {_src[0]}.{_src[1]} не соответствует версии v8unpack {_v8[0]}.{_v8[1]}")
+
+
+def get_descent_file_name(file_name, descent):
+    name: list = file_name.split('.')
+    name.insert(-1, str(descent))
+    return '.'.join(name)
+
+
+def get_near_descent_file_name(path, file_name, descent):
+    name: list = file_name.split('.')
+    startswith = '.'.join(name[0:-1])
+    endswith = name[-1]
+    size = len(name)
+    try:
+        entities = os.listdir(path)
+    except FileNotFoundError:
+        os.makedirs(path, exist_ok=True)
+        entities = []
+    descents = []
+    for entity in entities:
+        if entity.startswith(startswith) and entity.endswith(endswith):
+            _entity = entity.split('.')
+            if len(_entity) - 1 != size:
+                continue
+            full_path = os.path.join(path, entity)
+            if os.path.isfile(full_path):
+                try:
+                    descents.append(int(_entity[-2]))
+                except ValueError:  # если во втором разряде не число, значит не наш вариант
+                    pass
+    if not descents:
+        return '', ''
+    descents = sorted(descents, reverse=True, key=lambda x: 0 if x > descent else x)
+    if descents[0] > descent:
+        return '', ''
+    return path, f'{startswith}.{descents[0]}.{endswith}'

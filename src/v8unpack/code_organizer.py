@@ -1,6 +1,7 @@
 import os
 
 from . import helper
+from .ext_exception import ExtException
 from .index import get as get_from_index
 
 
@@ -19,7 +20,7 @@ class CodeOrganizer:
         self.code_areas = {'root': dict(data='')}
         _path = ['']
         _include_path = ['root']
-        with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
+        with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8-sig') as file:
             line = file.readline()
             while line:
                 if line[0] == '#':
@@ -47,44 +48,38 @@ class CodeOrganizer:
                 else:
                     self.code_areas[_include_path[-1]]['data'] += line
                 line = file.readline()
-        for elem in self.code_areas:
-            _file = self.code_areas[elem]
-            if elem == 'root':
-                _file['path'], _file['file_name'] = self.get_dest_path(dest_dir, path, file_name, index)
-            else:
-                _file['path'], _file['file_name'] = self.parse_include_path(elem, path, file_name)
-            _file['dest_path'] = os.path.join(dest_dir, _file['path'])
-
-            helper.txt_write(_file['data'], _file['dest_path'], _file['file_name'])
-
-        return self
+        return self.code_areas
 
     @classmethod
     def pack_mp(cls, params):
         return cls.pack(*params)
 
     @classmethod
-    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name):
-        self = cls()
-        self.data = self.pack_file(src_dir, src_path, src_file_name)
-        helper.txt_write(self.data, os.path.join(dest_dir, dest_path), dest_file_name)
-        return self
-        pass
+    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, descent,
+             pack_get_descent_filename):
+        data = cls.pack_file(src_dir, src_path, src_file_name, descent, pack_get_descent_filename)
+        helper.txt_write(data, os.path.join(dest_dir, dest_path), dest_file_name)
 
     @classmethod
-    def pack_file(cls, src_dir, path, file_name):
-        data = ''
-        with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
-            line = file.readline()
-            while line:
-                data += line
-                if line[0] == '#':
-                    if line.startswith('#Область include'):
-                        include_path = line[17:].strip()
-                        _path, _file_name = cls.parse_include_path(include_path, path, file_name)
-                        data += cls.pack_file(src_dir, _path, _file_name)
+    def pack_file(cls, src_dir, path, file_name, descent, pack_get_descent_filename):
+        try:
+            data = ''
+            with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
                 line = file.readline()
-            return data
+                while line:
+                    data += line
+                    if line[0] == '#':
+                        if line.startswith('#Область include'):
+                            include_path = line[17:].strip()
+                            _path, _file_name = cls.parse_include_path(include_path, path, file_name)
+                            _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
+                            if _src_abs_path.startswith(src_dir):
+                                _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
+                            data += cls.pack_file(src_dir, _path, _file_name, descent, pack_get_descent_filename)
+                    line = file.readline()
+                return data
+        except Exception as err:
+            raise ExtException(parent=err, action=f'{cls.__name__}.pack_file', detail=f'{path} {file_name}')
 
     @staticmethod
     def parse_include_path(include_path, path, file_name):
