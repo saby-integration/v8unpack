@@ -7,6 +7,7 @@ from .container_reader import extract
 from .container_writer import build
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
+from .file_organizer_ce import FileOrganizerCE
 from .json_container_decoder import JsonContainerDecoder
 from .json_container_decoder import json_decode, json_encode
 
@@ -85,17 +86,25 @@ class HelperTestDecode(unittest.TestCase):
             files = os.listdir(self.decode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
-    def decode_stage4(self):
+    def decode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.decode_dir_stage4))
-        FileOrganizer.unpack(self.decode_dir_stage3, self.decode_dir_stage4, pool=self.pool, index=self.index)
+        if descent:
+            FileOrganizerCE.unpack(self.decode_dir_stage3, self.decode_dir_stage4,
+                                   pool=self.pool, index=self.index, descent=descent)
+        else:
+            FileOrganizer.unpack(self.decode_dir_stage3, self.decode_dir_stage4, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.decode_dir_stage4)
             self.assertEqual(len(files), self.result['count_root_files_stage4'], 'count_root_files_stage4')
             pass
 
-    def encode_stage4(self):
+    def encode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage3))
-        FileOrganizer.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
+        if descent:
+            FileOrganizerCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
+                                 pool=self.pool, index=self.index, descent=descent)
+        else:
+            FileOrganizer.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.encode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
