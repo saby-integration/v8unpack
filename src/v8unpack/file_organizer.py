@@ -45,7 +45,7 @@ class FileOrganizer:
                                                                                         descent,
                                                                                         cls.equal_binary_file)
         else:
-            descent_full_dest_path, descent_file_name = dest_entry_path, dest_file_name
+            descent_full_dest_path, descent_file_name = os.path.join(dest_dir, dest_entry_path), dest_file_name
 
         if descent_file_name:
             shutil.copy(src_full_path, os.path.join(descent_full_dest_path, descent_file_name))
