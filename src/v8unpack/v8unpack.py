@@ -163,11 +163,11 @@ def main():
 
     if args.E is not None:
         extract(args.E[0], args.E[1],
-                index=args.index, temp_dir=args.temp, version=args.version)
+                index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent)
 
     if args.B is not None:
-        build(args.B[0], args.B[1], index=args.index, temp_dir=args.temp,
-              version=args.version, compatible=args.compatible)
+        build(args.B[0], args.B[1],
+              index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent)
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
