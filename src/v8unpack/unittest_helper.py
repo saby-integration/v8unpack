@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import unittest
@@ -35,7 +36,7 @@ class HelperTestDecode(unittest.TestCase):
         self.version = '803'
         self.index = None
 
-    def init(self):
+    def init(self, **kwargs):
         if not self.test_dir:
             self.test_dir = os.path.join(self.src_dir, 'tmp')
 
@@ -53,12 +54,10 @@ class HelperTestDecode(unittest.TestCase):
         self.encode_dir_stage2 = self.get_encode_folder(2)
         self.encode_dir_stage3 = self.get_encode_folder(3)
 
-        try:
-            with open(os.path.join(self.test_dir, 'index.json'), 'r', encoding='utf-8') as f:
-                import json
+        index = kwargs.get('index')
+        if index:
+            with open(index, 'r', encoding='utf-8') as f:
                 self.index = json.load(f)
-        except FileNotFoundError:
-            self.index = {}
 
         pass
 

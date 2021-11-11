@@ -123,8 +123,16 @@ class FileOrganizer:
                 if entry[-3:] == '.1c':
                     _src_path = os.path.join('..', os.path.dirname(index[entry]))
                     _dest_path = os.path.join(*path)
+
+                    _src_abs_path = os.path.abspath(_src_path)
+                    if _src_abs_path.startswith(src_dir):
+                        func_descent_filename = cls.pack_get_descent_filename
+                    else:
+                        func_descent_filename = FileOrganizer.pack_get_descent_filename
                     tasks.append((
-                        src_dir, _src_path, os.path.basename(index[entry]), dest_dir, _dest_path, entry, descent))
+                        src_dir, _src_path, os.path.basename(index[entry]),
+                        dest_dir, _dest_path, entry,
+                        descent, func_descent_filename))
                 else:
                     _dest_path = os.path.join(dest_dir, *path)
                     _src_full_path = os.path.join(src_dir, '..', index[entry])
@@ -179,4 +187,3 @@ class FileOrganizer:
             _dest_dir = os.path.dirname(_dest_path)
             os.makedirs(_dest_dir, exist_ok=True)
             shutil.copy(_src_path, _dest_path)
-
