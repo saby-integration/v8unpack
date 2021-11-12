@@ -14,4 +14,4 @@ tmp/
 temp/
 tests/*/src/
 tests/*/core/
-v8unpack.spec
+*.spec
