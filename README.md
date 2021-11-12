@@ -34,7 +34,7 @@
 
     pip install v8unpack
 
-или скачайте [exe файл](https://github.com/saby-integration/v8unpack/exe/v8unpack.exe)
+или [скачайте exe файл](https://github.com/saby-integration/v8unpack/raw/main/exe/v8unpack.exe)
 
 ## Распаковка файла 1С
 
