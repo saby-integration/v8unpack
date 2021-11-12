@@ -7,6 +7,6 @@ _version = __version__.split('.')
 PyInstaller.__main__.run([
     'source.py',
     '--onefile',
-    '-n',    f'v8unpack_{"_".join(_version[:-1])}',
+    '-n', f'v8unpack_{"_".join(_version[:-1])}',
     '--distpath', '.'
 ])
