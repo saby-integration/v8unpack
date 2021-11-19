@@ -57,7 +57,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
     begin4 = datetime.now()
     print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Организуем    ", end='')
     if descent:
-        FileOrganizerCE.unpack(stage3_dir, out_dir_name, pool=pool, index=index, descent=version)
+        FileOrganizerCE.unpack(stage3_dir, out_dir_name, pool=pool, index=index, descent=descent)
     else:
         FileOrganizer.unpack(stage3_dir, out_dir_name, pool=pool, index=index)
 
