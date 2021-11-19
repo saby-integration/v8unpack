@@ -11,7 +11,7 @@ class FileOrganizer:
     @classmethod
     def unpack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         tasks = []
-        cls._unpack(src_dir, dest_dir, '', tasks, index, descent)
+        cls._unpack(src_dir, os.path.abspath(dest_dir), '', tasks, index, descent)
         helper.run_in_pool(cls.unpack_code_file, tasks, pool=pool)
 
     @classmethod
@@ -35,7 +35,7 @@ class FileOrganizer:
         dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, dest_path, dest_file_name, index)
         if dest_entry_path:
             os.makedirs(os.path.join(dest_dir, dest_entry_path), exist_ok=True)
-        dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
+        dest_full_path = os.path.join(dest_dir, dest_entry_path)
 
         src_full_path = os.path.join(src_path, src_file_name)
 
@@ -60,7 +60,7 @@ class FileOrganizer:
                     _file['path'], _file['file_name'] = CodeOrganizer.get_dest_path(dest_dir, path, file_name, index)
                 else:
                     _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name)
-                _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
+                _file['dest_path'] = os.path.join(dest_dir, _file['path'])
                 if _file['dest_path'].startswith(dest_dir):
                     descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
                         None, None, _file['data'], _file['dest_path'], _file['file_name'], descent, cls.equal_code_file)
@@ -100,6 +100,7 @@ class FileOrganizer:
     def pack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         helper.clear_dir(dest_dir)
         tasks = []
+        src_dir = os.path.abspath(src_dir)
         cls.pack_index(src_dir, dest_dir, tasks, index, descent)
         cls._pack(src_dir, dest_dir, '', tasks, index, descent)
         helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool)
