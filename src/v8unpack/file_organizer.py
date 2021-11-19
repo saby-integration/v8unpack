@@ -60,7 +60,7 @@ class FileOrganizer:
                     _file['path'], _file['file_name'] = CodeOrganizer.get_dest_path(dest_dir, path, file_name, index)
                 else:
                     _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name)
-                _file['dest_path'] = os.path.join(dest_dir, _file['path'])
+                _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
                 if _file['dest_path'].startswith(dest_dir):
                     descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
                         None, None, _file['data'], _file['dest_path'], _file['file_name'], descent, cls.equal_code_file)
@@ -72,7 +72,11 @@ class FileOrganizer:
                 if descent_file_name:
                     helper.txt_write(_file['data'], descent_full_dest_path, descent_file_name)
         except Exception as err:
-            raise ExtException(parent=err, detail=os.path.join(src_dir, path, file_name))
+            raise ExtException(
+                parent=err,
+                dump={"filename": os.path.join(src_dir, path, file_name)},
+                action='unpack_code_file'
+            )
 
     @classmethod
     def equal_binary_file(cls, src_path, src_file_name, src_data, near_descent_path, near_descent_file_name):
