@@ -33,9 +33,10 @@ class FileOrganizer:
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
         dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, dest_path, dest_file_name, index)
+        dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
+
         if dest_entry_path:
-            os.makedirs(os.path.join(dest_dir, dest_entry_path), exist_ok=True)
-        dest_full_path = os.path.join(dest_dir, dest_entry_path)
+            os.makedirs(dest_full_path, exist_ok=True)
 
         src_full_path = os.path.join(src_path, src_file_name)
 
@@ -67,9 +68,8 @@ class FileOrganizer:
                 else:
                     descent_full_dest_path, descent_file_name = _file['dest_path'], _file['file_name']
 
-                os.makedirs(descent_full_dest_path, exist_ok=True)
-
                 if descent_file_name:
+                    os.makedirs(descent_full_dest_path, exist_ok=True)
                     helper.txt_write(_file['data'], descent_full_dest_path, descent_file_name)
         except Exception as err:
             raise ExtException(
