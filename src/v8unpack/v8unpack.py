@@ -162,12 +162,12 @@ def main():
     args = parser.parse_args()
 
     if args.E is not None:
-        extract(args.E[0], args.E[1],
-                index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent)
+        extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
+                index=args.index, temp_dir=args.temp, version=args.version, descent=int(args.descent))
 
     if args.B is not None:
-        build(args.B[0], args.B[1],
-              index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent)
+        build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
+              index=args.index, temp_dir=args.temp, version=args.version, descent=int(args.descent))
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
