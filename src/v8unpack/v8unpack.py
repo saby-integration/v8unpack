@@ -21,8 +21,8 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
     begin0 = datetime.now()
     print(f"v8unpack {__version__}")
     print(f"{helper.str_time(begin0)} Начали        ", end='')
-
-    helper.clear_dir(os.path.normpath(out_dir_name))
+    if descent is None:
+        helper.clear_dir(os.path.normpath(out_dir_name))
     clear_temp_dir = False
     if temp_dir is None:
         clear_temp_dir = True
