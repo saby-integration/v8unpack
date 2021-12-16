@@ -4,7 +4,7 @@ import sys
 import unittest
 
 from . import helper
-from .container_reader import extract
+from .container_reader import extract, decompress_and_extract
 from .container_writer import build
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
@@ -43,7 +43,6 @@ class HelperTestDecode(unittest.TestCase):
         os.makedirs(self.test_dir, exist_ok=True)
 
         self.decode_dir_stage0 = self.get_decode_folder(0)
-        self.decode_dir_stage2 = self.get_decode_folder(2)
         self.decode_dir_stage1 = self.get_decode_folder(1)
         self.decode_dir_stage2 = self.get_decode_folder(2)
         self.decode_dir_stage3 = self.get_decode_folder(3)
@@ -67,8 +66,14 @@ class HelperTestDecode(unittest.TestCase):
     def get_encode_folder(self, stage):
         return os.path.join(self.test_dir, f'encode_stage_{stage}')
 
+    def decode_stage0(self):
+        extract(os.path.join(self.src_dir, self.src_file), self.decode_dir_stage0, False, False)
+        if self.result:
+            files = os.listdir(self.decode_dir_stage0)
+            self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
+
     def decode_stage1(self):
-        extract(os.path.join(self.src_dir, self.src_file), self.decode_dir_stage1)
+        decompress_and_extract(self.decode_dir_stage0, self.decode_dir_stage1)
         if self.result:
             files = os.listdir(self.decode_dir_stage1)
             self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')

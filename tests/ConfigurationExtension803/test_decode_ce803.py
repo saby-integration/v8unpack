@@ -24,6 +24,9 @@ class TestDecode(HelperTestDecode):
         self.init()
         pass
 
+    def test_01_decode_stage0(self):
+        super(TestDecode, self).decode_stage0()
+
     def test_01_decode_stage1(self):
         super(TestDecode, self).decode_stage1()
 
