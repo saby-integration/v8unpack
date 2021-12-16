@@ -44,7 +44,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
     begin1 = datetime.now()
     print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Распаковываем ", end='')
-    container_extract(in_filename, stage1_dir)
+    container_extract(in_filename, stage1_dir, False, False)
 
     begin2 = datetime.now()
     print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Конвертируем  ", end='')
