@@ -52,6 +52,8 @@ class TestDecode(HelperTestDecode):
     def test_08_encode_stage1(self):
         super(TestDecode, self).encode_stage1()
 
+    def test_09_encode_stage0(self):
+        super(TestDecode, self).encode_stage0()
 
 if __name__ == '__main__':
     unittest.main()
