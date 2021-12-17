@@ -261,7 +261,8 @@ def extract(filename, folder, deflate=True, recursive=True):
         ContainerReader(f).extract(folder, deflate, recursive)
 
 
-def decompress_and_extract(src_folder, dest_folder):
+def decompress_and_extract(src_folder, dest_folder, *, pool=None):
+    helper.clear_dir(dest_folder)
     entries = os.listdir(src_folder)
 
     for filename in entries:
