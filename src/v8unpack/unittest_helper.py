@@ -4,8 +4,8 @@ import sys
 import unittest
 
 from . import helper
-from .container_reader import extract
-from .container_writer import build
+from .container_reader import extract, decompress_and_extract
+from .container_writer import build, compress_and_build
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
@@ -43,7 +43,6 @@ class HelperTestDecode(unittest.TestCase):
         os.makedirs(self.test_dir, exist_ok=True)
 
         self.decode_dir_stage0 = self.get_decode_folder(0)
-        self.decode_dir_stage2 = self.get_decode_folder(2)
         self.decode_dir_stage1 = self.get_decode_folder(1)
         self.decode_dir_stage2 = self.get_decode_folder(2)
         self.decode_dir_stage3 = self.get_decode_folder(3)
@@ -67,8 +66,14 @@ class HelperTestDecode(unittest.TestCase):
     def get_encode_folder(self, stage):
         return os.path.join(self.test_dir, f'encode_stage_{stage}')
 
+    def decode_stage0(self):
+        extract(os.path.join(self.src_dir, self.src_file), self.decode_dir_stage0, False, False)
+        if self.result:
+            files = os.listdir(self.decode_dir_stage0)
+            self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
+
     def decode_stage1(self):
-        extract(os.path.join(self.src_dir, self.src_file), self.decode_dir_stage1)
+        decompress_and_extract(self.decode_dir_stage0, self.decode_dir_stage1, pool=self.pool)
         if self.result:
             files = os.listdir(self.decode_dir_stage1)
             self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
@@ -123,10 +128,17 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage1'])
 
     def encode_stage1(self):
-        helper.clear_dir(os.path.normpath(self.encode_dir_stage0))
-        encode_file_path = os.path.join(self.encode_dir_stage0, self.src_file)
+        compress_and_build(self.encode_dir_stage1, self.encode_dir_stage0, pool=self.pool)
+        # self.assert_stage(self.decode_dir_stage0, self.encode_dir_stage0)
+        if self.result:
+            files = os.listdir(self.encode_dir_stage0)
+            self.assertEqual(len(files), self.result['count_root_files_stage1'])
+
+    def encode_stage0(self):
+        # helper.clear_dir(os.path.normpath(self.test_dir))
+        encode_file_path = os.path.join(self.test_dir, self.src_file)
         # decode_file_path = os.path.join(self.src_dir, self.src_file)
-        build(self.encode_dir_stage1, encode_file_path)
+        build(self.encode_dir_stage0, encode_file_path, True)
         # self.assertByteFile(decode_file_path, encode_file_path)
 
     def assert_external_data_processor_decode_stage3(self):
@@ -159,7 +171,8 @@ class HelperTestDecode(unittest.TestCase):
                     encode_data = None
 
                 if decode_data != encode_data:
-                    problems += f'\n      {entry}'
+                    if not entry.startswith('configinfo'):
+                        problems += f'\n      {entry}'
         if problems:
             problems = f'   {decode_dir}\n   {encode_dir}{problems}\n'
         if include_problems:

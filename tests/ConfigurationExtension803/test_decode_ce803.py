@@ -1,7 +1,6 @@
 import os
-import sys
-import shutil
 import unittest
+
 from v8unpack.unittest_helper import HelperTestDecode
 
 
@@ -13,7 +12,7 @@ class TestDecode(HelperTestDecode):
         self.src_dir = os.path.dirname(__file__)
 
         self.src_file = 'Расширение1.cfe'
-        self.version = None
+        self.version = '80313'
         # self.result = {
         #     'count_root_files_stage1': 13,
         #     'count_root_files_stage3': 5,
@@ -23,6 +22,9 @@ class TestDecode(HelperTestDecode):
         # }
         self.init()
         pass
+
+    def test_01_decode_stage0(self):
+        super(TestDecode, self).decode_stage0()
 
     def test_01_decode_stage1(self):
         super(TestDecode, self).decode_stage1()
@@ -48,6 +50,9 @@ class TestDecode(HelperTestDecode):
 
     def test_08_encode_stage1(self):
         super(TestDecode, self).encode_stage1()
+
+    def test_09_encode_stage0(self):
+        super(TestDecode, self).encode_stage0()
 
 
 if __name__ == '__main__':

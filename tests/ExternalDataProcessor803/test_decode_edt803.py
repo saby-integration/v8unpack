@@ -1,9 +1,9 @@
 import os
-import sys
 import shutil
+import sys
 import unittest
+
 from v8unpack.unittest_helper import HelperTestDecode
-from v8unpack import helper
 
 
 class TestDecode(HelperTestDecode):
@@ -25,6 +25,9 @@ class TestDecode(HelperTestDecode):
         }
         self.init()
         pass
+
+    def test_01_decode_stage0(self):
+        super(TestDecode, self).decode_stage0()
 
     def test_01_decode_stage1(self):
         super(TestDecode, self).decode_stage1()
@@ -51,6 +54,9 @@ class TestDecode(HelperTestDecode):
 
     def test_08_encode_stage1(self):
         super(TestDecode, self).encode_stage1()
+
+    def test_09_encode_stage0(self):
+        super(TestDecode, self).encode_stage0()
 
     @unittest.skip
     def test_extract(self):
