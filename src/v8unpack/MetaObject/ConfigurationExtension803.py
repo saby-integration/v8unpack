@@ -1,3 +1,5 @@
+from base64 import b64encode, b64decode
+from hashlib import md5
 from .. import __version__
 from .. import helper
 from ..MetaObject.Configuration803 import Configuration803
@@ -22,8 +24,9 @@ class ConfigurationExtension803(Configuration803):
         self.header['v8unpack'] = __version__
         self.header['file_uuid'] = root[1][1]
         self.header['version'] = root[0][1]
-        self.header['versions'] = root[2]
+        # self.header['versions'] = root[2]
         self.header['copyinfo'] = root[1]
+        # self.header['copyinfo'][2] = b64decode(self.header['copyinfo'][2])[:-16].hex()
         self.header['data'] = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
         _form_header = self.get_decode_header(self.header['data'])
         helper.decode_header(self.header, _form_header)
@@ -54,10 +57,13 @@ class ConfigurationExtension803(Configuration803):
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
         helper.check_version(__version__, self.header.get('v8unpack', ''))
+
+        # self.header['copyinfo'][2] = b64encode(bytes.fromhex(self.header['copyinfo'][2]+md5().digest().hex())).decode()
         root = [
             ["0", self.encode_version()],
             self.header['copyinfo'],
-            self.header['versions']
+            # self.header['versions']
+            ["____versions____"]
         ]
         self.encode_code(src_dir, cls.__name__)
         self.write_encode_code(dest_dir)

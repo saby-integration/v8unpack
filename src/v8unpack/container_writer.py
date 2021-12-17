@@ -4,7 +4,12 @@ import io
 import os
 import tempfile
 import zlib
+from base64 import b64encode
+from hashlib import sha1
 from struct import pack, calcsize
+
+from . import helper
+from .json_container_decoder import JsonContainerDecoder
 
 # INT32_MAX
 END_MARKER = 2147483647
@@ -102,16 +107,20 @@ class ContainerWriter(object):
         header = pack('2s8ss8ss8s3s', *[x.encode() for x in header_data])
 
         self.file.write(header)
+        self.write_block_data(self, data, self.file)
+
+        self.file.write(b'\x00' * (block_size - data.tell()))
+
+        return offset
+
+    @staticmethod
+    def write_block_data(container, data, dest_file):
         data.seek(0)
         while True:
             buffer = data.read(BUFFER_CHUNK_SIZE)
             if not buffer:
                 break
-            self.file.write(buffer)
-
-        self.file.write(b'\x00' * (block_size - data.tell()))
-
-        return offset
+            dest_file.write(buffer)
 
     def add_file(self, fd, name, inflate=False):
         """
@@ -132,20 +141,25 @@ class ContainerWriter(object):
         attribute_doc_offset = self.write_block(io.BytesIO(buffer), block_size=len(buffer))
 
         if inflate:
-            with tempfile.TemporaryFile() as f:
-                compressor = zlib.compressobj(wbits=-15)
-                fd.seek(0)
-                while True:
-                    chunk = fd.read(BUFFER_CHUNK_SIZE)
-                    if not chunk:
-                        f.write(compressor.flush())
-                        break
-                    f.write(compressor.compress(chunk))
-                data_doc_offset = self.write_block(f)
+            data_doc_offset = self.compress(self, fd, self.file, self.write_block)
         else:
             data_doc_offset = self.write_block(fd)
 
         self.toc.append((attribute_doc_offset, data_doc_offset))
+
+    @staticmethod
+    def compress(container, src_fd, dest_fd, block_writer):
+        with tempfile.TemporaryFile() as f:
+            compressor = zlib.compressobj(wbits=-15)
+            src_fd.seek(0)
+            while True:
+                chunk = src_fd.read(BUFFER_CHUNK_SIZE)
+                if not chunk:
+                    f.write(compressor.flush())
+                    break
+                f.write(compressor.compress(chunk))
+            data_doc_offset = block_writer(container, f, dest_fd)
+        return data_doc_offset
 
     def write_toc(self):
         """
@@ -213,7 +227,7 @@ def add_entries(container, folder, nested=False):
                 container.add_file(entry_file, entry, inflate=not nested)
 
 
-def build(folder, filename):
+def build(folder, filename, nested=False):
     """
     Запаковывает каталог в контейнер включая вложенные каталоги.
     Сахар для ContainerWriter.
@@ -224,4 +238,61 @@ def build(folder, filename):
     :type filename: string
     """
     with open(filename, 'w+b') as f, ContainerWriter(f) as container:
-        add_entries(container, folder)
+        add_entries(container, folder, nested)
+
+
+def calc_sha1(src_folder, dest_folder):
+    entries = sorted(os.listdir(dest_folder))
+    versions = []
+    versions_file = ''
+    for filename in entries:
+        dest_path = os.path.join(dest_folder, filename)
+        if filename == 'configinfo':
+            versions_file = 'configinfo'
+            continue
+
+        with open(dest_path, 'rb') as file:
+            data = file.read()
+        versions.append(f'"{filename}"')
+        versions.append(b64encode(sha1(data).digest()).decode())
+    if not versions_file:
+        return
+    versions.insert(0, str(int(len(versions) / 2)))
+    _versions = JsonContainerDecoder().encode_root_object([versions])
+
+    src_path = os.path.join(src_folder, versions_file)
+    dest_path = os.path.join(dest_folder, versions_file)
+
+    with open(src_path, 'r+', encoding='utf-8') as file:
+        data = file.read()
+        data = data.replace('{____versions____}', _versions)
+        file.seek(0)
+        file.write(data)
+
+    compress_and_build_simple_file(src_path, dest_path)
+    pass
+
+
+def compress_and_build_simple_file(src_path, dest_path):
+    with open(dest_path, 'w+b') as dest_fd:
+        with open(src_path, 'rb') as src_fd:
+            ContainerWriter.compress(None, src_fd, dest_fd, ContainerWriter.write_block_data)
+
+
+def compress_and_build(src_folder, dest_folder, *, pool=None, nested=False):
+    helper.clear_dir(dest_folder)
+    entries = sorted(os.listdir(src_folder))
+
+    for filename in entries:
+        src_path = os.path.join(src_folder, filename)
+        dest_path = os.path.join(dest_folder, filename)
+        # add_entry(container, src_folder, filename)
+        if os.path.isdir(src_path):
+            with open(dest_path, 'w+b') as dest_fd:
+                with tempfile.TemporaryFile() as tmp:
+                    with ContainerWriter(tmp) as nested_container:
+                        add_entries(nested_container, src_path, nested=True)
+                    ContainerWriter.compress(None, tmp, dest_fd, ContainerWriter.write_block_data)
+        else:
+            compress_and_build_simple_file(src_path, dest_path)
+    calc_sha1(src_folder, dest_folder)
