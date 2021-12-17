@@ -117,7 +117,7 @@ class HelperTestDecode(unittest.TestCase):
         encode(self.encode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool)
         self.assert_stage(self.decode_dir_stage2, self.encode_dir_stage2)
         if self.result:
-            files = os.listdir(self.encode_dir_stage3)
+            files = os.listdir(self.encode_dir_stage2)
             self.assertEqual(len(files), self.result['count_root_files_stage1'])
 
     def encode_stage2(self):
@@ -138,9 +138,8 @@ class HelperTestDecode(unittest.TestCase):
         # helper.clear_dir(os.path.normpath(self.test_dir))
         encode_file_path = os.path.join(self.test_dir, self.src_file)
         # decode_file_path = os.path.join(self.src_dir, self.src_file)
-        build(self.encode_dir_stage0, encode_file_path)
+        build(self.encode_dir_stage0, encode_file_path, True)
         # self.assertByteFile(decode_file_path, encode_file_path)
-
 
     def assert_external_data_processor_decode_stage3(self):
         if self.result:
@@ -172,7 +171,8 @@ class HelperTestDecode(unittest.TestCase):
                     encode_data = None
 
                 if decode_data != encode_data:
-                    problems += f'\n      {entry}'
+                    if not entry.startswith('configinfo'):
+                        problems += f'\n      {entry}'
         if problems:
             problems = f'   {decode_dir}\n   {encode_dir}{problems}\n'
         if include_problems:

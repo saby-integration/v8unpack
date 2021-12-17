@@ -13,7 +13,7 @@ READ_TEXT_FILE = 5
 
 
 class JsonContainerDecoder:
-    def __init__(self, *, src_dir, file_name):
+    def __init__(self, *, src_dir=None, file_name=None):
         self.data = None
         self.raw_data = None
         self.mode = READ_PARAM

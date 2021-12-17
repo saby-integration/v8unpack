@@ -8,8 +8,8 @@ from datetime import datetime
 
 from . import __version__
 from . import helper
-from .container_reader import extract as container_extract
-from .container_writer import build as container_build
+from .container_reader import extract as container_extract, decompress_and_extract
+from .container_writer import build as container_build, compress_and_build
 from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
@@ -29,9 +29,10 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         temp_dir = tempfile.mkdtemp()
     helper.clear_dir(os.path.normpath(temp_dir))
 
-    stage1_dir = os.path.join(temp_dir, 'decode_stage_1')
-    stage2_dir = os.path.join(temp_dir, 'decode_stage_2')
-    stage3_dir = os.path.join(temp_dir, 'decode_stage_3')
+    dir_stage0 = os.path.join(temp_dir, 'decode_stage_0')
+    dir_stage1 = os.path.join(temp_dir, 'decode_stage_1')
+    dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
+    dir_stage3 = os.path.join(temp_dir, 'decode_stage_3')
 
     if index:
         try:
@@ -44,22 +45,23 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
     begin1 = datetime.now()
     print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Распаковываем ", end='')
-    container_extract(in_filename, stage1_dir, False, False)
+    container_extract(in_filename, dir_stage0, False, False)
+    decompress_and_extract(dir_stage0, dir_stage1, pool=pool)
 
     begin2 = datetime.now()
     print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Конвертируем  ", end='')
-    json_decode(stage1_dir, stage2_dir, pool=pool)
+    json_decode(dir_stage1, dir_stage2, pool=pool)
 
     begin3 = datetime.now()
     print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Раcшифровываем", end='')
-    decode(stage2_dir, stage3_dir, pool=pool, version=version)
+    decode(dir_stage2, dir_stage3, pool=pool, version=version)
 
     begin4 = datetime.now()
     print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Организуем    ", end='')
     if descent:
-        FileOrganizerCE.unpack(stage3_dir, out_dir_name, pool=pool, index=index, descent=descent)
+        FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
     else:
-        FileOrganizer.unpack(stage3_dir, out_dir_name, pool=pool, index=index)
+        FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
 
     end = datetime.now()
     print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
@@ -80,9 +82,10 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         temp_dir = tempfile.mkdtemp()
     helper.clear_dir(os.path.normpath(temp_dir))
 
-    encode_dir_stage1 = os.path.join(temp_dir, 'encode_stage_1')
-    encode_dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
-    encode_dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
+    dir_stage0 = os.path.join(temp_dir, 'encode_stage_0')
+    dir_stage1 = os.path.join(temp_dir, 'encode_stage_1')
+    dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
+    dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
 
     pool = helper.get_pool()
 
@@ -96,21 +99,22 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
     begin1 = datetime.now()
     print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
     if descent:
-        FileOrganizerCE.pack(in_dir_name, encode_dir_stage3, pool=pool, index=index, descent=descent)
+        FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
     else:
-        FileOrganizer.pack(in_dir_name, encode_dir_stage3, pool=pool, index=index)
+        FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
 
     begin2 = datetime.now()
     print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
-    encode(encode_dir_stage3, encode_dir_stage2, version=version, pool=pool, release=release)
+    encode(dir_stage3, dir_stage2, version=version, pool=pool, release=release)
 
     begin3 = datetime.now()
     print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')
-    json_encode(encode_dir_stage2, encode_dir_stage1, pool=pool)
+    json_encode(dir_stage2, dir_stage1, pool=pool)
 
     begin4 = datetime.now()
     print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Запаковываем  ", end='')
-    container_build(encode_dir_stage1, out_file_name)
+    compress_and_build(dir_stage1, dir_stage0, pool=pool)
+    container_build(dir_stage0, out_file_name)
 
     end = datetime.now()
     print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
