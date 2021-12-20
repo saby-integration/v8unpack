@@ -13,6 +13,8 @@ PyInstaller.__main__.run([
     # '-n', f'v8unpack_{"_".join(_version[:-1])}',
     '-n', 'v8unpack',
     # '--hidden-import', modules,
+    '--collect-submodules', 'v8unpack',
+    '--collect-submodules', 'v8unpack.MetaObject',
     '--collect-submodules', 'v8unpack.MetaDataObject',
     '--distpath', '.'
 ])
