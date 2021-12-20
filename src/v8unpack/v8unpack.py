@@ -114,7 +114,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
     begin4 = datetime.now()
     print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Запаковываем  ", end='')
     compress_and_build(dir_stage1, dir_stage0, pool=pool)
-    container_build(dir_stage0, out_file_name)
+    container_build(dir_stage0, out_file_name, True)
 
     end = datetime.now()
     print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
