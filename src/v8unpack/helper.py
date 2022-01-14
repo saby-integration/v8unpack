@@ -168,9 +168,12 @@ def str_time(value, _format='%H:%M:%S.%f'):
 
 def get_extension_from_comment(comment: str) -> str:
     comment = comment.strip()
+    res = 'bin'
     if comment:
-        return comment.split(" ")[-1]
-    return "bin"
+        ext = comment.split(" ")[-1]
+        if len(ext) < 6 and ext.isalnum():
+            return ext
+    return res
 
 
 def check_version(v8_version: str, src_version: str) -> None:
