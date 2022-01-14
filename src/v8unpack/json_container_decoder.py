@@ -88,7 +88,7 @@ class JsonContainerDecoder:
                 self.current_value = ''
                 if line.startswith('{#base64'):
                     self.mode = READ_B64
-                    self.current_value += line[1:-1]
+                    self.decode_b64_line(line, 1)
                 else:
                     self.decode_object(line[1:])
             elif line[0] == '}':
@@ -102,6 +102,9 @@ class JsonContainerDecoder:
                 if not self.data and self.current_value is None:
                     self.data = line
                     self.mode = READ_TEXT_FILE
+                elif self.data == [[]] and self.current_value == '':  # текстовый файл с json
+                    self.data = '{\n' + line
+                    self.mode = READ_TEXT_FILE
                 else:
                     raise Exception(
                         f'неожиданное начало объекта file:{self.src_dir}/{self.file_name}, path:{self.path})')
@@ -114,17 +117,24 @@ class JsonContainerDecoder:
         elif self.mode == READ_B64:
             if line == '\n':
                 return
-            end_pos = line.find('}')
-            if end_pos >= 0:
-                self.current_value += line[:end_pos]
-                self._end_current_object()
-                self.decode_object(line[end_pos + 1:])
-            else:
-                self.current_value += line[:-1]
+            self.decode_b64_line(line, 0)
         elif self.mode == READ_TEXT_FILE:
             self.data += line
         else:
             raise NotImplemented(f'mode {self.mode}')
+
+    def decode_b64_line(self, line, start_pos):
+        end_pos = line.find('}')
+        if end_pos >= 0:
+            self.current_value += line[start_pos:end_pos]
+            if start_pos == 1:  # b64 не зарбит на строки
+                self.current_value = "#" + self.current_value
+            self._end_current_object()
+            self.decode_object(line[end_pos + 1:])
+            return True
+        else:
+            self.current_value += line[start_pos:-1]
+            return False
 
     def decode_object(self, line):
         for char in line:
@@ -230,6 +240,8 @@ class JsonContainerDecoder:
                     while j <= len(elem):
                         raw_data += f'\r\n{elem[j: j + 64]}'
                         j += 64
+                elif elem.startswith('##base64:'):  # b64 в одну строку
+                    raw_data += elem[1:]
                 else:
                     j = len(elem)
                     is_base64 = False

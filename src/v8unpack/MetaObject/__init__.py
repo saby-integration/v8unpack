@@ -137,7 +137,8 @@ class MetaObject:
 
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
-            helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
+            if self.code[code_name]:
+                helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
 
     def encode_code(self, src_dir, file_name):
         for code_name in self.ext_code:
