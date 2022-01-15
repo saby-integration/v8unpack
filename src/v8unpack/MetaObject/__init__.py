@@ -90,7 +90,8 @@ class MetaObject:
 
         for include in includes:
             _handler = helper.get_class_metadata_object(include)
-            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, _handler.get_obj_name(), tasks, self.version)
+            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, _handler.get_obj_name(), tasks,
+                                            self.version)
         return tasks
 
     @classmethod

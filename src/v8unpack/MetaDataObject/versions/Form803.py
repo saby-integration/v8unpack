@@ -1,5 +1,4 @@
 import re
-from enum import Enum
 
 from .Form8x import Form8x
 from ... import helper
@@ -119,10 +118,10 @@ class Form803(Form8x):
             self.write_old_encode_object(dest_dir)
         else:
             helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
-        if self.form:
-            helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
-            if len(self.form) > 1:
-                helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
+            if self.form:
+                helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
+                if len(self.form) > 1:
+                    helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
 
     def encode_empty_form(self):
         return [[
