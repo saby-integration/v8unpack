@@ -31,7 +31,7 @@ class Form803(Form8x):
         except FileNotFoundError:
             return
         try:
-            _code = helper.str_decode(self.form[0][2])
+            _code = helper.str_decode(form[0][2])
             if _code:
                 _code = self.double_quotes.sub('"', _code)
                 self.code['obj'] = _code
