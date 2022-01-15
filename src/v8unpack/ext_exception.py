@@ -47,7 +47,7 @@ class ExtException(Exception):
             self.code = self.code if self.code else self._code
             self.message = self.message if self.message else self._message
             if not self.detail:
-            self.add_sys_exc_to_stack()
+                self.add_sys_exc_to_stack()
         if args:
             if isinstance(args[0], str):
                 self.new_msg = True
