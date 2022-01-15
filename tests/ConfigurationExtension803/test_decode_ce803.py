@@ -1,11 +1,12 @@
 import os
 import unittest
 
+from v8unpack import helper
 from v8unpack.unittest_helper import HelperTestDecode
 
 
 class TestDecode(HelperTestDecode):
-    processes = 1
+    pool = helper.get_pool(pool=None, processes=1)
 
     def setUp(self):
         super(TestDecode, self).setUp()
