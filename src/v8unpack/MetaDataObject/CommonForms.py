@@ -1,8 +1,8 @@
-from ..MetaDataObject import MetaDataObject
+from ..MetaDataObject.core.Simple import SimpleNameFolder
 from ..MetaDataObject.versions.CommonForm803 import CommonForm803
 
 
-class CommonForms(MetaDataObject):
+class CommonForms(SimpleNameFolder):
     versions = {
         '803': CommonForm803
     }

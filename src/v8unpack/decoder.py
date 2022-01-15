@@ -62,6 +62,14 @@ class Decoder:
             handler = handler.get_version(decode_params[4])
             tasks = handler.decode(*decode_params)
             return tasks
+        except ExtException as err:
+            raise ExtException(
+                parent=err,
+                message=f'{err.message} - {err.detail}',
+                detail=f'decode include {include_type}',
+                dump={'decode_params': decode_params},
+                action=f'{cls.__name__}.decode_include'
+            )
         except Exception as err:
             raise ExtException(parent=err, action=f'{cls.__name__}.decode_include')
 

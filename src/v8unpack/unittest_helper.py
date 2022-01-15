@@ -6,7 +6,7 @@ import unittest
 from . import helper
 from .container_reader import extract, decompress_and_extract
 from .container_writer import build, compress_and_build
-from .decoder import decode, encode
+from .decoder import decode, encode, Decoder
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
 from .json_container_decoder import JsonContainerDecoder
@@ -19,7 +19,7 @@ class HelperTestDecode(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        if cls.pool is not None:
+        if cls.pool is None:
             cls.pool = helper.get_pool()
         # cls.maxDiff = None
 
@@ -181,6 +181,14 @@ class HelperTestDecode(unittest.TestCase):
 
     def tmpl_json_encode(self, *, encode_src_dir='', entity_name='', encode_dest_dir='', decode_dir=''):
         JsonContainerDecoder.encode(encode_src_dir, f'{entity_name}.json', encode_dest_dir)
+        if decode_dir:
+            self.assertUtfFile(
+                os.path.join(encode_dest_dir, entity_name),
+                os.path.join(decode_dir, entity_name)
+            )
+
+    def tmpl_decode(self, *, encode_src_dir='', entity_name='', encode_dest_dir='', decode_dir=''):
+        Decoder.decode(encode_src_dir, f'{entity_name}.json', encode_dest_dir)
         if decode_dir:
             self.assertUtfFile(
                 os.path.join(encode_dest_dir, entity_name),
