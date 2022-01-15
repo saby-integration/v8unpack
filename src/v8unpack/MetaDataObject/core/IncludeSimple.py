@@ -20,8 +20,9 @@ class IncludeSimple(MetaDataObject):
             self = cls()
             self.version = version
             self.set_header_data(header_data)
+            self.set_write_decode_mode(dest_dir, dest_path)
             self.decode_code(src_dir)
-            self.write_decode_object(dest_dir, dest_path, version)
+            self.write_decode_object(dest_dir, self.new_dest_path, self.new_dest_file_name, version)
         except Exception as err:
             raise ExtException(
                 parent=err,

@@ -90,7 +90,7 @@ class MetaObject:
 
         for include in includes:
             _handler = helper.get_class_metadata_object(include)
-            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, include, tasks, self.version)
+            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, _handler.get_obj_name(), tasks, self.version)
         return tasks
 
     @classmethod
@@ -102,6 +102,17 @@ class MetaObject:
         for entry in entries:
             if cls.re_meta_data_obj.fullmatch(entry):
                 tasks.append([include, [src_dir, entry[:-5], dest_dir, version]])
+
+    @classmethod
+    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version):
+        """
+        возвращает список задач на парсинг объектов этого типа
+        """
+        entries = os.listdir(src_dir)
+        for entry in entries:
+            if os.path.isdir(os.path.join(src_dir, entry)):
+                new_src_dir = os.path.join(src_dir, entry)
+                tasks.append([include, [new_src_dir, include, dest_dir, version]])
 
     def encode_version(self):
         return self.header['version']

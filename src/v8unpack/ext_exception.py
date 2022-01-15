@@ -44,10 +44,9 @@ class ExtException(Exception):
             self.new_msg = bool(kwargs.get('message'))
         self.init_from_dict(kwargs)
         if parent and isinstance(parent, Exception) and not isinstance(parent, ExtException):
-            self.code = self._code
-            self.message = kwargs.get('message', self._message)
+            self.code = self.code if self.code else self._code
+            self.message = self.message if self.message else self._message
             if not self.detail:
-                self.detail = str(parent)
             self.add_sys_exc_to_stack()
         if args:
             if isinstance(args[0], str):
@@ -96,7 +95,8 @@ class ExtException(Exception):
         return {
             'message': exc_info[0].__name__,
             'detail': str(exc_info[1]),
-            'traceback': f'{path.basename(last_call.filename)}, {last_call.name}, line {last_call.lineno}'
+            'traceback': f'{path.basename(path.dirname(last_call.filename))}/{path.basename(last_call.filename)}, '
+                         f'{last_call.name}, line {last_call.lineno}'
         }
 
     def init_from_dict(self, data):

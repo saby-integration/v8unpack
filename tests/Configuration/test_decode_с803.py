@@ -1,11 +1,15 @@
 import os
-import sys
 import shutil
+import sys
 import unittest
+
+from v8unpack import helper
 from v8unpack.unittest_helper import HelperTestDecode
 
 
 class TestDecode(HelperTestDecode):
+    pool = helper.get_pool(pool=None, processes=1)
+
     def setUp(self):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)

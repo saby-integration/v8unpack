@@ -14,15 +14,17 @@ class Form803(Form8x):
     quotes = re.compile('(")')
 
     def decode_data(self, src_dir, uuid):
+        _header_obj = self.get_decode_obj_header(self.header['data'])
+        self.header['Включать в содержание справки'] = _header_obj[1][2]
+        self.header['Тип формы'] = _header_obj[1][3]
+
         try:
-            _header_obj = self.get_decode_obj_header(self.header['data'])
-            self.header['Включать в содержание справки'] = _header_obj[1][2]
-            self.header['Тип формы'] = _header_obj[1][3]
             self.header['Расширенное представление'] = _header_obj[2]
-            if self.header['Тип формы'] != OLD_FORM:
-                self.decode_form0(src_dir, uuid)
         except IndexError:
             pass
+
+        if self.header['Тип формы'] != OLD_FORM:
+            self.decode_form0(src_dir, uuid)
 
     def decode_form0(self, src_dir, uuid):
         try:
@@ -117,9 +119,10 @@ class Form803(Form8x):
             self.write_old_encode_object(dest_dir)
         else:
             helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
+        if self.form:
             helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
-        if len(self.form) > 1:
-            helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
+            if len(self.form) > 1:
+                helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
 
     def encode_empty_form(self):
         return [[

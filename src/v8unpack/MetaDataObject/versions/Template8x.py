@@ -17,7 +17,6 @@ class TmplType(Enum):
 
 
 class Template8x(Simple):
-    folder = "Макеты"
 
     def __init__(self):
         super().__init__()

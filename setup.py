@@ -23,7 +23,7 @@ setuptools.setup(
         'Topic :: Software Development',
         "Operating System :: OS Independent"
     ],
-    keywords='1C CF CFE EPF V8UNPACK',
+    keywords='1C CF CFE EPF V8UNPACK SABY SBIS СБИС 1С',
     python_requires='>=3.3',
     zip_safe=False,
     install_requires=[
