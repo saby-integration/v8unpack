@@ -1,5 +1,3 @@
-import os
-
 from .Form8x import Form8x
 from ... import helper
 
