@@ -20,7 +20,7 @@ class TestDecode(HelperTestDecode):
             'count_root_files_stage1': 14,
             'count_root_files_stage3': 5,
             'count_root_files_stage4': 5,
-            'count_forms_files': 7,
+            'count_forms_files': 3,
             'count_templates_files': 2
         }
         self.init()
