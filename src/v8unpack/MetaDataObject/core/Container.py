@@ -1,6 +1,3 @@
-import os
-
-from .. import helper
 from ...MetaDataObject import MetaDataObject
 from ...ext_exception import ExtException
 

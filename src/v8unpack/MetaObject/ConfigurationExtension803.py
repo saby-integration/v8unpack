@@ -1,5 +1,3 @@
-from base64 import b64encode, b64decode
-from hashlib import md5
 from .. import __version__
 from .. import helper
 from ..MetaObject.Configuration803 import Configuration803
