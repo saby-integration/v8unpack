@@ -1,5 +1,5 @@
-from ..MetaDataObject.core.Simple import Simple
+from ..MetaDataObject.core.Simple import SimpleNameFolder
 
 
-class CommonModules(Simple):
+class CommonModules(SimpleNameFolder):
     pass

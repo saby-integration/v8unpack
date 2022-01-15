@@ -17,7 +17,6 @@ class TmplType(Enum):
 
 
 class Template8x(Simple):
-    folder = "Макеты"
 
     def __init__(self):
         super().__init__()
@@ -60,10 +59,10 @@ class Template8x(Simple):
     def decode_scheme_data(self, src_dir, dest_dir, write):
         try:
             self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0.bin')
+            if write:
+                helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
         except FileNotFoundError:
-            return
-        if write:
-            helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
+            self.decode_text_data(src_dir, dest_dir, write)
 
     def decode_table_data(self, src_dir, dest_dir, write):
         self.decode_text_data(src_dir, dest_dir, write)
@@ -130,7 +129,7 @@ class Template8x(Simple):
             raw_data = helper.bin_read(src_dir, f'{self.header["name"]}.bin')
             helper.bin_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
         except FileNotFoundError:
-            pass
+            self.encode_text_data(src_dir, dest_dir)
 
     def encode_text_data(self, src_dir, dest_dir):
         try:

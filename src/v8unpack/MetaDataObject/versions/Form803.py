@@ -1,7 +1,11 @@
 import re
+from enum import Enum
 
 from .Form8x import Form8x
 from ... import helper
+
+OLD_FORM = '0'
+UPR_FORM = '1'
 
 
 class Form803(Form8x):
@@ -10,23 +14,48 @@ class Form803(Form8x):
     quotes = re.compile('(")')
 
     def decode_data(self, src_dir, uuid):
-        self.form = helper.json_read(src_dir, f'{uuid}.0.json')
+        _header_obj = self.get_decode_obj_header(self.header['data'])
+        self.header['Включать в содержание справки'] = _header_obj[1][2]
+        self.header['Тип формы'] = _header_obj[1][3]
+
+        try:
+            self.header['Расширенное представление'] = _header_obj[2]
+        except IndexError:
+            pass
+
+        if self.header['Тип формы'] != OLD_FORM:
+            self.decode_form0(src_dir, uuid)
+
+    def decode_form0(self, src_dir, uuid):
+        try:
+            form = helper.json_read(src_dir, f'{uuid}.0.json')
+        except FileNotFoundError:
+            return
         try:
             _code = helper.str_decode(self.form[0][2])
             if _code:
                 _code = self.double_quotes.sub('"', _code)
                 self.code['obj'] = _code
                 self.header['code_info_obj'] = 'Код в отдельном файле'
-                self.form[0][2] = 'Код в отдельном файле'
+                form[0][2] = 'Код в отдельном файле'
+
         except IndexError:
             pass  # todo код расширения не достается
+        self.form.append(form)
 
+    def decode_form1(self, src_dir, uuid):
         try:
-            _header_obj = self.get_decode_obj_header(self.header['data'])
-            self.header['Включать в содержание справки'] = _header_obj[1][2]
-            self.header['Расширенное представление'] = _header_obj[2]
-        except IndexError:
-            pass
+            form = helper.json_read(src_dir, f'{uuid}.1.json')
+        except FileNotFoundError:
+            return
+        self.form.append(form)
+
+    def decode_code(self, src_dir):
+        if self.header['Тип формы'] == OLD_FORM:
+            self.decode_old_form(src_dir)
+        else:
+            super().decode_code(src_dir)
+        self.decode_form1(src_dir, self.header['uuid'])
 
     def encode_header(self):
         return [[
@@ -58,7 +87,7 @@ class Form803(Form8x):
                 *self.header['h5'],
             ],
             self.header['Включать в содержание справки'],
-            "1",
+            self.header['Тип формы'],
             [
                 "2",
                 [
@@ -75,6 +104,8 @@ class Form803(Form8x):
         ]
 
     def encode_data(self):
+        if self.header['Тип формы'] == OLD_FORM:
+            return
         try:
             _code = self.code.pop('obj', "")
             _code = self.quotes.sub('""', _code)
@@ -84,8 +115,14 @@ class Form803(Form8x):
         return self.form
 
     def write_encode_object(self, dest_dir):
-        helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
-        helper.json_write(self.form, dest_dir, f'{self.header["uuid"]}.0.json')
+        if self.header['Тип формы'] == OLD_FORM:
+            self.write_old_encode_object(dest_dir)
+        else:
+            helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
+        if self.form:
+            helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
+            if len(self.form) > 1:
+                helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
 
     def encode_empty_form(self):
         return [[
