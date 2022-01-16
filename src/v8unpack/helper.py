@@ -55,6 +55,13 @@ def bin_read(path, file_name):
 
 
 def decode_header(obj: dict, header: list):
+    # try:  # Эксперимент
+        # header[0] = "0"
+        # header[6] = "0"
+        # header[7] = "00000000-0000-0000-0000-000000000000"
+        # header[8] = "0"
+    # except IndexError:
+    #     pass
     obj['uuid'] = header[1][2]
     obj['name'] = str_decode(header[2])
     obj['name2'] = {}
