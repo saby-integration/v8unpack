@@ -108,7 +108,8 @@ class Form803(Form8x):
         try:
             _code = self.code.pop('obj', "")
             _code = self.quotes.sub('""', _code)
-            self.form[0][2] = helper.str_encode(_code)
+            form0 = self.form[0]
+            form0[0][2] = helper.str_encode(_code)
         except IndexError:
             pass
         return self.form

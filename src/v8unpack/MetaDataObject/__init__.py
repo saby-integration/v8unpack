@@ -82,7 +82,10 @@ class MetaDataObject(MetaObject):
         self.version = version
         file_name = self.get_encode_file_name(file_name)
         try:
-            self.header = helper.json_read(src_dir, f'{file_name}.json')
+            try:
+                self.header = helper.json_read(src_dir, f'{file_name}.json')
+            except FileNotFoundError:
+                return
             self.encode_object(src_dir, file_name, dest_dir, version)
             self.write_encode_object(dest_dir)
             return self.encode_includes(src_dir, dest_dir)

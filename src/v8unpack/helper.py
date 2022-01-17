@@ -107,10 +107,14 @@ def run_in_pool(method, list_args, pool=None):
     # msg = f'pool {method}({len(list_args)})'
     try:
         result = _pool.starmap(method, list_args)
-    except Exception as err:
+    except ExtException as err:
+        raise ExtException(
+            parent=err,
+            action=f'run_in_pool {method.__qualname__}') from err
+    # except Exception as err:
+    #     raise ExtException(parent=err, detail=f'{method.__qualname__ {err.message}' action=f'run_in_pool {method.__qualname__}') from err
+    finally:
         close_pool(_pool, pool)
-        raise ExtException(parent=err, detail=method, action='run_in_pool') from err
-    close_pool(_pool, pool)
     return result
 
 
