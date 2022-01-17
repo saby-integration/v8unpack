@@ -45,9 +45,9 @@ class ExtException(Exception):
         self.init_from_dict(kwargs)
         if parent and isinstance(parent, Exception) and not isinstance(parent, ExtException):
             self.code = self.code if self.code else self._code
-            self.message = self.message if self.message else self._message
             if not self.detail:
                 self.add_sys_exc_to_stack()
+                self.detail = f'{parent.__class__.__name__} {str(parent)}'
         if args:
             if isinstance(args[0], str):
                 self.new_msg = True
@@ -111,7 +111,7 @@ class ExtException(Exception):
     @property
     def title(self):
         if self.detail:
-            return f'{self.code}: {self.message} - {self.detail}'
+            return f'{self.code}: {self.message} - {self.detail} {self.action}'
         return f'{self.code}: {self.message}'
 
     def __str__(self):
