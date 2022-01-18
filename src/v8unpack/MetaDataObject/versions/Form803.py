@@ -2,6 +2,7 @@ import re
 
 from .Form8x import Form8x
 from ... import helper
+from ...ext_exception import ExtException
 
 OLD_FORM = '0'
 UPR_FORM = '1'
@@ -31,16 +32,61 @@ class Form803(Form8x):
         except FileNotFoundError:
             return
         try:
-            _code = helper.str_decode(form[0][2])
+            _code = helper.str_decode(self.getset_form_code(form, 'Код в отдельном файле', self.header))
             if _code:
                 _code = self.double_quotes.sub('"', _code)
                 self.code['obj'] = _code
                 self.header['code_info_obj'] = 'Код в отдельном файле'
-                form[0][2] = 'Код в отдельном файле'
-
-        except IndexError:
-            pass  # todo код расширения не достается
+        except Exception as err:
+            raise ExtException(parent=err, detail=self.header['uuid'])
         self.form.append(form)
+
+    @classmethod
+    def get_last_level_array(cls, data):
+        while True:
+            if isinstance(data[-1], list):
+                return cls.get_last_level_array(data[-1])
+            else:
+                return data
+
+    @classmethod
+    def getset_form_code(cls, form, new_value=None, header=None):
+        err_detail = f'{header["uuid"]} {header["name"]} ' \
+                     f'опытным путем подобрано, если у Вас код не где то не достается' \
+                     f'обновитесь до последней версии, и если не поможет создайте issue с дампом'
+        len_form_0 = len(form[0])
+        if len_form_0 > 2 and form[0][0] == '4':
+            code = form[0][2]
+            if not isinstance(code, str):
+                raise ExtException(
+                    message='Not supported forms',
+                    detail=err_detail,
+                    dump=form
+                )
+            if len_form_0 != 10:
+                a = 1
+            return code
+
+        last_level = cls.get_last_level_array(form)
+        if len_form_0 < 10 and (last_level[0] == '49' or last_level[0] == '4'):
+            return ''
+
+        if len(last_level) > 10 \
+                and last_level[0] in ['22', '1'] \
+                and last_level[-1] == '0' \
+                and last_level[-2] == '0':
+            code_index = -8
+            code = last_level[code_index]
+            if not isinstance(code, str):
+                raise ExtException(
+                    message='Not supported forms',
+                    detail=err_detail,
+                    dump=form
+                )
+            if new_value is not None:
+                last_level[code_index] = new_value
+            return code
+        return ''
 
     def decode_form1(self, src_dir, uuid):
         try:
@@ -109,7 +155,7 @@ class Form803(Form8x):
             _code = self.code.pop('obj', "")
             _code = self.quotes.sub('""', _code)
             form0 = self.form[0]
-            form0[0][2] = helper.str_encode(_code)
+            self.getset_form_code(form0, helper.str_encode(_code), self.header)
         except IndexError:
             pass
         return self.form
@@ -121,8 +167,8 @@ class Form803(Form8x):
             helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
             if self.form:
                 helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
-                if len(self.form) > 1:
-                    helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
+        if self.form and len(self.form) > 1:
+            helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
 
     def encode_empty_form(self):
         return [[

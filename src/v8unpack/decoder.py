@@ -109,7 +109,7 @@ class Decoder:
             tasks = handler.encode(*encode_params)
             return tasks
         except Exception as err:
-            raise ExtException(parent=err, dump=dict(include=include_type)) from err
+            raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
 
 
 def encode(src_dir, dest_dir, *, pool=None, version='803', release=None):
