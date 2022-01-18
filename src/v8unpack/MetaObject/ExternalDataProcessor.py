@@ -26,6 +26,13 @@ class ExternalDataProcessor(MetaObject):
         self.header['versions'] = helper.json_read(src_dir, 'versions.json')
         self.data['copyinfo'] = helper.json_read(src_dir, 'copyinfo.json')
 
+        try:
+            form1 = helper.json_read(src_dir, f'{self.header["uuid"]}.1.json')
+        except FileNotFoundError:
+            form1 = None
+
+        self.data['form1'] = form1
+
         self.decode_code(src_dir)
         pass
         _file_name = self.get_class_name_without_version()
@@ -62,6 +69,8 @@ class ExternalDataProcessor(MetaObject):
         helper.json_write(self.header['versions'], dest_dir, 'versions.json')
         helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
         helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
+        if self.data['form1']:
+            helper.json_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1.json')
         self.encode_code(src_dir, 'ExternalDataProcessor')
         self.write_encode_code(dest_dir)
         tasks = self.encode_includes(src_dir, dest_dir)

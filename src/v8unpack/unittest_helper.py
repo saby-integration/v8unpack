@@ -152,32 +152,62 @@ class HelperTestDecode(unittest.TestCase):
         problems = self._assert_stage(decode_dir, encode_dir)
         self.assertTrue(not problems, f'file not equal\n{problems}')
 
+    @classmethod
+    def compare_file(cls, path_decode_entry, path_encode_entry):
+        problems = ''
+        entry = os.path.basename(path_encode_entry)
+        with open(path_decode_entry, 'rb') as decode_file:
+            try:
+                i = 0
+                with open(path_encode_entry, 'rb') as encode_file:
+                    for decode_line in decode_file:
+                        i += 1
+                        encode_line = encode_file.readline()
+                        if decode_line != encode_line:
+                            if encode_line.endswith(b'\r\n'):
+                                if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
+                                    encode_file.readline()
+                                    continue
+                                if encode_line[:-2] == decode_line:
+                                    continue
+                            problems += f'\n      {entry:38} {i:6} {decode_line}'
+                            problems += f'\n      {"":45} {encode_line}'
+                            raise NotEqualLine()
+                    for encode_line in encode_file:
+                        i += 1
+                        if encode_line == b'}\r\n' or b'}':
+                            continue
+                        problems += f'\n      {entry:38} {i:6} {encode_line}'
+                        raise NotEqualLine()
+            except FileNotFoundError:
+                problems += f'\n      {entry} not encode file'
+        return problems
+
     def _assert_stage(self, decode_dir, encode_dir):
         entries = os.listdir(decode_dir)
         problems = ''
         include_problems = ''
         for entry in entries:
+            if entry.startswith('configinfo'):
+                continue
             path_decode_entry = os.path.join(decode_dir, entry)
             path_encode_entry = os.path.join(encode_dir, entry)
             if os.path.isdir(path_decode_entry):
                 include_problems += self._assert_stage(path_decode_entry, path_encode_entry)
             else:
-                with open(path_decode_entry, 'rb') as file:
-                    decode_data = file.read()
                 try:
-                    with open(path_encode_entry, 'rb') as file:
-                        encode_data = file.read()
-                except FileNotFoundError:
-                    encode_data = None
-
-                if decode_data != encode_data:
-                    if not entry.startswith('configinfo'):
-                        problems += f'\n      {entry}'
+                    problems += self.compare_file(path_decode_entry, path_encode_entry)
+                except NotEqualLine:
+                    continue
         if problems:
             problems = f'   {decode_dir}\n   {encode_dir}{problems}\n'
         if include_problems:
             problems += '\n' + include_problems
         return problems
+
+    @classmethod
+    def remove_closing_brackets(cls, file_data):
+        return file_data
 
     def tmpl_json_encode(self, *, encode_src_dir='', entity_name='', encode_dest_dir='', decode_dir=''):
         JsonContainerDecoder.encode(encode_src_dir, f'{entity_name}.json', encode_dest_dir)
@@ -208,3 +238,7 @@ class HelperTestDecode(unittest.TestCase):
         with open(dest, 'rb') as file:
             dest_data = file.read()
         self.assertEqual(dest_data, src_data)
+
+
+class NotEqualLine(Exception):
+    pass
