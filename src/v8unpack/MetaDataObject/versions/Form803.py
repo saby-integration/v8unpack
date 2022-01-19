@@ -64,6 +64,7 @@ class Form803(Form8x):
                     detail=err_detail,
                     dump=form
                 )
+            form[0][2] = new_value
             if len_form_0 != 10:
                 a = 1
             return code
