@@ -152,37 +152,6 @@ class HelperTestDecode(unittest.TestCase):
         problems = self._assert_stage(decode_dir, encode_dir)
         self.assertTrue(not problems, f'file not equal\n{problems}')
 
-    @classmethod
-    def compare_file(cls, path_decode_entry, path_encode_entry):
-        problems = ''
-        entry = os.path.basename(path_encode_entry)
-        with open(path_decode_entry, 'rb') as decode_file:
-            try:
-                i = 0
-                with open(path_encode_entry, 'rb') as encode_file:
-                    for decode_line in decode_file:
-                        i += 1
-                        encode_line = encode_file.readline()
-                        if decode_line != encode_line:
-                            if encode_line.endswith(b'\r\n'):
-                                if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
-                                    encode_file.readline()
-                                    continue
-                                if encode_line[:-2] == decode_line:
-                                    continue
-                            problems += f'\n      {entry:38} {i:6} {decode_line}'
-                            problems += f'\n      {"":45} {encode_line}'
-                            raise NotEqualLine()
-                    for encode_line in encode_file:
-                        i += 1
-                        if encode_line == b'}\r\n' or b'}':
-                            continue
-                        problems += f'\n      {entry:38} {i:6} {encode_line}'
-                        raise NotEqualLine()
-            except FileNotFoundError:
-                problems += f'\n      {entry} not encode file'
-        return problems
-
     def _assert_stage(self, decode_dir, encode_dir):
         entries = os.listdir(decode_dir)
         problems = ''
@@ -196,9 +165,9 @@ class HelperTestDecode(unittest.TestCase):
                 include_problems += self._assert_stage(path_decode_entry, path_encode_entry)
             else:
                 try:
-                    problems += self.compare_file(path_decode_entry, path_encode_entry)
-                except NotEqualLine:
-                    continue
+                    problems += compare_file(path_decode_entry, path_encode_entry)
+                except NotEqualLine as err:
+                    problems += str(err)
         if problems:
             problems = f'   {decode_dir}\n   {encode_dir}{problems}\n'
         if include_problems:
@@ -217,13 +186,13 @@ class HelperTestDecode(unittest.TestCase):
                 os.path.join(decode_dir, entity_name)
             )
 
-    def tmpl_decode(self, *, encode_src_dir='', entity_name='', encode_dest_dir='', decode_dir=''):
-        Decoder.decode(encode_src_dir, f'{entity_name}.json', encode_dest_dir)
-        if decode_dir:
-            self.assertUtfFile(
-                os.path.join(encode_dest_dir, entity_name),
-                os.path.join(decode_dir, entity_name)
-            )
+    # def tmpl_decode(self, *, encode_src_dir='', entity_name='', encode_dest_dir='', decode_dir=''):
+    #     Decoder.decode(encode_src_dir, f'{entity_name}.json', encode_dest_dir)
+    #     if decode_dir:
+    #         self.assertUtfFile(
+    #             os.path.join(encode_dest_dir, entity_name),
+    #             os.path.join(decode_dir, entity_name)
+    #         )
 
     def assertUtfFile(self, src, dest):
         with open(src, 'r', encoding='utf-8') as file:
@@ -242,3 +211,39 @@ class HelperTestDecode(unittest.TestCase):
 
 class NotEqualLine(Exception):
     pass
+
+
+def compare_file(path_decode_entry, path_encode_entry):
+    problems = ''
+    entry = os.path.basename(path_encode_entry)
+    with open(path_decode_entry, 'rb') as decode_file:
+        try:
+            i = 0
+            with open(path_encode_entry, 'rb') as encode_file:
+                for decode_line in decode_file:
+                    # if i == 1 and decode_line.startswith(b'\xef\xbb\xbf'):
+                    #     decode_line = decode_line[3:]
+                    i += 1
+                    encode_line = encode_file.readline()
+                    if decode_line != encode_line:
+                        if encode_line.endswith(b'\r\n'):
+                            if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
+                                encode_file.readline()
+                                # problems += f'\n      {entry:38} {i:6} \\r {decode_line}'
+                                continue
+                            if encode_line[:-2] == decode_line:
+                                continue
+                        problems += f'\n      {entry:38} {i:6} {decode_line}'
+                        problems += f'\n      {"":45} {encode_line}'
+                        raise NotEqualLine(problems)
+                    elif decode_line.hex() != encode_line.hex():
+                        a = 1
+                for encode_line in encode_file:
+                    i += 1
+                    if encode_line == b'}\r\n' or b'}':
+                        continue
+                    problems += f'\n      {entry:38} {i:6} {encode_line}'
+                    raise NotEqualLine(problems)
+        except FileNotFoundError:
+            problems += f'\n      {entry} not encode file'
+    return problems
