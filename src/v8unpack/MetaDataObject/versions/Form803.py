@@ -17,6 +17,7 @@ class Form803(Form8x):
         _header_obj = self.get_decode_obj_header(self.header['data'])
         self.header['Включать в содержание справки'] = _header_obj[1][2]
         self.header['Тип формы'] = _header_obj[1][3]
+        self.header['Версия803'] = _header_obj[1][0]
 
         try:
             self.header['Расширенное представление'] = _header_obj[2]
@@ -55,7 +56,7 @@ class Form803(Form8x):
                      f'опытным путем подобрано, если у Вас код не где то не достается' \
                      f'обновитесь до последней версии, и если не поможет создайте issue с дампом'
         len_form_0 = len(form[0])
-        if len_form_0 > 2 and form[0][0] == '4':
+        if len_form_0 > 2 and form[0][0] in ['4', '3']:
             code = form[0][2]
             if not isinstance(code, str):
                 raise ExtException(
@@ -118,7 +119,7 @@ class Form803(Form8x):
 
     def encode_header_title(self):
         return [
-            "13",
+            self.header.get('Версия803', '13'),
             [
                 self.header['h0'],
                 [

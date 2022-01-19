@@ -216,6 +216,8 @@ class NotEqualLine(Exception):
 def compare_file(path_decode_entry, path_encode_entry):
     problems = ''
     entry = os.path.basename(path_encode_entry)
+    folder = os.path.basename(os.path.dirname(path_encode_entry))
+    title = os.path.join(folder,entry)
     with open(path_decode_entry, 'rb') as decode_file:
         try:
             i = 0
@@ -233,8 +235,8 @@ def compare_file(path_decode_entry, path_encode_entry):
                                 continue
                             if encode_line[:-2] == decode_line:
                                 continue
-                        problems += f'\n      {entry:38} {i:6} {decode_line}'
-                        problems += f'\n      {"":45} {encode_line}'
+                        problems += f'\n      {title:73} {i:5} {decode_line}'
+                        problems += f'\n      {"":90} {encode_line}'
                         raise NotEqualLine(problems)
                     elif decode_line.hex() != encode_line.hex():
                         a = 1
