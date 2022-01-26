@@ -167,7 +167,7 @@ def main():
 
     if args.B is not None:
         build(args.B[0], args.B[1], index=args.index, temp_dir=args.temp,
-              version=args.version, compatible=args.compatible)
+              version=args.version)
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
