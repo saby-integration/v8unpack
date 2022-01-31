@@ -31,6 +31,9 @@ class Decoder:
                     obj_version = '802'
                 elif _tmp == 3:
                     obj_version = version[0][0][2][0]
+                    #UAA для записи обработки 8.2 после её переконвертации в 8.3 версия приходит в формате для 8.3
+                    if obj_version == '2':
+                        obj_version = '802'
                 else:
                     raise Exception(f'Not supported version {_tmp}')
                 return available_types[f'{obj_type.name}{obj_version[:3]}']
