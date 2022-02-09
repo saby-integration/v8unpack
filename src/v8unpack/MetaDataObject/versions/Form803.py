@@ -1,32 +1,9 @@
-import re
-
 from .Form8x import Form8x
 from ... import helper
 
 
 class Form803(Form8x):
     ver = '803'
-    double_quotes = re.compile('("")')
-    quotes = re.compile('(")')
-
-    def decode_data(self, src_dir, uuid):
-        self.form = helper.json_read(src_dir, f'{uuid}.0.json')
-        try:
-            _code = helper.str_decode(self.form[0][2])
-            if _code:
-                _code = self.double_quotes.sub('"', _code)
-                self.code['obj'] = _code
-                self.header['code_info_obj'] = 'Код в отдельном файле'
-                self.form[0][2] = 'Код в отдельном файле'
-        except IndexError:
-            pass  # todo код расширения не достается
-
-        try:
-            _header_obj = self.get_decode_obj_header(self.header['data'])
-            self.header['Включать в содержание справки'] = _header_obj[1][2]
-            self.header['Расширенное представление'] = _header_obj[2]
-        except IndexError:
-            pass
 
     def encode_header(self):
         return [[
@@ -58,7 +35,7 @@ class Form803(Form8x):
                 *self.header['h5'],
             ],
             self.header['Включать в содержание справки'],
-            "1",
+            self.header['ТипФормы'],
             [
                 "2",
                 [
@@ -73,19 +50,6 @@ class Form803(Form8x):
                 ]
             ]
         ]
-
-    def encode_data(self):
-        try:
-            _code = self.code.pop('obj', "")
-            _code = self.quotes.sub('""', _code)
-            self.form[0][2] = helper.str_encode(_code)
-        except IndexError:
-            pass
-        return self.form
-
-    def write_encode_object(self, dest_dir):
-        helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
-        helper.json_write(self.form, dest_dir, f'{self.header["uuid"]}.0.json')
 
     def encode_empty_form(self):
         return [[
