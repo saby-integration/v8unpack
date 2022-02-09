@@ -1,6 +1,6 @@
 import os
 
-from ..core.Simple import SimpleNameFolder
+from ..core.Simple import Simple
 from ... import helper
 
 FORM83 = "13"
@@ -8,7 +8,7 @@ FORM82 = "9"
 FORM81 = "7"
 
 
-class Form8x(SimpleNameFolder):
+class Form8x(Simple):
     ver = ''
     _obj_name = "Form"
 
