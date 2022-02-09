@@ -69,7 +69,7 @@ class ExternalDataProcessor(MetaObject):
         helper.json_write(self.header['versions'], dest_dir, 'versions.json')
         helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
         helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
-        if self.data['form1']:
+        if self.data.get('form1'):
             helper.json_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1.json')
         self.encode_code(src_dir, 'ExternalDataProcessor')
         self.write_encode_code(dest_dir)
