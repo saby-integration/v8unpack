@@ -18,8 +18,8 @@ class CommonForm803(Form803):
             [
                 "4",
                 self.encode_header_title(),
-                self.header['Расширенное представление'],
-                self.header['Пояснение'],
+                self.header.get('Расширенное представление', ['0']),
+                self.header.get('Пояснение', ['0']),
                 self.header['Использовать стандартные команды']
             ],
             "0"
