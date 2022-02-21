@@ -85,7 +85,7 @@ class MetaObject:
                 try:
                     MetaDataTypes[entry]
                 except KeyError:
-                    raise Exception(f'Обнаружен не поддерживаемый тип метаданных {entry}')
+                    raise Exception(f'Обнаружен не поддерживаемый тип метаданных или некорректно описанная область {entry} ')
                 includes.append(entry)
 
         for include in includes:

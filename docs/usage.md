@@ -153,7 +153,7 @@ XYYZZ, например 8.3.6 = 80306
 Чтобы не набивать руками есть генератор оглавления, который добавляет в имеющийся
 файл все чего там нет.
 
-    v8unpack.exe -I src --index index.json -core core
+    v8unpack.exe -I src --index index.json --core core
     
 параметры 
 * src - папка с исходниками
