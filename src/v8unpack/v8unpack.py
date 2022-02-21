@@ -18,110 +18,116 @@ from .json_container_decoder import json_decode, json_encode
 
 
 def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None, descent=None):
-    begin0 = datetime.now()
-    print(f"v8unpack {__version__}")
-    print(f"{helper.str_time(begin0)} Начали        ", end='')
-    if descent is None:
-        helper.clear_dir(os.path.normpath(out_dir_name))
-    clear_temp_dir = False
-    if temp_dir is None:
-        clear_temp_dir = True
-        temp_dir = tempfile.mkdtemp()
-    helper.clear_dir(os.path.normpath(temp_dir))
+    try:
+        begin0 = datetime.now()
+        print(f"v8unpack {__version__}")
+        print(f"{helper.str_time(begin0)} Начали        ", end='')
+        if descent is None:
+            helper.clear_dir(os.path.normpath(out_dir_name))
+        clear_temp_dir = False
+        if temp_dir is None:
+            clear_temp_dir = True
+            temp_dir = tempfile.mkdtemp()
+        helper.clear_dir(os.path.normpath(temp_dir))
 
-    dir_stage0 = os.path.join(temp_dir, 'decode_stage_0')
-    dir_stage1 = os.path.join(temp_dir, 'decode_stage_1')
-    dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
-    dir_stage3 = os.path.join(temp_dir, 'decode_stage_3')
+        dir_stage0 = os.path.join(temp_dir, 'decode_stage_0')
+        dir_stage1 = os.path.join(temp_dir, 'decode_stage_1')
+        dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
+        dir_stage3 = os.path.join(temp_dir, 'decode_stage_3')
 
-    if index:
-        try:
-            with open(index, 'r', encoding='utf-8') as f:
-                index = json.load(f)
-        except FileNotFoundError:
-            index = None
+        if index:
+            try:
+                with open(index, 'r', encoding='utf-8') as f:
+                    index = json.load(f)
+            except FileNotFoundError:
+                index = None
 
-    pool = helper.get_pool()
+        pool = helper.get_pool()
 
-    begin1 = datetime.now()
-    print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Распаковываем ", end='')
-    container_extract(in_filename, dir_stage0, False, False)
-    decompress_and_extract(dir_stage0, dir_stage1, pool=pool)
+        begin1 = datetime.now()
+        print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Распаковываем ", end='')
+        container_extract(in_filename, dir_stage0, False, False)
+        decompress_and_extract(dir_stage0, dir_stage1, pool=pool)
 
-    begin2 = datetime.now()
-    print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Конвертируем  ", end='')
-    json_decode(dir_stage1, dir_stage2, pool=pool)
+        begin2 = datetime.now()
+        print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Конвертируем  ", end='')
+        json_decode(dir_stage1, dir_stage2, pool=pool)
 
-    begin3 = datetime.now()
-    print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Раcшифровываем", end='')
-    decode(dir_stage2, dir_stage3, pool=pool, version=version)
+        begin3 = datetime.now()
+        print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Раcшифровываем", end='')
+        decode(dir_stage2, dir_stage3, pool=pool, version=version)
 
-    begin4 = datetime.now()
-    print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Организуем    ", end='')
-    if descent:
-        FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
-    else:
-        FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
+        begin4 = datetime.now()
+        print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Организуем    ", end='')
+        if descent:
+            FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
+        else:
+            FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
 
-    end = datetime.now()
-    print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
+        end = datetime.now()
+        print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
 
-    helper.close_pool(pool)
-    if clear_temp_dir:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        helper.close_pool(pool)
+        if clear_temp_dir:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+    except Exception as err:
+        print(err)
 
 
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
           version='803', descent=None, release=None):
-    begin0 = datetime.now()
-    print(f"v8unpack {__version__}")
-    print(f"{helper.str_time(begin0)} Начали        ", end='')
-    clear_temp_dir = False
-    if temp_dir is None:
-        clear_temp_dir = True
-        temp_dir = tempfile.mkdtemp()
-    helper.clear_dir(os.path.normpath(temp_dir))
+    try:
+        begin0 = datetime.now()
+        print(f"v8unpack {__version__}")
+        print(f"{helper.str_time(begin0)} Начали        ", end='')
+        clear_temp_dir = False
+        if temp_dir is None:
+            clear_temp_dir = True
+            temp_dir = tempfile.mkdtemp()
+        helper.clear_dir(os.path.normpath(temp_dir))
 
-    dir_stage0 = os.path.join(temp_dir, 'encode_stage_0')
-    dir_stage1 = os.path.join(temp_dir, 'encode_stage_1')
-    dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
-    dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
+        dir_stage0 = os.path.join(temp_dir, 'encode_stage_0')
+        dir_stage1 = os.path.join(temp_dir, 'encode_stage_1')
+        dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
+        dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
 
-    pool = helper.get_pool()
+        pool = helper.get_pool()
 
-    if index:
-        try:
-            with open(index, 'r', encoding='utf-8') as f:
-                index = json.load(f)
-        except FileNotFoundError:
-            index = None
+        if index:
+            try:
+                with open(index, 'r', encoding='utf-8') as f:
+                    index = json.load(f)
+            except FileNotFoundError:
+                index = None
 
-    begin1 = datetime.now()
-    print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
-    if descent:
-        FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
-    else:
-        FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
+        begin1 = datetime.now()
+        print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
+        if descent:
+            FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
+        else:
+            FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
 
-    begin2 = datetime.now()
-    print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
-    encode(dir_stage3, dir_stage2, version=version, pool=pool, release=release)
+        begin2 = datetime.now()
+        print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
+        encode(dir_stage3, dir_stage2, version=version, pool=pool, release=release)
 
-    begin3 = datetime.now()
-    print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')
-    json_encode(dir_stage2, dir_stage1, pool=pool)
+        begin3 = datetime.now()
+        print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')
+        json_encode(dir_stage2, dir_stage1, pool=pool)
 
-    begin4 = datetime.now()
-    print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Запаковываем  ", end='')
-    compress_and_build(dir_stage1, dir_stage0, pool=pool)
-    container_build(dir_stage0, out_file_name, True)
+        begin4 = datetime.now()
+        print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Запаковываем  ", end='')
+        compress_and_build(dir_stage1, dir_stage0, pool=pool)
+        container_build(dir_stage0, out_file_name, True)
 
-    end = datetime.now()
-    print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
+        end = datetime.now()
+        print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
 
-    helper.close_pool(pool)
-    if clear_temp_dir:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        helper.close_pool(pool)
+        if clear_temp_dir:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+    except Exception as err:
+        print(err)
 
 
 def main():
