@@ -188,7 +188,7 @@ def check_version(v8_version: str, src_version: str) -> None:
     if len(_src) != 3:
         raise AssertionError(f'Не правильная версия исходников "{src_version}"')
     if (int(_v8[0]), int(_v8[1])) != (int(_src[0]), int(_src[1])):
-        raise AssertionError("Версия исходников {_src[0]}.{_src[1]} не соответствует версии v8unpack {_v8[0]}.{_v8[1]}")
+        raise AssertionError(f"Версия исходников {_src[0]}.{_src[1]} не соответствует версии v8unpack {_v8[0]}.{_v8[1]}")
 
 
 def get_descent_file_name(file_name, descent):
