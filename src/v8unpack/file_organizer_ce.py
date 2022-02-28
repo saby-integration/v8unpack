@@ -32,6 +32,16 @@ class FileOrganizerCE(FileOrganizer):
 
     @classmethod
     def list_descent_dir(cls, src_dir, path, descent):
+        def check_descent_name(_name):
+            try:
+                if len(_name) < 3:
+                    return False
+                _descent = _name[-2]
+                if str(int(_descent)) == _descent:
+                    return True
+            except Exception:
+                return False
+
         _index = {}
         result = []
         _dir = os.path.join(src_dir, path)
@@ -42,7 +52,8 @@ class FileOrganizerCE(FileOrganizer):
                 result.append(entry)
             else:
                 name: list = entry.split('.')
-                name.pop(-2)
+                if not check_descent_name(name):
+                    raise Exception(f'Файл {path} {entry} не содержит информации о descent.')
                 entry_without_descent = '.'.join(name)
                 if entry_without_descent not in _index:
                     _index[entry_without_descent] = 1
