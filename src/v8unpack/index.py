@@ -1,6 +1,8 @@
 import json
 import os
 
+from .helper import remove_descent_from_filename
+
 
 def get(index: dict, path: str, file_name: str):
     _index = index
@@ -15,6 +17,7 @@ def update_index(src_dir: str, index_file_name: str, dest_dir: str):
     def _update_index(_src_dir, _index, _dest_dir, _path):
         entries = os.listdir(os.path.join(_src_dir, _path))
         for entry in entries:
+            entry = remove_descent_from_filename(entry)
             new_path = os.path.join(_path, entry)
             if os.path.isdir(os.path.join(_src_dir, new_path)):
                 if entry not in _index:

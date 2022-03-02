@@ -71,7 +71,7 @@ class CodeOrganizer:
                     if line[0] == '#':
                         if line.startswith('#Область include'):
                             include_path = line[17:].strip()
-                            _path, _file_name = cls.parse_include_path(include_path, path, file_name)
+                            _path, _file_name = cls.parse_include_path(include_path, path, file_name, descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
                             if _src_abs_path.startswith(src_dir):
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
@@ -82,20 +82,22 @@ class CodeOrganizer:
             raise ExtException(parent=err, action=f'{cls.__name__}.pack_file', detail=f'{path} {file_name}')
 
     @staticmethod
-    def parse_include_path(include_path, path, file_name):
+    def parse_include_path(include_path, path, file_name, descent):
         tmp = include_path.split('_')
         size_tmp = len(tmp)
         if size_tmp == 0:
             raise Exception(f'{path} {file_name} в include не указан путь')
         _file_name = f'{tmp[-1]}.1c'
         _path = '..'  # include не должен лежать внутри папки с исходниками
+        if descent:
+            _path = os.path.join(_path, '..')
         if size_tmp > 1:
             tmp = ['..' if elem == '' else elem for elem in tmp[:-1]]
             _path = os.path.join(_path, *tmp)
         return _path, _file_name
 
     @staticmethod
-    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict):
+    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict, descent: int):
         if index:
             try:
                 _res = get_from_index(index, path, file_name)
@@ -105,7 +107,12 @@ class CodeOrganizer:
             if _res:
                 _path = os.path.dirname(_res)
                 _file = os.path.basename(_res)
-                _path = os.path.join('..', _path)
+                _path = os.path.join(
+                    '..',
+                    None if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                    _path
+                )
+
                 try:
                     os.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
                 except FileExistsError:

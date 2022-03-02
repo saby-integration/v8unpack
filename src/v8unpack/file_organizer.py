@@ -32,7 +32,8 @@ class FileOrganizer:
 
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
-        dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, dest_path, dest_file_name, index)
+        dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, dest_path, dest_file_name, index,
+                                                                      descent)
         dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
 
         if dest_entry_path:
@@ -58,9 +59,10 @@ class FileOrganizer:
             for elem in code_areas:
                 _file = code_areas[elem]
                 if elem == 'root':
-                    _file['path'], _file['file_name'] = CodeOrganizer.get_dest_path(dest_dir, path, file_name, index)
+                    _file['path'], _file['file_name'] = CodeOrganizer.get_dest_path(dest_dir, path, file_name, index,
+                                                                                    descent)
                 else:
-                    _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name)
+                    _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name, descent)
                 _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
                 if _file['dest_path'].startswith(dest_dir):
                     descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
@@ -126,7 +128,11 @@ class FileOrganizer:
                 pass
             elif isinstance(index[entry], str):
                 if entry[-3:] == '.1c':
-                    _src_path = os.path.join('..', os.path.dirname(index[entry]))
+                    _src_path = os.path.join(
+                        '..',
+                        None if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                        os.path.dirname(index[entry])
+                    )
                     _dest_path = os.path.join(*path)
 
                     _src_abs_path = os.path.abspath(_src_path)
@@ -140,7 +146,12 @@ class FileOrganizer:
                         descent, func_descent_filename))
                 else:
                     _dest_path = os.path.join(dest_dir, *path)
-                    _src_full_path = os.path.join(src_dir, '..', index[entry])
+                    _src_full_path = os.path.join(
+                        src_dir,
+                        '..',
+                        None if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                        index[entry]
+                    )
                     _src_path = os.path.dirname(_src_full_path)
                     _src_file_name = os.path.basename(_src_full_path)
                     cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
