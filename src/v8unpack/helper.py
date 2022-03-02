@@ -188,7 +188,8 @@ def check_version(v8_version: str, src_version: str) -> None:
     if len(_src) != 3:
         raise AssertionError(f'Не правильная версия исходников "{src_version}"')
     if (int(_v8[0]), int(_v8[1])) != (int(_src[0]), int(_src[1])):
-        raise AssertionError(f"Версия исходников {_src[0]}.{_src[1]} не соответствует версии v8unpack {_v8[0]}.{_v8[1]}")
+        raise AssertionError(
+            f"Версия исходников {_src[0]}.{_src[1]} не соответствует версии v8unpack {_v8[0]}.{_v8[1]}")
 
 
 def get_descent_file_name(file_name, descent):
@@ -225,3 +226,15 @@ def get_near_descent_file_name(path, file_name, descent):
     if descents[0] > descent:
         return '', ''
     return path, f'{startswith}.{descents[0]}.{endswith}'
+
+
+def remove_descent_from_filename(file_name):
+    _name = file_name.split('.')
+    try:
+        if len(_name) < 3:
+            return file_name
+        _descent = _name.pop(-2)
+        if str(int(_descent)) == _descent:
+            return '.'.join(_name)
+    except Exception:
+        return file_name

@@ -51,11 +51,8 @@ class FileOrganizerCE(FileOrganizer):
             if os.path.isdir(full_path):
                 result.append(entry)
             else:
-                name: list = entry.split('.')
-                if not check_descent_name(name):
-                    raise Exception(f'Файл {path} {entry} не содержит информации о descent.')
-                entry_without_descent = '.'.join(name)
-                if entry_without_descent not in _index:
-                    _index[entry_without_descent] = 1
-                    result.append(entry_without_descent)
+                entry = helper.remove_descent_from_filename(entry)
+                if entry not in _index:
+                    _index[entry] = 1
+                    result.append(entry)
         return result
