@@ -3,6 +3,10 @@ from ..MetaDataObject.core.Container import Container
 
 class DataProcessor(Container):
     version = '803'
+    ext_code = {
+        'mgr': '2',  # модуль менеджера
+        'obj': '0',  # модуль объекта
+    }
 
     def __init__(self):
         super(DataProcessor, self).__init__()
