@@ -130,7 +130,7 @@ class FileOrganizer:
                 if entry[-3:] == '.1c':
                     _src_path = os.path.join(
                         '..',
-                        None if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
                         os.path.dirname(index[entry])
                     )
                     _dest_path = os.path.join(*path)
@@ -149,7 +149,7 @@ class FileOrganizer:
                     _src_full_path = os.path.join(
                         src_dir,
                         '..',
-                        None if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
                         index[entry]
                     )
                     _src_path = os.path.dirname(_src_full_path)
