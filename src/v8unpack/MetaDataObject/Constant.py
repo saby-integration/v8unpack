@@ -1,7 +1,7 @@
 from ..MetaDataObject.core.Simple import Simple
 
 
-class Constants(Simple):
+class Constant(Simple):
     ext_code = {
         'mgr': '1',  # модуль менеджера Константы
         'obj': '0',  # модуль менеджера значения Константы

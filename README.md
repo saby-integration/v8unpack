@@ -83,7 +83,7 @@ if __name__ == '__main__':
 3.	Декодирование заголовков и разбивка по типам метаданных
 4.	Организация кода и структуры хранения
 
-![Алгоритм работы](https://github.com/saby-integration/v8unpack/blob/main/docs/stage.png)
+![Алгоритм работы](https://github.com/saby-integration/v8unpack/blob/main/docs/stage.png?raw=true)
 
 ## Ограничения
 

@@ -1,7 +1,7 @@
 from ..MetaDataObject.core.Container import Container
 
 
-class Documents(Container):
+class Document(Container):
     pass
 
     @classmethod
