@@ -109,7 +109,7 @@ class CodeOrganizer:
                 _file = os.path.basename(_res)
                 _path = os.path.join(
                     '..',
-                    None if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                    '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
                     _path
                 )
 
