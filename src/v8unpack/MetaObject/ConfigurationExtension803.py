@@ -28,6 +28,7 @@ class ConfigurationExtension803(Configuration803):
         self.header['data'] = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
         _form_header = self.get_decode_header(self.header['data'])
         helper.decode_header(self.header, _form_header)
+        product_version = self.header['data'][0][3][1][1][15]
         if version is None:
             self.header['compatibility_version'] = self.header['data'][0][3][1][1][43]
         else:
@@ -41,7 +42,7 @@ class ConfigurationExtension803(Configuration803):
                 self.header[f'info{i}'] = helper.json_read(src_dir, f'{self.header["uuid"]}.{i}.json')
             except FileNotFoundError:
                 pass
-
+        helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.txt', encoding='utf-8')
         helper.json_write(self.header, dest_dir, f'{cls.get_class_name_without_version()}.json')
         self.write_decode_code(dest_dir, cls.__name__)
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
@@ -52,8 +53,15 @@ class ConfigurationExtension803(Configuration803):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
+        try:
+            product_version = helper.txt_read(src_dir, 'version.txt', encoding='utf-8')
+            self.header['data'][0][3][1][1][15] = helper.str_encode(product_version)
+        except FileNotFoundError:
+            pass
+
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
+
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
         # self.header['copyinfo'][2] = b64encode(bytes.fromhex(self.header['copyinfo'][2]+md5().digest().hex())).decode()
