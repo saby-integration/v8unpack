@@ -16,7 +16,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Natural Language :: Russian',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',

@@ -237,6 +237,7 @@ def build(folder, filename, nested=False):
     :param filename: имя файла контейнера
     :type filename: string
     """
+    os.makedirs(os.path.dirname(filename))
     with open(filename, 'w+b') as f, ContainerWriter(f) as container:
         add_entries(container, folder, nested)
 
