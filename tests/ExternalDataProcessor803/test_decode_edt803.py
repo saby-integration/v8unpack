@@ -19,11 +19,11 @@ class TestDecode(HelperTestDecode):
         self.result = {
             'count_root_files_stage1': 14,
             'count_root_files_stage3': 5,
-            'count_root_files_stage4': 5,
+            'count_root_files_stage4': 4,
             'count_forms_files': 3,
             'count_templates_files': 2
         }
-        self.init()
+        self.init(index='index.json')
         pass
 
     def test_01_decode_stage0(self):
