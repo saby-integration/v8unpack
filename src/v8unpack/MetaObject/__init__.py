@@ -133,8 +133,8 @@ class MetaObject:
 
     def write_raw_code(self, code, dest_dir, filename, encoding='uft-8'):
         if code is not None:
-            if self.version in ['801', '802']:  # комментируем директивы
-                code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
+            # if self.version in ['801', '802']:  # комментируем директивы
+            code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
             helper.txt_write(code, dest_dir, filename, encoding=encoding)
 
     def decode_code(self, src_dir):
