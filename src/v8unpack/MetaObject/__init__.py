@@ -127,14 +127,14 @@ class MetaObject:
     def read_raw_code(self, src_dir, file_name, encoding='utf-8'):
         code = helper.txt_read(src_dir, file_name, encoding=encoding)
         if code:
-            if self.version in ['801', '802']:  # убираем комментрии у директив
-                code = self.directive_1c_comment.sub('\g<n>\g<d>', code)
+            # if self.version in ['801', '802']:  # убираем комментрии у директив
+            code = self.directive_1c_comment.sub('\g<n>\g<d>', code)
         return code
 
     def write_raw_code(self, code, dest_dir, filename, encoding='uft-8'):
         if code is not None:
-            # if self.version in ['801', '802']:  # комментируем директивы
-            code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
+            if self.version in ['801', '802']:  # комментируем директивы
+                code = self.directive_1c_uncomment.sub('\g<n>// v8unpack \g<d>', code)
             helper.txt_write(code, dest_dir, filename, encoding=encoding)
 
     def decode_code(self, src_dir):
