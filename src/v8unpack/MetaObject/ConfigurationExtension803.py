@@ -49,7 +49,7 @@ class ConfigurationExtension803(Configuration803):
         return tasks
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, release=None, file_name=None):
+    def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, gui=None, **kwargs):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
@@ -58,6 +58,8 @@ class ConfigurationExtension803(Configuration803):
 
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
+        if gui is not None:
+            self.header['data'][0][3][1][1][38] = gui
 
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 

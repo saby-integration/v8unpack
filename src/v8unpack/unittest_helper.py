@@ -113,9 +113,9 @@ class HelperTestDecode(unittest.TestCase):
             files = os.listdir(self.encode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
-    def encode_stage3(self):
+    def encode_stage3(self, *, gui=None):
         encode(self.encode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool,
-               file_name=os.path.basename(self.src_file))
+               file_name=os.path.basename(self.src_file), gui=gui)
         self.assert_stage(self.decode_dir_stage2, self.encode_dir_stage2)
         if self.result:
             files = os.listdir(self.encode_dir_stage2)
