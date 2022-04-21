@@ -62,12 +62,13 @@ class FileOrganizer:
                     _file['path'], _file['file_name'] = CodeOrganizer.get_dest_path(dest_dir, path, file_name, index,
                                                                                     descent)
                 else:
-                    _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name, index,
-                                                                                         descent)
+                    _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(
+                        elem, path, file_name, index.get('Области include'), descent)
                 _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
                 if _file['dest_path'].startswith(dest_dir):
                     descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
-                        None, None, _file['data'], _file['dest_path'], _file['file_name'], descent, cls.equal_code_file)
+                        None, None, _file['data'], _file['dest_path'], _file['file_name'], descent,
+                        cls.equal_code_file)
                 else:
                     descent_full_dest_path, descent_file_name = _file['dest_path'], _file['file_name']
 
@@ -108,17 +109,15 @@ class FileOrganizer:
         helper.clear_dir(dest_dir)
         tasks = []
         src_dir = os.path.abspath(src_dir)
-        cls.pack_index(src_dir, dest_dir, tasks, index, descent)
-        cls._pack(src_dir, dest_dir, '', tasks, index, descent)
+        index_code_areas = index.get('Области include') if index else None
+        if index:
+            cls._pack_index(src_dir, dest_dir, tasks, index, index_code_areas, [''], descent)
+        cls._pack(src_dir, dest_dir, '', tasks, index, index_code_areas, descent)
         helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool)
 
     @classmethod
-    def pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, descent=None):
-        if index:
-            cls._pack_index(src_dir, dest_dir, tasks, index, [''], descent)
-
-    @classmethod
-    def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, path: list, descent=None):
+    def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, index_code_areas: dict, path: list,
+                    descent=None):
         for entry in index:
             if entry == 'Области include':
                 continue
@@ -126,7 +125,7 @@ class FileOrganizer:
                 continue
             if isinstance(index[entry], dict):
                 path.append(entry)
-                cls._pack_index(src_dir, dest_dir, tasks, index[entry], path, descent)
+                cls._pack_index(src_dir, dest_dir, tasks, index[entry], index_code_areas, path, descent)
                 path.pop()
                 pass
             elif isinstance(index[entry], str):
@@ -145,7 +144,7 @@ class FileOrganizer:
                         func_descent_filename = FileOrganizer.pack_get_descent_filename
                     tasks.append((
                         src_dir, _src_path, os.path.basename(index[entry]),
-                        dest_dir, _dest_path, entry, index,
+                        dest_dir, _dest_path, entry, index_code_areas,
                         descent, func_descent_filename))
                 else:
                     _dest_path = os.path.join(dest_dir, *path)
@@ -170,7 +169,7 @@ class FileOrganizer:
         return os.listdir(os.path.join(src_dir, path))
 
     @classmethod
-    def _pack(cls, src_dir, dest_dir, path, tasks, index, descent=None):
+    def _pack(cls, src_dir, dest_dir, path, tasks, index, index_code_areas, descent=None):
         if path:
             os.makedirs(os.path.join(dest_dir, path), exist_ok=True)
         entries = cls.list_descent_dir(src_dir, path, descent)
@@ -179,7 +178,7 @@ class FileOrganizer:
                 src_entry_path = os.path.join(src_dir, path, entry)
 
                 if os.path.isdir(src_entry_path):
-                    cls._pack(src_dir, dest_dir, os.path.join(path, entry), tasks, index, descent)
+                    cls._pack(src_dir, dest_dir, os.path.join(path, entry), tasks, index, index_code_areas, descent)
                     continue
                 _src_path = os.path.join(src_dir, path)
                 descent_full_src_path, descent_file_name = cls.pack_get_descent_filename(
@@ -187,7 +186,7 @@ class FileOrganizer:
 
                 if entry[-3:] == '.1c':
                     tasks.append((
-                        src_dir, path, descent_file_name, dest_dir, path, entry, index, descent,
+                        src_dir, path, descent_file_name, dest_dir, path, entry, index_code_areas, descent,
                         cls.pack_get_descent_filename))
                 else:
                     # shutil.copy(src_entry_path, os.path.join(dest_dir, path, entry))
