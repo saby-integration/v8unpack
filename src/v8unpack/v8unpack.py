@@ -109,7 +109,8 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         begin2 = datetime.now()
         print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
-        encode(dir_stage3, dir_stage2, version=version, pool=pool, release=release)
+        encode(dir_stage3, dir_stage2, version=version, pool=pool, release=release,
+               file_name=os.path.basename(out_file_name))
 
         begin3 = datetime.now()
         print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')

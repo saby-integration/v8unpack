@@ -63,18 +63,17 @@ class FileOrganizer:
                                                                                     descent)
                 else:
                     _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(
-                        elem, path, file_name,
-                        index.get('Области include'), descent)
-                    _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
-                    if _file['dest_path'].startswith(dest_dir):
-                        descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
-                            None, None, _file['data'], _file['dest_path'], _file['file_name'], descent,
-                            cls.equal_code_file)
-                    else:
-                        descent_full_dest_path, descent_file_name = _file['dest_path'], _file['file_name']
+                        elem, path, file_name, index.get('Области include'), descent)
+                _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
+                if _file['dest_path'].startswith(dest_dir):
+                    descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
+                        None, None, _file['data'], _file['dest_path'], _file['file_name'], descent,
+                        cls.equal_code_file)
+                else:
+                    descent_full_dest_path, descent_file_name = _file['dest_path'], _file['file_name']
 
-                    if descent_file_name:
-                        os.makedirs(descent_full_dest_path, exist_ok=True)
+                if descent_file_name:
+                    os.makedirs(descent_full_dest_path, exist_ok=True)
                     helper.txt_write(_file['data'], descent_full_dest_path, descent_file_name)
         except Exception as err:
             raise ExtException(

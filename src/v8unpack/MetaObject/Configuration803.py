@@ -46,7 +46,7 @@ class Configuration803(MetaObject):
         ]
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, release=None):
+    def encode(cls, src_dir, dest_dir, *, version=None, release=None, file_name=None):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')

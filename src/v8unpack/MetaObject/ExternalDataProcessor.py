@@ -54,7 +54,7 @@ class ExternalDataProcessor(MetaObject):
         return header_data[0][3][1][1][3][1]
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, release=None):
+    def encode(cls, src_dir, dest_dir, *, version=None, release=None, file_name=None):
         self = cls()
         helper.clear_dir(dest_dir)
         _file_name = self.get_class_name_without_version()
@@ -64,6 +64,9 @@ class ExternalDataProcessor(MetaObject):
             self.data = helper.json_read(src_dir, f'{_file_name}.data{self.version}.json')
         except FileNotFoundError:
             self.data = self.encode_empty_data()
+
+        self.set_product_info(src_dir, file_name)
+
         helper.json_write(self.encode_root(), dest_dir, 'root.json')
         helper.json_write(self.encode_version(), dest_dir, 'version.json')
         helper.json_write(self.header['versions'], dest_dir, 'versions.json')
