@@ -23,31 +23,35 @@ class CodeOrganizer:
         with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8-sig') as file:
             line = file.readline()
             while line:
-                if line[0] == '#':
-                    if line.startswith('#Область'):
-                        if line.startswith('#Область include'):
-                            key = line[17:].strip()
-                            # if key in self.code_areas:
-                            #     raise Exception(
-                            #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
+                try:
+                    _line = line.strip()
+                    if _line and _line[0] == '#':
+                        if _line.startswith('#Область'):
+                            if _line.startswith('#Область include'):
+                                key = _line[17:].strip()
+                                # if key in self.code_areas:
+                                #     raise Exception(
+                                #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
+                                self.code_areas[_include_path[-1]]['data'] += line
+                                self.code_areas[key] = dict(data='')
+                                _include_path.append(key)
+                                _path.append(key)
+                            else:
+                                self.code_areas[_include_path[-1]]['data'] += line
+                                _path.append('')
+
+                        elif _line.startswith('#КонецОбласти'):
+                            if _path[-1]:  # кончилась include область
+                                _include_path.pop()
+                            _path.pop()
                             self.code_areas[_include_path[-1]]['data'] += line
-                            self.code_areas[key] = dict(data='')
-                            _include_path.append(key)
-                            _path.append(key)
                         else:
                             self.code_areas[_include_path[-1]]['data'] += line
-                            _path.append('')
-
-                    elif line.startswith('#КонецОбласти'):
-                        if _path[-1]:  # кончилась iтclude область
-                            _include_path.pop()
-                        _path.pop()
-                        self.code_areas[_include_path[-1]]['data'] += line
                     else:
                         self.code_areas[_include_path[-1]]['data'] += line
-                else:
-                    self.code_areas[_include_path[-1]]['data'] += line
-                line = file.readline()
+                    line = file.readline()
+                except Exception as err:
+                    raise ExtException(parent=err, detail=f'in file {file_name} line {line}') from err
         return self.code_areas
 
     @classmethod
@@ -55,34 +59,37 @@ class CodeOrganizer:
         return cls.pack(*params)
 
     @classmethod
-    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, descent,
+    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent,
              pack_get_descent_filename):
-        data = cls.pack_file(src_dir, src_path, src_file_name, descent, pack_get_descent_filename)
+        data = cls.pack_file(src_dir, src_path, src_file_name, index, descent, pack_get_descent_filename)
         helper.txt_write(data, os.path.join(dest_dir, dest_path), dest_file_name)
 
     @classmethod
-    def pack_file(cls, src_dir, path, file_name, descent, pack_get_descent_filename):
+    def pack_file(cls, src_dir, path, file_name, index, descent, pack_get_descent_filename):
         try:
             data = ''
             with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
                 line = file.readline()
                 while line:
                     data += line
-                    if line[0] == '#':
-                        if line.startswith('#Область include'):
-                            include_path = line[17:].strip()
-                            _path, _file_name = cls.parse_include_path(include_path, path, file_name, descent)
+                    _line = line.strip()
+                    if _line and _line[0] == '#':
+                        if _line.startswith('#Область include'):
+                            include_path = _line[17:].strip()
+                            _path, _file_name = cls.parse_include_path(include_path, path, file_name, index, descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
                             if _src_abs_path.startswith(src_dir):
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
-                            data += cls.pack_file(src_dir, _path, _file_name, descent, pack_get_descent_filename)
+                            data += cls.pack_file(src_dir, _path, _file_name, index, descent, pack_get_descent_filename)
                     line = file.readline()
                 return data
         except Exception as err:
             raise ExtException(parent=err, action=f'{cls.__name__}.pack_file', detail=f'{path} {file_name}')
 
     @staticmethod
-    def parse_include_path(include_path, path, file_name, descent):
+    def parse_include_path(include_path, path, file_name, index, descent):
+        if index and 'Области include' in index and include_path in index['Области include']:
+            include_path = index['Области include'][include_path]
         tmp = include_path.split('_')
         size_tmp = len(tmp)
         if size_tmp == 0:

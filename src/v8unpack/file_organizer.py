@@ -62,7 +62,8 @@ class FileOrganizer:
                     _file['path'], _file['file_name'] = CodeOrganizer.get_dest_path(dest_dir, path, file_name, index,
                                                                                     descent)
                 else:
-                    _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name, descent)
+                    _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(elem, path, file_name, index,
+                                                                                         descent)
                 _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
                 if _file['dest_path'].startswith(dest_dir):
                     descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
@@ -119,6 +120,8 @@ class FileOrganizer:
     @classmethod
     def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, path: list, descent=None):
         for entry in index:
+            if entry == 'Области include':
+                continue
             if not index[entry]:
                 continue
             if isinstance(index[entry], dict):
@@ -142,7 +145,7 @@ class FileOrganizer:
                         func_descent_filename = FileOrganizer.pack_get_descent_filename
                     tasks.append((
                         src_dir, _src_path, os.path.basename(index[entry]),
-                        dest_dir, _dest_path, entry,
+                        dest_dir, _dest_path, entry, index,
                         descent, func_descent_filename))
                 else:
                     _dest_path = os.path.join(dest_dir, *path)
@@ -184,7 +187,7 @@ class FileOrganizer:
 
                 if entry[-3:] == '.1c':
                     tasks.append((
-                        src_dir, path, descent_file_name, dest_dir, path, entry, descent,
+                        src_dir, path, descent_file_name, dest_dir, path, entry, index, descent,
                         cls.pack_get_descent_filename))
                 else:
                     # shutil.copy(src_entry_path, os.path.join(dest_dir, path, entry))
