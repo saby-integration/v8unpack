@@ -183,5 +183,5 @@ class MetaObject:
         except FileNotFoundError:
             pass
         if file_name:
-            product_info = f'#{file_name}:{product_version}'
+            product_info = f';{file_name};{product_version}'
             self.set_product_comment(product_info)
