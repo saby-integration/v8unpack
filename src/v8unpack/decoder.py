@@ -83,12 +83,11 @@ class Decoder:
             raise ExtException(parent=err, action=f'{cls.__name__}.decode_include')
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, pool=None, version=None, release=None):
+    def encode(cls, src_dir, dest_dir, *, pool=None, version=None, file_name=None, gui=None, **kwargs):
         helper.clear_dir(dest_dir)
         encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])
-        tasks = encoder.encode(src_dir, dest_dir,
-                               version=version,
-                               release=None)  # возвращает список вложенных объектов MetaDataObject
+        # возвращает список вложенных объектов MetaDataObject
+        tasks = encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui, **kwargs)
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
             tasks_list = helper.run_in_pool(cls.encode_include, tasks, pool)
             tasks = helper.list_merge(*tasks_list)
@@ -121,8 +120,8 @@ class Decoder:
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
 
 
-def encode(src_dir, dest_dir, *, pool=None, version='803', release=None):
-    Decoder.encode(src_dir, dest_dir, pool=pool, version=version, release=release)
+def encode(src_dir, dest_dir, *, pool=None, version='803', gui=None, file_name=None, **kwargs):
+    Decoder.encode(src_dir, dest_dir, pool=pool, version=version, gui=gui, file_name=file_name, **kwargs)
 
 
 def decode(src_dir, dest_dir, *, pool=None, version=None):

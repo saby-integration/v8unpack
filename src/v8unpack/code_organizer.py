@@ -59,13 +59,13 @@ class CodeOrganizer:
         return cls.pack(*params)
 
     @classmethod
-    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent,
+    def pack(cls, src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index_code_areas, descent,
              pack_get_descent_filename):
-        data = cls.pack_file(src_dir, src_path, src_file_name, index, descent, pack_get_descent_filename)
+        data = cls.pack_file(src_dir, src_path, src_file_name, index_code_areas, descent, pack_get_descent_filename)
         helper.txt_write(data, os.path.join(dest_dir, dest_path), dest_file_name)
 
     @classmethod
-    def pack_file(cls, src_dir, path, file_name, index, descent, pack_get_descent_filename):
+    def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename):
         try:
             data = ''
             with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
@@ -76,20 +76,22 @@ class CodeOrganizer:
                     if _line and _line[0] == '#':
                         if _line.startswith('#Область include'):
                             include_path = _line[17:].strip()
-                            _path, _file_name = cls.parse_include_path(include_path, path, file_name, index, descent)
+                            _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
+                                                                       descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
                             if _src_abs_path.startswith(src_dir):
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
-                            data += cls.pack_file(src_dir, _path, _file_name, index, descent, pack_get_descent_filename)
+                            data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
+                                                  pack_get_descent_filename)
                     line = file.readline()
                 return data
         except Exception as err:
             raise ExtException(parent=err, action=f'{cls.__name__}.pack_file', detail=f'{path} {file_name}')
 
     @staticmethod
-    def parse_include_path(include_path, path, file_name, index, descent):
-        if index and 'Области include' in index and include_path in index['Области include']:
-            include_path = index['Области include'][include_path]
+    def parse_include_path(include_path, path, file_name, index_code_areas, descent):
+        if index_code_areas and include_path in index_code_areas:
+            include_path = index_code_areas[include_path]
         tmp = include_path.split('_')
         size_tmp = len(tmp)
         if size_tmp == 0:
