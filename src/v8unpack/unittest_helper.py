@@ -20,7 +20,7 @@ class HelperTestDecode(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         if cls.pool is None:
-            cls.pool = helper.get_pool()
+            cls.pool = helper.get_pool(processes=cls.processes)
         # cls.maxDiff = None
 
     # @classmethod
