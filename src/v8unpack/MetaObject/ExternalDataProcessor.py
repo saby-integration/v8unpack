@@ -54,7 +54,7 @@ class ExternalDataProcessor(MetaObject):
         return header_data[0][3][1][1][3][1]
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, release=None, file_name=None):
+    def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
         self = cls()
         helper.clear_dir(dest_dir)
         _file_name = self.get_class_name_without_version()

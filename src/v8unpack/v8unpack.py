@@ -75,7 +75,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
 
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
-          version='803', descent=None, release=None):
+          version='803', descent=None, gui=None, **kwargs):
     try:
         begin0 = datetime.now()
         print(f"v8unpack {__version__}")
@@ -109,8 +109,8 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         begin2 = datetime.now()
         print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
-        encode(dir_stage3, dir_stage2, version=version, pool=pool, release=release,
-               file_name=os.path.basename(out_file_name))
+        encode(dir_stage3, dir_stage2, version=version, pool=pool, gui=gui,
+               file_name=os.path.basename(out_file_name), **kwargs)
 
         begin3 = datetime.now()
         print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')
@@ -161,10 +161,13 @@ def main():
                         help="включает режим наследования при сборке и разборке,"
                              "четырех значный формат 3.0.75.100 (не более 3 знаков на каждый разряд)"
                              "подробности в инструкции - раздел разработка расширений")
-    parser.add_argument('--release',
-                        help="номер версии собираемого продукта, "
-                             "для обработки добавяется в функцию GetVersion модуля обработки, "
-                             "для расширений устанавливается в соответствующий реквизит ")
+    parser.add_argument('--gui',
+                        help="режим совместимости интерфейса 1С, переопределяет значение из исходников "
+                             "для расширений, если указан устанавливается в соответствующий реквизит. "
+                             "Допустимые значения:"
+                             " допустимые значения 0 - Версия 8.2, 1 - Версия 8.2. Разрешить Такси,"
+                             " 2- Такси. Разрешить Версия 8.2, 3 - Такси"
+                             "для расширений устанавливается в соответствующий реквизит")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -172,6 +175,7 @@ def main():
 
     args = parser.parse_args()
     descent = int(args.descent) if args.descent else None
+    gui = args.gui if args.gui else None
 
     if args.E is not None:
         extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
@@ -179,7 +183,7 @@ def main():
 
     if args.B is not None:
         build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
-              index=args.index, temp_dir=args.temp, version=args.version, descent=descent)
+              index=args.index, temp_dir=args.temp, version=args.version, descent=descent, gui=gui)
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
