@@ -61,7 +61,9 @@ def decode_header(obj: dict, header: list):
     count_locale = int(header[3][0])
     for i in range(count_locale):
         obj['name2'][str_decode(header[3][i * 2 + 1])] = str_decode(header[3][i * 2 + 2])
-    obj['comment'] = str_decode(header[4])
+    comment = str_decode(header[4]).split(';')[0]  # удаляем имя файла и номер версии которую добавляем при сборке
+    header[4] = str_encode(comment)
+    obj['comment'] = comment
     obj['h1_0'] = header[1][0]
     obj['h0'] = header[0]
     obj['h5'] = header[5:]
