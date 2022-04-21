@@ -167,3 +167,21 @@ class MetaObject:
             helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
             self.write_raw_code(self.code[code_name], _code_dir, 'text.txt',
                                 encoding=self.header.get(f'code_encoding_{code_name}', 'utf-8'))
+
+    def set_product_version(self, product_version):
+        pass
+
+    def set_product_comment(self, product_version):
+        header = self.get_decode_header(self.header['data'])
+        header[4] = helper.str_encode(helper.str_decode(header[4]) + product_version)
+
+    def set_product_info(self, src_dir, file_name):
+        product_version = ''
+        try:
+            product_version = helper.txt_read(src_dir, 'version.txt', encoding='utf-8')
+            self.set_product_version(product_version)
+        except FileNotFoundError:
+            pass
+        if file_name:
+            product_info = f'#{file_name}:{product_version}'
+            self.set_product_comment(product_info)

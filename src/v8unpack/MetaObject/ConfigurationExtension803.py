@@ -49,15 +49,12 @@ class ConfigurationExtension803(Configuration803):
         return tasks
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, release=None):
+    def encode(cls, src_dir, dest_dir, *, version=None, release=None, file_name=None):
         self = cls()
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
-        try:
-            product_version = helper.txt_read(src_dir, 'version.txt', encoding='utf-8')
-            self.header['data'][0][3][1][1][15] = helper.str_encode(product_version)
-        except FileNotFoundError:
-            pass
+
+        self.set_product_info(src_dir, file_name)
 
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
@@ -82,3 +79,6 @@ class ConfigurationExtension803(Configuration803):
                 pass
         tasks = self.encode_includes(src_dir, dest_dir)
         return tasks
+
+    def set_product_version(self, product_version):
+        self.header['data'][0][3][1][1][15] = helper.str_encode(product_version)
