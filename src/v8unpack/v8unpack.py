@@ -17,11 +17,35 @@ from .index import update_index
 from .json_container_decoder import json_decode, json_encode
 
 
+def _check_index(index):
+    if index:
+        try:
+            with open(index, 'r', encoding='utf-8') as f:
+                index = json.load(f)
+            if not isinstance(index, dict):
+                print(f'Error: Bad index file - not dict\n')
+                return False
+        except FileNotFoundError:
+            print(f'Error: index file not found - {index}')
+            return False
+        except Exception as err:
+            print(f'Error: Bad index file - {err}\n')
+            return False
+
+    return index
+
+
 def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None, descent=None):
     try:
         begin0 = datetime.now()
         print(f"v8unpack {__version__}")
+
+        index = _check_index(index)
+        if not index and index is not None:
+            return
+
         print(f"{helper.str_time(begin0)} Начали        ", end='')
+
         if descent is None:
             helper.clear_dir(os.path.normpath(out_dir_name))
         clear_temp_dir = False
@@ -34,13 +58,6 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         dir_stage1 = os.path.join(temp_dir, 'decode_stage_1')
         dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
         dir_stage3 = os.path.join(temp_dir, 'decode_stage_3')
-
-        if index:
-            try:
-                with open(index, 'r', encoding='utf-8') as f:
-                    index = json.load(f)
-            except FileNotFoundError:
-                index = None
 
         pool = helper.get_pool()
 
@@ -78,8 +95,15 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
           version='803', descent=None, gui=None, **kwargs):
     try:
         begin0 = datetime.now()
+
         print(f"v8unpack {__version__}")
+
+        index = _check_index(index)
+        if not index and index is not None:
+            return
+
         print(f"{helper.str_time(begin0)} Начали        ", end='')
+
         clear_temp_dir = False
         if temp_dir is None:
             clear_temp_dir = True
@@ -92,13 +116,6 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
 
         pool = helper.get_pool()
-
-        if index:
-            try:
-                with open(index, 'r', encoding='utf-8') as f:
-                    index = json.load(f)
-            except FileNotFoundError:
-                index = None
 
         begin1 = datetime.now()
         print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
