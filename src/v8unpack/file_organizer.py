@@ -63,7 +63,7 @@ class FileOrganizer:
                                                                                     descent)
                 else:
                     _file['path'], _file['file_name'] = CodeOrganizer.parse_include_path(
-                        elem, path, file_name, index.get('Области include'), descent)
+                        elem, path, file_name, index.get('Области include') if index else None, descent)
                 _file['dest_path'] = os.path.abspath(os.path.join(dest_dir, _file['path']))
                 if _file['dest_path'].startswith(dest_dir):
                     descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(
