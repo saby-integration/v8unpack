@@ -237,7 +237,7 @@ def compare_file(path_decode_entry, path_encode_entry):
                             if encode_line[:-2] == decode_line:
                                 continue
                         problems += f'\n      {title:73} {i:5} {decode_line}'
-                        problems += f'\n      {"":90} {encode_line}'
+                        problems += f'\n      {"":80} {encode_line}'
                         raise NotEqualLine(problems)
                     elif decode_line.hex() != encode_line.hex():
                         a = 1

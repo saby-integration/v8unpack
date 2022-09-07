@@ -4,7 +4,7 @@ from ..MetaObject.Configuration803 import Configuration803
 
 
 class ConfigurationExtension803(Configuration803):
-    info = ['6', '8']
+    info = ['6', '8', '9']
     ext_code = {
         'con': '5',
         'app': '6',
