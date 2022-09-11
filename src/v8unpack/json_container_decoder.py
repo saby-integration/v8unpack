@@ -36,7 +36,13 @@ class JsonContainerDecoder:
         encoding = None
         try:
             with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8-sig') as entry_file:  # replace BOM
-                data = self.decode_file(entry_file)
+                try:
+                    json.load(entry_file)  # если в файле чистый json воспринимаем его как текстовый файл
+                    entry_file.seek(0)
+                    data = entry_file.read()
+                except json.JSONDecodeError as err:
+                    entry_file.seek(0)
+                    data = self.decode_file(entry_file)
         except UnicodeDecodeError:
             try:
                 with open(os.path.join(src_dir, file_name), 'r', encoding='windows-1251') as entry_file:  # replace BOM
