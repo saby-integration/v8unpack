@@ -10,8 +10,8 @@ UPR_FORM = '1'
 
 class Form803(Form8x):
     ver = '803'
-    double_quotes = re.compile('("")')
-    quotes = re.compile('(")')
+    double_quotes = re.compile(r'("")')
+    quotes = re.compile(r'(")')
 
     def decode_data(self, src_dir, uuid):
         _header_obj = self.get_decode_obj_header(self.header['data'])
@@ -35,7 +35,7 @@ class Form803(Form8x):
         try:
             _code = helper.str_decode(self.getset_form_code(form, 'Код в отдельном файле', self.header))
             if _code:
-                _code = self.double_quotes.sub('"', _code)
+                _code = self.double_quotes.sub(r'"', _code)
                 self.code['obj'] = _code
                 self.header['code_info_obj'] = 'Код в отдельном файле'
         except Exception as err:
@@ -155,7 +155,7 @@ class Form803(Form8x):
             return
         try:
             _code = self.code.pop('obj', "")
-            _code = self.quotes.sub('""', _code)
+            _code = self.quotes.sub(r'""', _code)
             form0 = self.form[0]
             self.getset_form_code(form0, helper.str_encode(_code), self.header)
         except IndexError:
