@@ -42,7 +42,7 @@ class ConfigurationExtension803(Configuration803):
                 self.header[f'info{i}'] = helper.json_read(src_dir, f'{self.header["uuid"]}.{i}.json')
             except FileNotFoundError:
                 pass
-        helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.txt', encoding='utf-8')
+        helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.bin', encoding='utf-8')
         helper.json_write(self.header, dest_dir, f'{cls.get_class_name_without_version()}.json')
         self.write_decode_code(dest_dir, cls.__name__)
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
