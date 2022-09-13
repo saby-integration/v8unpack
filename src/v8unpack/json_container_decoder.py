@@ -34,12 +34,16 @@ class JsonContainerDecoder:
         _src_path = os.path.join(src_dir, file_name)
         self = cls(src_dir=src_dir, file_name=file_name)
         encoding = None
+        read_as_byte = False
         try:
             with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8-sig') as entry_file:  # replace BOM
                 try:
-                    json.load(entry_file)  # если в файле чистый json воспринимаем его как текстовый файл
-                    entry_file.seek(0)
-                    data = entry_file.read()
+                    if entry_file.read(1) == '{':
+                        entry_file.seek(0)
+                        json.load(entry_file)  # если в файле чистый json воспринимаем его как бинарный файл
+                        read_as_byte = True
+                    else:
+                        read_as_byte = True
                 except json.JSONDecodeError as err:
                     entry_file.seek(0)
                     data = self.decode_file(entry_file)
@@ -49,10 +53,12 @@ class JsonContainerDecoder:
                     data = self.decode_file(entry_file)
                     encoding = 'windows-1251'
             except UnicodeDecodeError:
-                with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
-                    data = entry_file.read()
+                read_as_byte = True
         except Exception as err:
             raise ExtException(parent=err, message=f'Json decode {file_name} error: {err}')
+        if read_as_byte:
+            with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
+                data = entry_file.read()
 
         if dest_dir is not None:
             if isinstance(data, list):
