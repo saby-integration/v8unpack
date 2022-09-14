@@ -34,13 +34,10 @@ class TestFileOrganizerCE(unittest.TestCase):
         pass
 
     def test_decode_raw_b64_and_string(self):
-        file_name = 'raw_end_string'
-        data = b'\xef\xbb\xbf{\r\n{"S1\r\r\n\t\tS2\r\n\t\tS2\r\r\n\t\t\tS3\r\r\n\tS4"},"MainTable",\r\n{#base64:AgFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdayG8=},\r\n{#base64:iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAA\n'
-        with open(os.path.join(self.data_dir, 'raw_end_string'), 'wb') as file:
-            file.write(data)
+        file_name = 'raw_b64_and_string'
         helper.clear_dir(self.temp_dir)
         helper.clear_dir(self.temp_dir2)
-        JsonContainerDecoder.decode(self.data_dir, file_name, self.temp_dir)
+        res1 = JsonContainerDecoder.decode(self.data_dir, file_name, self.temp_dir)
         JsonContainerDecoder.encode(self.temp_dir, f'{file_name}.json', self.temp_dir2)
         try:
             result = compare_file(
@@ -50,6 +47,3 @@ class TestFileOrganizerCE(unittest.TestCase):
         except NotEqualLine as err:
             result = err
         print(result)
-        self.assertEqual('', result)
-        # json_res = json.loads(res.encode(encoding='utf-8'))
-        pass
