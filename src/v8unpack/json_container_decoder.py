@@ -79,8 +79,21 @@ class JsonContainerDecoder:
     def decode_file(self, file):
         self.mode = READ_PARAM
         self.data = []
+        i = 1
         for line in file:
-            self.decode_line(line)
+            try:
+                self.decode_line(line)
+                i += 1
+            except Exception as err:
+                raise ExtException(
+                    parent=err,
+                    message="Ошибка при разборе скобкофайла",
+                    detail=f'{os.path.basename(self.src_dir)}/{self.file_name} упало на строке {i}',
+                    dump=dict(
+                        mode=self.mode,
+                        current_object=self.current_object,
+                        path=self.path
+                    ))
         if not self.data:
             return ''
         return self.data
@@ -121,11 +134,7 @@ class JsonContainerDecoder:
                     raise Exception(
                         f'неожиданное начало объекта file:{self.src_dir}/{self.file_name}, path:{self.path})')
         elif self.mode == BEGIN_READ_STRING_VALUE:
-            if line.endswith('",\n') and not line.endswith('"",\n'):
-                self.current_value += line[:-2]
-                self._end_value()
-            else:
-                self.current_value += line
+            self.decode_object(line)
         elif self.mode == READ_B64:
             if line == '\n':
                 return
@@ -194,7 +203,8 @@ class JsonContainerDecoder:
     def _end_current_object(self):
         self.mode = READ_PARAM
         self._end_value()
-        self.path.pop()
+        if self.path:  # могут быль лишние закрывающие скобки
+            self.path.pop()
         self.current_object = self.path[-1] if self.path else None
         self.current_value = None
 
