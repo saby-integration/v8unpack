@@ -111,8 +111,8 @@ class ExtException(Exception):
     @property
     def title(self):
         if self.detail:
-            return f'{self.code}: {self.message} - {self.detail} {self.action}'
-        return f'{self.code}: {self.message}'
+            return f'{self.message} {self.detail}'
+        return f'{self.message}'
 
     def __str__(self):
         res = f'{self.title}'
