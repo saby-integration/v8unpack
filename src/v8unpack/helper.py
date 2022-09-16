@@ -3,7 +3,6 @@ import os
 import shutil
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from multiprocessing import Pool, cpu_count
-import uuid
 
 from .ext_exception import ExtException
 
@@ -57,12 +56,6 @@ def bin_read(path, file_name):
 
 def decode_header(obj: dict, header: list):
     obj['uuid'] = header[1][2]
-    try:
-        if uuid.UUID(obj['uuid']).version != 4:
-            raise ValueError('Заголовок определен не верно')
-    except ValueError:
-        raise ValueError('Заголовок определен не верно')
-
     obj['name'] = str_decode(header[2])
     obj['name2'] = {}
     count_locale = int(header[3][0])
