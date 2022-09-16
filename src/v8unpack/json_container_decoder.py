@@ -33,6 +33,7 @@ class JsonContainerDecoder:
     def decode(cls, src_dir, file_name, dest_dir=None):
         _src_path = os.path.join(src_dir, file_name)
         self = cls(src_dir=src_dir, file_name=file_name)
+        print(src_dir+"\\"+file_name)
         encoding = None
         read_as_byte = False
         try:

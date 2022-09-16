@@ -36,10 +36,17 @@ class MetaDataObject(MetaObject):
             header_data = helper.json_read(src_dir, f'{file_name}.json')
             self = cls()
             self.version = version
-            self.decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
-            self.set_write_decode_mode(dest_dir, dest_path)
+            try:
+                self.decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
+                self.set_write_decode_mode(dest_dir, dest_path)
+            except Exception as err:
+                a=0
             tasks = self.decode_includes(src_dir, dest_dir, self.new_dest_path, header_data)
-            self.write_decode_object(dest_dir, self.new_dest_path, self.new_dest_file_name, version)
+            try:
+                self.write_decode_object(dest_dir, self.new_dest_path, self.new_dest_file_name, version)
+            except Exception as err:
+                a=0
+
             return tasks
         except ExtException as err:
             raise ExtException(
