@@ -49,19 +49,15 @@ class MetaDataObject(MetaObject):
 
             return tasks
         except ExtException as err:
-            problem_file = os.path.join(os.path.basename(src_dir), file_name)
             raise ExtException(
                 parent=err,
-                message="Ошибка декодирования",
-                detail=f'объекта метаданных {cls.__name__} файл {problem_file} - {err.message} + {err.detail}',
+                message=err.message + err.detail,
+                detail=f'in decode {cls.__name__}',
                 action=f'{cls.__name__}.decode'
             ) from err
         except Exception as err:
-            problem_file = os.path.join(os.path.basename(src_dir), file_name)
             raise ExtException(
                 parent=err,
-                message="Ошибка декодирования",
-                detail=f'объекта метаданных "{cls.__name__}" файл "{problem_file}" - {err}',
                 action=f'{cls.__name__}.decode'
             ) from err
 

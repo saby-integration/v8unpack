@@ -89,7 +89,7 @@ class JsonContainerDecoder:
                 raise ExtException(
                     parent=err,
                     message="Ошибка при разборе скобкофайла",
-                    detail=f'{os.path.basename(self.src_dir)}/{self.file_name} проблема до строки {i}',
+                    detail=f'{os.path.basename(self.src_dir)}/{self.file_name} упало на строке {i}',
                     dump=dict(
                         mode=self.mode,
                         current_object=self.current_object,
