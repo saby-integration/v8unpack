@@ -1,5 +1,9 @@
+import sys
 import unittest
+
 from v8unpack import helper
+
+sys.path.append("../../src/")
 
 
 class TestHelper(unittest.TestCase):
