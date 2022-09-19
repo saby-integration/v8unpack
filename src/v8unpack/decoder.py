@@ -1,6 +1,7 @@
 import os
 
 from . import helper
+from .MetaObject.Configuration802 import Configuration802
 from .MetaObject.Configuration803 import Configuration803
 from .MetaObject.ConfigurationExtension803 import ConfigurationExtension803
 from .MetaObject.ExternalDataProcessor801 import ExternalDataProcessor801
@@ -13,6 +14,7 @@ available_types = {
     'ExternalDataProcessor801': ExternalDataProcessor801,
     'ExternalDataProcessor802': ExternalDataProcessor802,
     'ExternalDataProcessor803': ExternalDataProcessor803,
+    'Configuration802': Configuration802,
     'Configuration803': Configuration803
 }
 
@@ -106,6 +108,9 @@ class Decoder:
                 return ConfigurationExtension803
             if os.path.isfile(os.path.join(src_dir, 'Configuration.json')):
                 return Configuration803
+        elif version == '802':
+            if os.path.isfile(os.path.join(src_dir, 'Configuration802.json')):
+                return Configuration802
         raise FileNotFoundError(f'Не найдены файлы для сборки версии {version} ({src_dir})')
 
     @classmethod
