@@ -8,4 +8,4 @@ class CommonTemplate803(Template803):
 
     @classmethod
     def get_template_type(cls, header_data):
-        return header_data[0][0]
+        return header_data[0][1][2]

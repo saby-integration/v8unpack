@@ -80,7 +80,7 @@ class Template8x(Simple):
 
     def decode_base64_data(self, src_dir, dest_dir, write):
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
+            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.bin')
         except FileNotFoundError:
             return
         if data[0][1] and data[0][1][0]:
@@ -92,7 +92,7 @@ class Template8x(Simple):
 
     def decode_html_data(self, src_dir, dest_dir, write):
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
+            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.bin')
         except FileNotFoundError:
             return
         if data[0][3] and data[0][3][0]:
@@ -119,7 +119,7 @@ class Template8x(Simple):
         except AttributeError:
             raise Exception(f'Не реализованный тип макета {self.header["type"]}')
 
-        helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.json')
+        helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.bin')
 
     def encode_table_data(self, src_dir, dest_dir):
         self.encode_text_data(src_dir, dest_dir)
@@ -155,14 +155,14 @@ class Template8x(Simple):
             ["#base64:" + b64encode(bin_data).decode(encoding='utf-8')],
             "0"
         ]]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
 
     def _encode_bin_data(self, bin_data, dest_dir):
         self.raw_data = [[
             "1",
             ["#base64:" + b64encode(bin_data).decode(encoding='utf-8')]
         ]]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
 
     def encode_header(self):
         raise NotImplemented()
