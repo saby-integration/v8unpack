@@ -22,8 +22,7 @@ class MetaDataTypes(Enum):
     CommonCommand = '2f1a5187-fb0e-4b05-9489-dc5dd6412348'            # Общая команда
     CommonTemplate = '0c89c792-16c3-11d5-b96b-0050bae0a95d'           # Общие макеты
     CommonModule = '0fe48980-252d-11d6-a3c7-0050bae0a776'             # Общие модули
-    CommonForm = "07ee8426-87f1-11d5-b99c-0050bae0a95d"               # Общие формы, 19 штук
-    #CommonForm = '157fa490-4ce9-11d4-9415-008048da11f9'
+    CommonForm = "07ee8426-87f1-11d5-b99c-0050bae0a95d"               # Общие формы
     Report = '631b75a0-29e2-11d6-a3c7-0050bae0a776'                   # Отчеты
     ReportForm = 'a3b368c0-29e2-11d6-a3c7-0050bae0a776'                   # Отчеты форма
     InformationRegister = '13134201-f60b-11d5-a3c7-0050bae0a776'      # Регистры сведений
