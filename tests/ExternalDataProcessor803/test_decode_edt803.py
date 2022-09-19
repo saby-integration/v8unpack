@@ -3,6 +3,7 @@ import shutil
 import sys
 import unittest
 
+sys.path.append("../../src/")
 from v8unpack.unittest_helper import HelperTestDecode
 
 

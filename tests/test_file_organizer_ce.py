@@ -1,7 +1,9 @@
 import os
 import shutil
+import sys
 import unittest
 
+sys.path.append("../../src/")
 from v8unpack import helper
 from v8unpack.file_organizer_ce import FileOrganizerCE
 
