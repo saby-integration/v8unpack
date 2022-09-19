@@ -1,6 +1,8 @@
 import os
+import sys
 import unittest
 
+sys.path.append("../../src/")
 from v8unpack import helper
 from v8unpack.json_container_decoder import JsonContainerDecoder
 from v8unpack.unittest_helper import compare_file, NotEqualLine

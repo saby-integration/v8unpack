@@ -24,6 +24,7 @@ class MetaDataTypes(Enum):
     CommonModule = '0fe48980-252d-11d6-a3c7-0050bae0a776'             # Общие модули
     CommonForm = "07ee8426-87f1-11d5-b99c-0050bae0a95d"               # Общие формы
     Report = '631b75a0-29e2-11d6-a3c7-0050bae0a776'                   # Отчеты
+    ReportForm = 'a3b368c0-29e2-11d6-a3c7-0050bae0a776'                   # Отчеты форма
     InformationRegister = '13134201-f60b-11d5-a3c7-0050bae0a776'      # Регистры сведений
     InformationRegisterForm = '13134204-f60b-11d5-a3c7-0050bae0a776'      # Form регистра сведений
     InformationRegisterCommand = 'b44ba719-945c-445c-8aab-1088fa4df16e'
@@ -34,31 +35,39 @@ class MetaDataTypes(Enum):
     Enum = "f6a80749-5ad7-400b-8519-39dc5dff2542"                         # Перечисления
     ChartOfCharacteristicType = '82a1b659-b220-4d94-a9bd-14d757b95a48'    # План видов характеристик
     # ChartOfCalculationTypes = '30b100d6-b29f-47ac-aec7-cb8ca8a54767'    # План видов расчета
-    # ExchangePlan = '857c4a91-e5f4-4fac-86ec-787626f1c108'               # План обмена
+    ExchangePlan = '857c4a91-e5f4-4fac-86ec-787626f1c108'               # План обмена
+    ExchangePlanForm = '87c509ab-3d38-4d67-b379-aca796298578'            # План обмена Form
     # ChartOfAccounts = '238e7e88-3c5f-48b2-8a3b-81ebbecb20ed'            # План счетов
-    # AccumulationRegister = 'b64d9a40-1642-11d6-a3c7-0050bae0a776'       # Регистры накопления
+    AccumulationRegister = 'b64d9a40-1642-11d6-a3c7-0050bae0a776'       # Регистры накопления
+    AccumulationRegisterForm = 'b64d9a44-1642-11d6-a3c7-0050bae0a776'       # Регистры накопления форма
     # CalculationRegister = 'f2de87a8-64e5-45eb-a22d-b3aedab050e7'        # Регистры расчета
-    # Style = '3e5404af-6ef8-4c73-ad11-91bd2dfac4c8'                      # Стиль
+    Style = '3e5404af-6ef8-4c73-ad11-91bd2dfac4c8'                      # Стиль
     # AccountingRegister = '2deed9b8-0056-4ffe-a473-c20a6c32a0bc'         # Регистры бухгалтерии
     StyleItem = '58848766-36ea-4076-8800-e91eb49590d7'                    # Элемены стиля
-    # HTTPService = '0fffc09c-8f4c-47cc-b41c-8d5c5a221d79'                # HTTPСервис
-    # XDTOPackage = 'cc9df798-7c94-4616-97d2-7aa0b7bc515e'                # ПакетXDTO
+    HTTPService = '0fffc09c-8f4c-47cc-b41c-8d5c5a221d79'                # HTTPСервис
+    XDTOPackage = 'cc9df798-7c94-4616-97d2-7aa0b7bc515e'                # ПакетXDTO
     # WebService = '8657032e-7740-4e1d-a3ba-5dd6e8afb78f'                 # Веб-сервис
     # CommonAttribute = '15794563-ccec-41f6-a83c-ec5f7b9a5bc1'            # Общие реквизиты
-    # FilterCriterion = '3e7bfcc0-067d-11d6-a3c7-0050bae0a776'            # Критерии отбора
-    # EventSubscription = '4e828da6-0f44-4b5b-b1c0-a2b3cfe7bdcc'          # Подписки на события
-    # ScheduledJob = '11bdaf85-d5ad-4d91-bb24-aa0eee139052'               # Регламентные задания
+    FilterCriterion = '3e7bfcc0-067d-11d6-a3c7-0050bae0a776'            # Критерии отбора
+    FilterCriterionForm = '00867c40-06b1-11d6-a3c7-0050bae0a776'        # Критерии отбора Form
+    EventSubscription = '4e828da6-0f44-4b5b-b1c0-a2b3cfe7bdcc'          # Подписки на события
+    ScheduledJob = '11bdaf85-d5ad-4d91-bb24-aa0eee139052'               # Регламентные задания
     FunctionalOption = 'af547940-3268-434f-a3e7-e47d6d2638c3'             # Функциональные опции
     # FunctionalOptionsParameter = '30d554db-541e-4f62-8970-a1c6dcfeb2bc' # Параметры функциональных опций
     DefinedType = 'c045099e-13b9-4fb6-9d50-fca00202971e'                  # Определяемые типы
     # SettingsStorage = '46b4cd97-fd13-4eaa-aba2-3bddd7699218'            # Хранилище настроек
-    # Interface = '39bddf6a-0c3c-452b-921c-d99cfa1c2f1b'                  # Интерфейсы
+    Interface = '39bddf6a-0c3c-452b-921c-d99cfa1c2f1b'                  # Интерфейсы
     # WSReference = 'd26096fb-7a5d-4df9-af63-47d04771fa9b'                # WS-ссылки
     Constant = '0195e80c-b157-11d4-9435-004095e12fc7'                     # Константы
-    # DocumentJournal = '5aee69df-0513-4c6c-9815-103102471712'            # Журналы документов
+    #DocumentJournal = '5aee69df-0513-4c6c-9815-103102471712'            # Журналы документов
+    DocumentJournal = '4612bd75-71b7-4a5c-8cc5-2b0b65f9fa0d'
+    DocumentJournalForm = 'ec81ad10-ca07-11d5-b9a5-0050bae0a95d'
     # BusinessProcess = 'fcd3404e-1523-48ce-9bc0-ecdb822684a1'            # Бизнес-процессы
     # Task = '3e63355c-1378-4953-be9b-1deb5fb6bec5'                       # Задачи
     # ExternalDataSource = 'e68182ea-4237-4383-967f-90c1e3370bc7'         # Внешние источники данных (не точно...)
+
+    Sequences = 'bc587f20-35d9-11d6-a3c7-0050bae0a776' # Последовательность, 1 ШТ
+
 
 
 
