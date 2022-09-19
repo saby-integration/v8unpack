@@ -1,7 +1,8 @@
 import os
+import sys
 import unittest
 
-from v8unpack import helper
+sys.path.append("../../src/")
 from v8unpack.unittest_helper import HelperTestDecode
 
 
