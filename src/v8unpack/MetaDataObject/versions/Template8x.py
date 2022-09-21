@@ -80,7 +80,7 @@ class Template8x(Simple):
 
     def decode_base64_data(self, src_dir, dest_dir, write):
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.bin')
+            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
         except FileNotFoundError:
             return
         if data[0][1] and data[0][1][0]:
@@ -92,7 +92,7 @@ class Template8x(Simple):
 
     def decode_html_data(self, src_dir, dest_dir, write):
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.bin')
+            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
         except FileNotFoundError:
             return
         if data[0][3] and data[0][3][0]:
@@ -152,17 +152,24 @@ class Template8x(Simple):
             "5",
             "1",
             "\"ru\"",
-            ["#base64:" + b64encode(bin_data).decode(encoding='utf-8')],
+            [self._get_b64_string(bin_data)],
             "0"
         ]]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
+        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+
+    @staticmethod
+    def _get_b64_string(bin_data):
+        if not bin_data:
+            return "##base64:"
+        else:
+            return "#base64:" + b64encode(bin_data).decode(encoding='utf-8')
 
     def _encode_bin_data(self, bin_data, dest_dir):
         self.raw_data = [[
             "1",
-            ["#base64:" + b64encode(bin_data).decode(encoding='utf-8')]
+            [self._get_b64_string(bin_data)]
         ]]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
+        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
 
     def encode_header(self):
         raise NotImplemented()

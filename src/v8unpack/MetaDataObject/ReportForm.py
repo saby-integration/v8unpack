@@ -1,8 +1,8 @@
 from ..MetaDataObject.core.Simple import SimpleNameFolder
-from ..MetaDataObject.versions.DocumentForm803 import DocumentForm803
+from ..MetaDataObject.versions.ReportForm803 import ReportForm803
 
 
 class ReportForm(SimpleNameFolder):
     versions = {
-        '803': DocumentForm803
+        '803': ReportForm803
     }
