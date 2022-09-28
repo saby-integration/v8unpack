@@ -27,6 +27,7 @@ setuptools.setup(
     python_requires='>=3.3',
     zip_safe=False,
     install_requires=[
+        "tqdm"
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),

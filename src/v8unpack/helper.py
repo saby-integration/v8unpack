@@ -103,8 +103,8 @@ def get_pool(*, pool: Pool = None, processes=None) -> Pool:
     if pool is not None:
         return pool
     if processes is None:
-        processes = max(cpu_count() - 1, 1)  # чтобы система совсем не висла
-    return Pool(processes=processes)
+        processes = max(round(cpu_count() / 2), 1)  # чтобы система совсем не висла
+    return Pool(processes)
 
 
 def close_pool(local_pool: Pool, pool: Pool = None) -> None:
@@ -119,7 +119,7 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     # msg = f'pool {method}({len(list_args)})'
     try:
         with tqdm(desc=title, total=len(list_args)) as pbar:
-            for _res in _pool.imap_unordered(method, list_args, chunksize=10):
+            for _res in _pool.imap_unordered(method, list_args, chunksize=5):
                 if need_result and _res:
                     result.extend(_res)
                 pbar.update()
