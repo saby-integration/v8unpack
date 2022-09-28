@@ -142,10 +142,16 @@ class MetaObject:
             _obj_code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
             if os.path.isdir(_obj_code_dir):
                 self.header[f'code_info_{code_name}'] = helper.json_read(_obj_code_dir, 'info.json')
-                self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text.bin')
-
-                encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text.bin'), 'utf-8')
-                self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
+                try:
+                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text.bin')
+                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text.bin'), 'utf-8')
+                    self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
+                except FileNotFoundError as err:
+                    # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
+                    if os.path.isfile(os.path.join(_obj_code_dir, 'text.json')):
+                        print(f'Работа с зашифрованными модулями пока не поддерживается, обратитесь к разработчику')
+                    else:
+                        raise err from err
 
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
