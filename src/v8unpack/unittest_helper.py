@@ -17,17 +17,15 @@ class HelperTestDecode(unittest.TestCase):
     pool = None
     processes = None
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        if cls.pool is None:
-            cls.pool = helper.get_pool(processes=cls.processes)
-        # cls.maxDiff = None
-
-    # @classmethod
-    # def tearDownClass(cls) -> None:
-    #     helper.close_pool(cls.pool)
+    def tearDown(self) -> None:
+        helper.close_pool(self.pool)
 
     def setUp(self) -> None:
+        if not sys.warnoptions:
+            import warnings
+            warnings.simplefilter("ignore")
+
+        self.pool = helper.get_pool(processes=self.processes)
         self.src_dir = os.path.join(sys.path[0])  # абсолютный путь до папки с исходным файлом
         self.src_file = ''  # имя исходного файла
         self.test_dir = ''  # абсолютный путь до временной папки c файлами промежуточных стадий

@@ -12,7 +12,7 @@ class FileOrganizer:
     def unpack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         tasks = []
         cls._unpack(src_dir, os.path.abspath(dest_dir), '', tasks, index, descent)
-        helper.run_in_pool(cls.unpack_code_file, tasks, pool=pool)
+        helper.run_in_pool(cls.unpack_code_file, tasks, pool=pool, title=f'{"Раскладываем код по файлам":30}')
 
     @classmethod
     def _unpack(cls, src_dir, dest_dir, path, tasks, index, descent=None):
@@ -53,7 +53,8 @@ class FileOrganizer:
             shutil.copy(src_full_path, os.path.join(descent_full_dest_path, descent_file_name))
 
     @classmethod
-    def unpack_code_file(cls, src_dir, path, file_name, dest_dir, index, descent=None):
+    def unpack_code_file(cls, params):
+        src_dir, path, file_name, dest_dir, index, descent = params
         try:
             code_areas = CodeOrganizer.unpack(src_dir, path, file_name, dest_dir, index)
             for elem in code_areas:
@@ -113,7 +114,7 @@ class FileOrganizer:
         if index:
             cls._pack_index(src_dir, dest_dir, tasks, index, index_code_areas, [''], descent)
         cls._pack(src_dir, dest_dir, '', tasks, index, index_code_areas, descent)
-        helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool)
+        helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool, title=f'{"Собираем код из файлов":30}')
 
     @classmethod
     def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, index_code_areas: dict, path: list,

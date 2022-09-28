@@ -30,7 +30,8 @@ class JsonContainerDecoder:
         return cls.decode(*params)
 
     @classmethod
-    def decode(cls, src_dir, file_name, dest_dir=None):
+    def decode(cls, params):
+        src_dir, file_name, dest_dir = params
         _src_path = os.path.join(src_dir, file_name)
         self = cls(src_dir=src_dir, file_name=file_name)
         encoding = None
@@ -219,7 +220,8 @@ class JsonContainerDecoder:
         return cls.encode(*params)
 
     @classmethod
-    def encode(cls, src_dir, file_name, dest_dir=None):
+    def encode(cls, params):
+        src_dir, file_name, dest_dir = params
         try:
             # try:
             with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8') as file:
@@ -319,23 +321,28 @@ def json_decode(src_dir, dest_dir, *, pool=None):
     """
     tasks = []
     _decode(src_dir, dest_dir, tasks)
-    helper.run_in_pool(JsonContainerDecoder.decode, tasks, pool=pool)
+    helper.run_in_pool(JsonContainerDecoder.decode, tasks, pool=pool, title='Конвертируем скобкофайл в json', need_result=False)
 
 
 def _decode(src_dir, dest_dir, tasks):
     entries = sorted(os.listdir(src_dir))
     helper.clear_dir(dest_dir)
     for entry in entries:
-        try:
-            src_entry_path = os.path.join(src_dir, entry)
-            dest_entry_path = os.path.join(dest_dir, entry)
-            if os.path.isdir(src_entry_path):
-                os.mkdir(dest_entry_path)
+        src_entry_path = os.path.join(src_dir, entry)
+        dest_entry_path = os.path.join(dest_dir, entry)
+        if os.path.isdir(src_entry_path):
+            try:
+                os.makedirs(dest_entry_path, exist_ok=True)
+            except Exception as err:
+                raise ExtException(
+                    parent=err, message='Ошибка при создании папки',
+                    detail=f'{dest_entry_path} ({err})', action='json_decode')
+            try:
                 _decode(src_entry_path, dest_entry_path, tasks)
-            else:
-                tasks.append((src_dir, entry, dest_dir))
-        except Exception as err:
-            raise ExtException(parent=err, detail=f'{entry} {src_dir}', action='json_decode')
+            except Exception as err:
+                raise ExtException(parent=err, detail=f'{entry} {src_dir}', action='json_decode')
+        else:
+            tasks.append((src_dir, entry, dest_dir))
 
 
 def json_encode(src_dir, dest_dir, *, pool=None):
@@ -352,7 +359,7 @@ def json_encode(src_dir, dest_dir, *, pool=None):
     tasks = []
     helper.clear_dir(dest_dir)
     _encode(src_dir, dest_dir, tasks)
-    helper.run_in_pool(JsonContainerDecoder.encode, tasks, pool=pool)
+    helper.run_in_pool(JsonContainerDecoder.encode, tasks, pool=pool, title='Конвертироуем json в скобковайл', need_result=False)
 
 
 def _encode(src_dir, dest_dir, tasks):

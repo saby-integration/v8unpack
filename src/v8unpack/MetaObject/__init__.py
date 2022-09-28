@@ -12,6 +12,7 @@ class MetaObject:
     re_meta_data_obj = re.compile(r'^[^.]+\.json$')
     directive_1c_uncomment = re.compile(r'(?P<n>\\n)(?P<d>[#|&])')
     directive_1c_comment = re.compile(r'(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
+    encrypted_types = ['text.json', 'image.json']
 
     def __init__(self):
         self.header = {}
@@ -22,9 +23,12 @@ class MetaObject:
         return header_data[0][1][1]
 
     def set_header_data(self, header_data):
-        _form_header = self.get_decode_header(header_data)
-        helper.decode_header(self.header, _form_header)
-        self.header['data'] = header_data
+        try:
+            _form_header = self.get_decode_header(header_data)
+            helper.decode_header(self.header, _form_header)
+            self.header['data'] = header_data
+        except Exception as err:
+            raise ExtException(parent=err)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
         tasks = []
@@ -33,7 +37,7 @@ class MetaObject:
             try:
                 count_include_types = int(include[2])
             except IndexError:
-                raise ExtException(msg='Include types not found', detail=self.__class__.__name__)
+                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
             for i in range(count_include_types):
                 _metadata = include[i + 3]
                 _count_obj = int(_metadata[1])
@@ -49,7 +53,9 @@ class MetaObject:
                     if not isinstance(_metadata[2], str):  # вложенный объект
                         continue
                     msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
-                    raise Exception(msg)
+                    print(msg)
+                    continue
+                    # raise Exception(msg)
                 new_dest_path = os.path.join(dest_path, metadata_type.name)
                 for j in range(_count_obj):
                     obj_uuid = _metadata[j + 2]
@@ -85,7 +91,8 @@ class MetaObject:
                 try:
                     MetaDataTypes[entry]
                 except KeyError:
-                    raise Exception(f'Обнаружен не поддерживаемый тип метаданных или некорректно описанная область {entry} ')
+                    raise Exception(
+                        f'Обнаружен не поддерживаемый тип метаданных или некорректно описанная область {entry} ')
                 includes.append(entry)
 
         for include in includes:
@@ -148,15 +155,23 @@ class MetaObject:
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
-                    if os.path.isfile(os.path.join(_obj_code_dir, 'text.json')):
-                        print(f'Работа с зашифрованными модулями пока не поддерживается, обратитесь к разработчику')
-                    else:
+                    not_encrypted = True
+                    for encrypted_type in self.encrypted_types:
+                        if os.path.isfile(os.path.join(_obj_code_dir, encrypted_type)):
+                            self.code[code_name] = helper.bin_read(_obj_code_dir, encrypted_type)
+                            self.header[f'code_encoding_{code_name}'] = encrypted_type
+                            not_encrypted = False
+                            break
+                    if not_encrypted:
                         raise err from err
 
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
             if self.code[code_name]:
-                helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
+                if self.header.get(f'code_encoding_{code_name}') in self.encrypted_types:
+                    helper.bin_write(self.code[code_name], dest_dir, self.header[f'code_encoding_{code_name}'])
+                else:
+                    helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
 
     def encode_code(self, src_dir, file_name):
         for code_name in self.ext_code:

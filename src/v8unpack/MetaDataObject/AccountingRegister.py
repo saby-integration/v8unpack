@@ -1,9 +1,9 @@
 from ..MetaDataObject.core.Container import Container
 
 
-class Sequences(Container):
+class AccountingRegister(Container):
     pass
 
     @classmethod
     def get_decode_header(cls, header):
-        return header[0][1][7][1]
+        return header[0][1][15][1]
