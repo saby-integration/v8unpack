@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from . import helper
 from .MetaObject.Configuration802 import Configuration802
@@ -58,16 +59,21 @@ class Decoder:
 
     @classmethod
     def decode(cls, src_dir, dest_dir, *, pool=None, version=None):
+        begin = datetime.now()
+        print(f'{"Разбираем объект":30}')
         decoder = cls.detect_version(src_dir)
         helper.clear_dir(dest_dir)
         tasks = decoder.decode(src_dir, dest_dir,
                                version=version)  # возвращает список вложенных объектов MetaDataObject
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
-            tasks_list = helper.run_in_pool(cls.decode_include, tasks, pool)
-            tasks = helper.list_merge(*tasks_list)
+            tasks = helper.run_in_pool(cls.decode_include, tasks, pool, title=f'{"Разбираем вложенные объекты":30}',
+                                       need_result=True)
+            # tasks = helper.list_merge(*tasks_list)
+        print(f'{"Разбор объекта закончен":30}: {datetime.now() - begin}')
 
     @classmethod
-    def decode_include(cls, include_type, decode_params):
+    def decode_include(cls, params):
+        include_type, decode_params = params
         try:
             handler = helper.get_class_metadata_object(include_type)
             handler = handler.get_version(decode_params[4])
@@ -86,13 +92,16 @@ class Decoder:
 
     @classmethod
     def encode(cls, src_dir, dest_dir, *, pool=None, version=None, file_name=None, gui=None, **kwargs):
+        begin = datetime.now()
+        print(f'{"Собираем объект":30}')
         helper.clear_dir(dest_dir)
         encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])
         # возвращает список вложенных объектов MetaDataObject
         tasks = encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui, **kwargs)
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
-            tasks_list = helper.run_in_pool(cls.encode_include, tasks, pool)
-            tasks = helper.list_merge(*tasks_list)
+            tasks = helper.run_in_pool(cls.encode_include, tasks, pool, title=f'{"Собираем вложенные объекты":30}',
+                                       need_result=True)
+        print(f'{"Сборка объекта закончена":30}: {datetime.now() - begin}')
 
     @classmethod
     def get_encoder(cls, src_dir, version='803'):
@@ -114,7 +123,8 @@ class Decoder:
         raise FileNotFoundError(f'Не найдены файлы для сборки версии {version} ({src_dir})')
 
     @classmethod
-    def encode_include(cls, include_type, encode_params):
+    def encode_include(cls, params):
+        include_type, encode_params = params
         try:
 
             handler = helper.get_class_metadata_object(include_type)

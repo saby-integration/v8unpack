@@ -1,7 +1,7 @@
 from ..MetaDataObject.core.Container import Container
 
 
-class Sequences(Container):
+class CalculationRegisterRecalculations(Container):
     pass
 
     @classmethod

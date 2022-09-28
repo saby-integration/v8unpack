@@ -4,6 +4,7 @@ from enum import Enum
 
 from ..core.Simple import Simple
 from ... import helper
+from ...ext_exception import ExtException
 
 
 class TmplType(Enum):
@@ -11,6 +12,7 @@ class TmplType(Enum):
     base64 = "1"
     html = "3"
     text = "4"
+    design = "7"  # Макет оформления компоновки данных
     scheme = "6"
     extension = "9"
     # todo добавить остальные типы макетов и их сериализацию
@@ -32,11 +34,14 @@ class Template8x(Simple):
         return None
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header):
-        super(Template8x, self).decode_object(src_dir, uuid, dest_dir, dest_path, version, header)
-        self.tmpl_type = TmplType(self.get_template_type(header))
-        self.header['type'] = self.tmpl_type.name
+        try:
+            super(Template8x, self).decode_object(src_dir, uuid, dest_dir, dest_path, version, header)
+            self.tmpl_type = TmplType(self.get_template_type(header))
+            self.header['type'] = self.tmpl_type.name
 
-        _dest_dir = os.path.join(dest_dir, dest_path)
+            _dest_dir = os.path.join(dest_dir, dest_path)
+        except Exception as err:
+            raise ExtException(parent=err)
         try:
             getattr(self, f'decode_{self.tmpl_type.name}_data')(src_dir, _dest_dir, True)
         except AttributeError:
@@ -55,6 +60,9 @@ class Template8x(Simple):
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header):
         return []
+
+    def decode_design_data(self, src_dir, dest_dir, write):
+        self.decode_scheme_data(src_dir, dest_dir, write)
 
     def decode_scheme_data(self, src_dir, dest_dir, write):
         try:
@@ -95,11 +103,15 @@ class Template8x(Simple):
             data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
         except FileNotFoundError:
             return
-        if data[0][3] and data[0][3][0]:
-            self.data = b64decode(data[0][3][0][8:])
-            data[0][3][0] = '"данные в отдельном файле"'
-            if write:
-                helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.html')
+        try:
+            if data[0][3] and data[0][3][0]:
+                self.data = b64decode(data[0][3][0][8:])
+                data[0][3][0] = '"данные в отдельном файле"'
+                if write:
+                    helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.html')
+        except IndexError:
+            pass
+        self.header['html0'] = data
 
     def decode_header(self, header):
         self.tmpl_type = TmplType(header[0][1][1])
@@ -124,6 +136,9 @@ class Template8x(Simple):
     def encode_table_data(self, src_dir, dest_dir):
         self.encode_text_data(src_dir, dest_dir)
 
+    def encode_design_data(self, src_dir, dest_dir):
+        self.encode_scheme_data(src_dir, dest_dir)
+
     def encode_scheme_data(self, src_dir, dest_dir):
         try:
             raw_data = helper.bin_read(src_dir, f'{self.header["name"]}.bin')
@@ -147,15 +162,16 @@ class Template8x(Simple):
         self._encode_bin_data(bin_data, dest_dir)
 
     def encode_html_data(self, src_dir, dest_dir):
-        bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.html')
-        self.raw_data = [[
-            "5",
-            "1",
-            "\"ru\"",
-            [self._get_b64_string(bin_data)],
-            "0"
-        ]]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+        try:
+            bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.html')
+        except FileNotFoundError:
+            bin_data = None
+
+        raw_data = self.header.get('html0', [["5", "1", "\"ru\"", '', "0"
+                                              ]])
+        if len(raw_data[0]) > 2 and bin_data:
+            raw_data[0][3][0] = bin_data
+        helper.json_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
 
     @staticmethod
     def _get_b64_string(bin_data):
