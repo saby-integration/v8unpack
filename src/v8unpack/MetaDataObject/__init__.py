@@ -1,5 +1,5 @@
 import os
-
+from base64 import b64decode, b64encode
 from .. import helper
 from ..MetaObject import MetaObject
 from ..ext_exception import ExtException
@@ -37,7 +37,6 @@ class MetaDataObject(MetaObject):
             self = cls()
             self.version = version
             self.decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
-            self.set_write_decode_mode(dest_dir, dest_path)
             tasks = self.decode_includes(src_dir, dest_dir, self.new_dest_path, header_data)
             self.write_decode_object(dest_dir, self.new_dest_path, self.new_dest_file_name, version)
             return tasks
@@ -63,6 +62,7 @@ class MetaDataObject(MetaObject):
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         self.set_header_data(header_data)
+        self.set_write_decode_mode(dest_dir, dest_path)
 
     def write_decode_object(self, dest_dir, dest_path, file_name, version):
         dest_full_path = os.path.join(dest_dir, dest_path)
@@ -110,3 +110,36 @@ class MetaDataObject(MetaObject):
     def write_encode_object(self, dest_dir):
         helper.json_write(self.header['data'], dest_dir, f'{self.header["uuid"]}.json')
         self.write_encode_code(dest_dir)
+
+
+    def _decode_html_data(self, src_dir, dest_dir, header_field, file_number=0):
+        try:
+            data = helper.json_read(src_dir, f'{self.header["uuid"]}.{file_number}.json')
+        except FileNotFoundError:
+            return
+        try:
+            if data[0][3] and data[0][3][0]:
+                bin_data = b64decode(data[0][3][0][8:])
+                data[0][3][0] = '"данные в отдельном файле"'
+                helper.bin_write(bin_data, dest_dir, f'{self.new_dest_file_name}.html')
+        except IndexError:
+            pass
+        self.header[header_field] = data
+
+    def _encode_html_data(self, src_dir, dest_dir, header_field, file_number=0):
+        try:
+            bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.html')
+        except FileNotFoundError:
+            bin_data = None
+        header = self.header.get(header_field)
+        if header and len(header[0]) > 2 and bin_data:
+            header[0][3][0] = self._get_b64_string(bin_data)
+        if header:
+            helper.json_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}.json')
+
+    @staticmethod
+    def _get_b64_string(bin_data):
+        if not bin_data:
+            return "##base64:"
+        else:
+            return "#base64:" + b64encode(bin_data).decode(encoding='utf-8')

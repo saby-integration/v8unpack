@@ -1,8 +1,10 @@
+import os
 from ...MetaDataObject import MetaDataObject
 from ...ext_exception import ExtException
 
 
 class Container(MetaDataObject):
+    help_file_number = None
 
     @classmethod
     def get_decode_header(cls, header):
@@ -17,12 +19,16 @@ class Container(MetaDataObject):
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
+        if self.help_file_number is not None:
+            self._decode_html_data(src_dir, self.new_dest_dir, 'help', self.help_file_number)
         self.decode_code(src_dir)
 
     def set_write_decode_mode(self, dest_dir, dest_path):
         self.set_mode_decode_in_name_folder(dest_dir, dest_path)
 
     def encode_object(self, src_dir, file_name, dest_dir, version):
+        if self.help_file_number is not None:
+            self._encode_html_data(src_dir, dest_dir, 'help', self.help_file_number)
         self.encode_code(src_dir, self.__class__.__name__)
         return []
 

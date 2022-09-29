@@ -11,12 +11,8 @@ class CodeOrganizer:
         self.data = None
 
     @classmethod
-    def unpack_mp(cls, params):
-        return cls.unpack(*params)
-
-    @classmethod
     def unpack(cls, params):
-        src_dir, path, file_name, dest_dir, index = params
+        src_dir, path, file_name, dest_dir, index, descent = params
         self = cls()
         self.code_areas = {'root': dict(data='')}
         _path = ['']
@@ -56,13 +52,9 @@ class CodeOrganizer:
         return self.code_areas
 
     @classmethod
-    def pack_mp(cls, params):
-        return cls.pack(*params)
-
-    @classmethod
     def pack(cls, params):
-        src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index_code_areas, descent, \
-        pack_get_descent_filename = params
+        src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index_code_areas, \
+        descent, pack_get_descent_filename = params
         data = cls.pack_file(src_dir, src_path, src_file_name, index_code_areas, descent, pack_get_descent_filename)
         helper.txt_write(data, os.path.join(dest_dir, dest_path), dest_file_name)
 

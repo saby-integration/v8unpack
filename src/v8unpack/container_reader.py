@@ -262,7 +262,7 @@ def extract(filename, folder, deflate=True, recursive=True):
     print(f'{"Распаковываем бинарник":30}:', end="")
     with open(filename, 'rb') as f:
         ContainerReader(f).extract(folder, deflate, recursive)
-    print(f" - {datetime.now() - begin}")
+    print(f"{datetime.now() - begin}")
 
 
 def decompress_and_extract(src_folder, dest_folder, *, pool=None):
