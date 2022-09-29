@@ -1,10 +1,10 @@
 from .Form803 import Form803
 
 
-class ReportForm803(Form803):
+class TaskForm803(Form803):
     @classmethod
     def get_decode_obj_header(cls, header):
-        return header[0][1][1]
+        return header[0]
 
     # @classmethod
     # def get_decode_header(cls, header_data):
