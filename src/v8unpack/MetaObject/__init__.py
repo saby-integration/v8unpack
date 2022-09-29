@@ -1,6 +1,7 @@
 import os
 import re
 
+
 from .. import helper
 from ..ext_exception import ExtException
 from ..metadata_types import MetaDataTypes
@@ -177,7 +178,10 @@ class MetaObject:
         for code_name in self.ext_code:
             if self.header.get(f'code_info_{code_name}'):
                 try:
-                    self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
+                    if self.header.get(f'code_encoding_{code_name}') in self.encrypted_types:
+                        self.code[code_name] = helper.bin_read(src_dir, self.header.get(f'code_encoding_{code_name}'))
+                    else:
+                        self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
                 except FileNotFoundError:
                     self.code[code_name] = ''
 
@@ -186,8 +190,11 @@ class MetaObject:
             _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
             os.makedirs(_code_dir)
             helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
-            self.write_raw_code(self.code[code_name], _code_dir, 'text.bin',
-                                encoding=self.header.get(f'code_encoding_{code_name}', 'utf-8'))
+            encoding = self.header.get(f'code_encoding_{code_name}', 'utf-8')
+            if encoding in self.encrypted_types:
+                helper.bin_write(self.code[code_name], _code_dir, encoding)
+            else:
+                self.write_raw_code(self.code[code_name], _code_dir, 'text.bin', encoding=encoding)
 
     def set_product_version(self, product_version):
         pass

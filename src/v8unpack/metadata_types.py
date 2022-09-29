@@ -32,6 +32,7 @@ class MetaDataTypes(Enum):
     Configuration = '9cd510cd-abfc-11d4-9434-004095e12fc7'  # Идентифицирует род. узел описания конфигурации
     Constant = '0195e80c-b157-11d4-9435-004095e12fc7'  # Константы
     DataProcessor = "bf845118-327b-4682-b5c6-285d2a0eb296"  # Обработки
+    DataProcessorCommand = '45556acb-826a-4f73-898a-6025fc9536e1'
     DefinedType = 'c045099e-13b9-4fb6-9d50-fca00202971e'  # Определяемые типы
     Document = "061d872a-5787-460e-95ac-ed74ea3a3e84"  # Документы
     DocumentCommand = 'b544fc6a-2ba3-4885-8fb2-cb289fb6d65e'  # Команда документа

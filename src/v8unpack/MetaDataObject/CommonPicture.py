@@ -14,7 +14,7 @@ class CommonPicture(Simple):
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         try:
-            super(CommonPicture, self).decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
+            super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
             try:
                 self.raw_data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
             except FileNotFoundError:

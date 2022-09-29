@@ -103,19 +103,7 @@ class Template8x(Simple):
                 helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.{extension}')
 
     def decode_html_data(self, src_dir, dest_dir, write):
-        try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
-        except FileNotFoundError:
-            return
-        try:
-            if data[0][3] and data[0][3][0]:
-                self.data = b64decode(data[0][3][0][8:])
-                data[0][3][0] = '"данные в отдельном файле"'
-                if write:
-                    helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.html')
-        except IndexError:
-            pass
-        self.header['html0'] = data
+        self._decode_html_data(src_dir, dest_dir, "html0")
 
     def decode_header(self, header):
         self.tmpl_type = TmplType(header[0][1][1])
@@ -169,23 +157,7 @@ class Template8x(Simple):
         self._encode_bin_data(bin_data, dest_dir)
 
     def encode_html_data(self, src_dir, dest_dir):
-        try:
-            bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.html')
-        except FileNotFoundError:
-            bin_data = None
-
-        raw_data = self.header.get('html0', [["5", "1", "\"ru\"", '', "0"
-                                              ]])
-        if len(raw_data[0]) > 2 and bin_data:
-            raw_data[0][3][0] = bin_data
-        helper.json_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
-
-    @staticmethod
-    def _get_b64_string(bin_data):
-        if not bin_data:
-            return "##base64:"
-        else:
-            return "#base64:" + b64encode(bin_data).decode(encoding='utf-8')
+        self._encode_html_data(src_dir, dest_dir, "html0")
 
     def _encode_bin_data(self, bin_data, dest_dir):
         self.raw_data = [[
