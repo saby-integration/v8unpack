@@ -7,6 +7,7 @@ class DataProcessor(Container):
         'mgr': '2',  # модуль менеджера
         'obj': '0',  # модуль объекта
     }
+    help_file_number = 1
 
     def __init__(self):
         super(DataProcessor, self).__init__()

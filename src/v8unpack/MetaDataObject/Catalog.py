@@ -5,8 +5,9 @@ class Catalog(Container):
     ext_code = {
         'mgr': '3',  # модуль менеджера Справочника
         'obj': '0',  # модуль объекта Справочника
-        'pre': '1c',  # предопределенные элементы Справочника
     }
+    help_file_number = 1
+    predefined_file_number = '1c'
 
     @classmethod
     def get_decode_header(cls, header):

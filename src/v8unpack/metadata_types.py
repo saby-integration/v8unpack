@@ -22,6 +22,7 @@ class MetaDataTypes(Enum):
     ChartOfCalculationTypes = '30b100d6-b29f-47ac-aec7-cb8ca8a54767'  # План видов расчета
     ChartOfCalculationTypesForm = 'a7f8f92a-7a4b-484b-937e-42d242e64144'
     ChartOfCharacteristicType = '82a1b659-b220-4d94-a9bd-14d757b95a48'  # План видов характеристик
+    ChartOfCharacteristicTypeForm = 'eb2b78a8-40a6-4b7e-b1b3-6ca9966cbc94'  # План видов характеристик
     CommandGroup = '1c57eabe-7349-44b3-b1de-ebfeab67b47d'  # Группа команд
     CommonAttribute = '15794563-ccec-41f6-a83c-ec5f7b9a5bc1'  # Общие реквизиты
     CommonCommand = '2f1a5187-fb0e-4b05-9489-dc5dd6412348'  # Общая команда
@@ -41,6 +42,7 @@ class MetaDataTypes(Enum):
     DocumentJournalForm = 'ec81ad10-ca07-11d5-b9a5-0050bae0a95d'
     DocumentNumerators = '36a8e346-9aaa-4af9-bdbd-83be3c177977'  # Нумератор документа
     Enum = "f6a80749-5ad7-400b-8519-39dc5dff2542"  # Перечисления
+    EnumForm = "33f2e54b-37ce-4a7a-a569-b648d7aa4634"  # Перечисления
     EventSubscription = '4e828da6-0f44-4b5b-b1c0-a2b3cfe7bdcc'  # Подписки на события
     ExchangePlan = '857c4a91-e5f4-4fac-86ec-787626f1c108'  # План обмена
     ExchangePlanForm = '87c509ab-3d38-4d67-b379-aca796298578'  # План обмена Form
@@ -58,6 +60,7 @@ class MetaDataTypes(Enum):
     Interface = '39bddf6a-0c3c-452b-921c-d99cfa1c2f1b'  # Интерфейсы
     Language = '9cd510ce-abfc-11d4-9434-004095e12fc7'  # Языки
     Report = '631b75a0-29e2-11d6-a3c7-0050bae0a776'  # Отчеты
+    ReportCommand = 'e7ff38c0-ec3c-47a0-ae90-20c73ca72246'  # Отчеты
     ReportForm = 'a3b368c0-29e2-11d6-a3c7-0050bae0a776'  # Отчеты форма
     Role = '09736b02-9cac-4e3f-b4f7-d3e9576ab948'  # Роли
     ScheduledJob = '11bdaf85-d5ad-4d91-bb24-aa0eee139052'  # Регламентные задания

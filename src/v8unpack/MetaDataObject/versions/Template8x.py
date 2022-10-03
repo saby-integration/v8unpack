@@ -157,7 +157,7 @@ class Template8x(Simple):
         self._encode_bin_data(bin_data, dest_dir)
 
     def encode_html_data(self, src_dir, dest_dir):
-        self._encode_html_data(src_dir, dest_dir, "html0")
+        self._encode_html_data(src_dir, self.header["name"], dest_dir, "html0")
 
     def _encode_bin_data(self, bin_data, dest_dir):
         self.raw_data = [[
