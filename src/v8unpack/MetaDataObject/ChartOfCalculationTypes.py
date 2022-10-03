@@ -2,7 +2,8 @@ from ..MetaDataObject.core.Container import Container
 
 
 class ChartOfCalculationTypes(Container):
-    pass
+    help_file_number = 1
+    predefined_file_number = 2
 
     @classmethod
     def get_decode_header(cls, header):
