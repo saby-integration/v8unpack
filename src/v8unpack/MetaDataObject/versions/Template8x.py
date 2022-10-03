@@ -77,7 +77,7 @@ class Template8x(Simple):
             self.decode_text_data(src_dir, dest_dir, write)
 
     def decode_table_data(self, src_dir, dest_dir, write):
-        self.decode_text_data(src_dir, dest_dir, write)
+        self.decode_scheme_data(src_dir, dest_dir, write)
 
     def decode_text_data(self, src_dir, dest_dir, write):
         try:
@@ -126,7 +126,7 @@ class Template8x(Simple):
         helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.bin')
 
     def encode_table_data(self, src_dir, dest_dir):
-        self.encode_text_data(src_dir, dest_dir)
+        self.encode_scheme_data(src_dir, dest_dir)
 
     def encode_geographic_data(self, src_dir, dest_dir):
         self.encode_scheme_data(src_dir, dest_dir)

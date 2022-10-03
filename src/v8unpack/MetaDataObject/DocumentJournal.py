@@ -2,7 +2,7 @@ from ..MetaDataObject.core.Container import Container
 
 
 class DocumentJournal(Container):
-    pass
+    help_file_number = 0
 
     @classmethod
     def get_decode_header(cls, header):

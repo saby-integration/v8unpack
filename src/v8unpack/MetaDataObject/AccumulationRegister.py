@@ -7,6 +7,7 @@ class AccumulationRegister(Container):
         'obj': '1',  # Модуль набора записей
     }
     help_file_number = 0
+    predefined_file_number = 3  # Агрегаты
 
     @classmethod
     def get_decode_header(cls, header_data):

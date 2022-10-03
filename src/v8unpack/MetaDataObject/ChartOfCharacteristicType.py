@@ -6,6 +6,7 @@ class ChartOfCharacteristicType(Container):
         'mgr': '16',  # модуль менеджера Плана видов характеристик
         'obj': '15',  # модуль менеджера Плана видов характеристик
     }
+    help_file_number = 5
     predefined_file_number = 7
 
     @classmethod
