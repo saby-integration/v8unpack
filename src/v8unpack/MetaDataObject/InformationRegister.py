@@ -6,6 +6,7 @@ class InformationRegister(Container):
         'mgr': '2',  # модуль менеджера
         'obj': '1',  # Модуль набора записей
     }
+    help_file_number = 0
 
     @classmethod
     def get_decode_header(cls, header_data):

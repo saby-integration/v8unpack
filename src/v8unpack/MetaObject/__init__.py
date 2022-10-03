@@ -165,6 +165,15 @@ class MetaObject:
                             break
                     if not_encrypted:
                         raise err from err
+            else:
+                try:
+                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}.bin'
+                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
+                    encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
+                    self.header[f'code_info_{code_name}'] = 'file'
+                    self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
+                except FileNotFoundError as err:
+                    pass
 
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
@@ -187,14 +196,18 @@ class MetaObject:
 
     def write_encode_code(self, dest_dir):
         for code_name in self.code:
-            _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
-            os.makedirs(_code_dir)
-            helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
             encoding = self.header.get(f'code_encoding_{code_name}', 'utf-8')
-            if encoding in self.encrypted_types:
-                helper.bin_write(self.code[code_name], _code_dir, encoding)
+            if self.header[f'code_info_{code_name}'] == 'file':
+                _code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}.bin'
+                self.write_raw_code(self.code[code_name], dest_dir, _code_file_name, encoding=encoding)
             else:
-                self.write_raw_code(self.code[code_name], _code_dir, 'text.bin', encoding=encoding)
+                _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
+                os.makedirs(_code_dir)
+                helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
+                if encoding in self.encrypted_types:
+                    helper.bin_write(self.code[code_name], _code_dir, encoding)
+                else:
+                    self.write_raw_code(self.code[code_name], _code_dir, 'text.bin', encoding=encoding)
 
     def set_product_version(self, product_version):
         pass

@@ -77,7 +77,7 @@ class Decoder:
         try:
             handler = helper.get_class_metadata_object(include_type)
             handler = handler.get_version(decode_params[4])
-            tasks = handler.decode(*decode_params)
+            tasks = handler.decode(*decode_params, parent_type=include_type)
             return tasks
         except ExtException as err:
             raise ExtException(

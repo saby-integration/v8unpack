@@ -1,8 +1,14 @@
 from ..MetaDataObject.core.Container import Container
+from .. import helper
 
 
 class ChartOfAccounts(Container):
-    pass
+    ext_code = {
+        'obj': 14,
+        # 'mgr': хз
+    }
+    help_file_number = 5
+    predefined_file_number = 9
 
     @classmethod
     def get_decode_header(cls, header):

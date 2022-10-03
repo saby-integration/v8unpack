@@ -23,6 +23,10 @@ class Form803(Form8x):
             self.header['Расширенное представление'] = _header_obj[2]
         except IndexError:
             pass
+        try:
+            self.header['ХЗ1'] = _header_obj[1][4]
+        except IndexError:
+            pass
 
         if self.header['Тип формы'] != OLD_FORM:
             self.decode_form0(src_dir, uuid)
@@ -119,8 +123,9 @@ class Form803(Form8x):
         ]]
 
     def encode_header_title(self):
-        return [
-            self.header.get('Версия803', '13'),
+        version = self.header.get('Версия803', '13')
+        header_title = [
+            version,
             [
                 self.header['h0'],
                 [
@@ -134,21 +139,13 @@ class Form803(Form8x):
                 *self.header['h5'],
             ],
             self.header['Включать в содержание справки'],
-            self.header['Тип формы'],
-            [
-                "2",
-                [
-                    "\"#\"",
-                    "1708fdaa-cbce-4289-b373-07a5a74bee91",
-                    "1"
-                ],
-                [
-                    "\"#\"",
-                    "1708fdaa-cbce-4289-b373-07a5a74bee91",
-                    "2"
-                ]
-            ]
+            self.header['Тип формы']
         ]
+        try:
+            header_title.append(self.header['ХЗ1'])
+        except KeyError:
+            pass
+        return header_title
 
     def encode_data(self):
         if self.header['Тип формы'] == OLD_FORM:
