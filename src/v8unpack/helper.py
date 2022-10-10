@@ -1,9 +1,11 @@
 import json
 import os
 import shutil
+import uuid
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from multiprocessing import Pool, cpu_count
-import uuid
+
+from tqdm.auto import tqdm
 
 from .ext_exception import ExtException
 
@@ -56,11 +58,11 @@ def bin_read(path, file_name):
 
 
 def decode_header(obj: dict, header: list):
-    obj['uuid'] = header[1][2]
     try:
-        if uuid.UUID(obj['uuid']).version != 4:
-            raise ValueError('Заголовок определен не верно')
-    except ValueError:
+        obj['uuid'] = header[1][2]
+        uuid.UUID(obj['uuid'])
+
+    except (ValueError, IndexError):
         raise ValueError('Заголовок определен не верно')
 
     obj['name'] = str_decode(header[2])
@@ -101,8 +103,8 @@ def get_pool(*, pool: Pool = None, processes=None) -> Pool:
     if pool is not None:
         return pool
     if processes is None:
-        processes = cpu_count()
-    return Pool(processes=processes)
+        processes = max(cpu_count() - 2, 1)  # чтобы система совсем не висла
+    return Pool(processes)
 
 
 def close_pool(local_pool: Pool, pool: Pool = None) -> None:
@@ -111,11 +113,16 @@ def close_pool(local_pool: Pool, pool: Pool = None) -> None:
         local_pool.join()
 
 
-def run_in_pool(method, list_args, pool=None):
+def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     _pool = get_pool(pool=pool)
+    result = []
     # msg = f'pool {method}({len(list_args)})'
     try:
-        result = _pool.starmap(method, list_args)
+        with tqdm(desc=title, total=len(list_args)) as pbar:
+            for _res in _pool.imap_unordered(method, list_args, chunksize=1):
+                if need_result and _res:
+                    result.extend(_res)
+                pbar.update()
     except ExtException as err:
         raise ExtException(
             parent=err,

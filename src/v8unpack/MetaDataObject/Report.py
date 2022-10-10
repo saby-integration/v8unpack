@@ -6,6 +6,7 @@ class Report(Container):
         'mgr': '2',  # модуль менеджера Отчета
         'obj': '0',  # модуль Отчета
     }
+    help_file_number = 1
 
     @classmethod
     def get_decode_header(cls, header_data):
