@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from base64 import b64decode
 
 from . import helper
@@ -55,13 +56,16 @@ class JsonContainerDecoder:
                     encoding = 'windows-1251'
             except UnicodeDecodeError:
                 read_as_byte = True
+        except BigBase64:
+            shutil.copy2(os.path.join(src_dir, file_name), os.path.join(dest_dir, file_name + '.c1b64'))
+            return
         except Exception as err:
             raise ExtException(parent=err, message=f'Json decode {file_name} error: {err}')
         if read_as_byte:
-            with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
-                data = entry_file.read()
-
-        if dest_dir is not None:
+            shutil.copy2(os.path.join(src_dir, file_name), os.path.join(dest_dir, file_name + '.bin'))
+            # with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
+            #     data = entry_file.read()
+        else:
             if isinstance(data, list):
                 with open(f'{os.path.join(dest_dir, file_name)}.json', 'w', encoding='utf-8') as entry_file2:
                     json.dump(data, entry_file2, ensure_ascii=False, indent=2)
@@ -70,12 +74,11 @@ class JsonContainerDecoder:
                     encoding = helper.detect_by_bom(_src_path, 'utf-8')
                 with open(f'{os.path.join(dest_dir, file_name)}.txt', 'w', encoding=encoding) as entry_file2:
                     entry_file2.write(data)
-            elif isinstance(data, bytes):
-                with open(f'{os.path.join(dest_dir, file_name)}.bin', 'wb') as entry_file2:
-                    entry_file2.write(data)
+            # elif isinstance(data, bytes):
+            #     with open(f'{os.path.join(dest_dir, file_name)}.bin', 'wb') as entry_file2:
+            #         entry_file2.write(data)
             else:
                 raise Exception(f'Не поддерживаемый тип данных {type(data)}')
-        return data
 
     def decode_file(self, file):
         self.mode = READ_PARAM
@@ -85,6 +88,8 @@ class JsonContainerDecoder:
             try:
                 self.decode_line(line)
                 i += 1
+            except BigBase64 as err:
+                raise err from err
             except Exception as err:
                 raise ExtException(
                     parent=err,
@@ -113,6 +118,9 @@ class JsonContainerDecoder:
 
                 self.current_value = ''
                 if line.startswith('{#base64'):
+                    # это скорее всего файл целиком из двоичных данных
+                    if len(self.data) == 1 and len(self.data[0]) == 2 and self.data[0][0] == '1':
+                        raise BigBase64()
                     self.mode = READ_B64
                     self.decode_b64_line(line, 1)
                 else:
@@ -321,7 +329,8 @@ def json_decode(src_dir, dest_dir, *, pool=None):
     """
     tasks = []
     _decode(src_dir, dest_dir, tasks)
-    helper.run_in_pool(JsonContainerDecoder.decode, tasks, pool=pool, title='Конвертируем скобкофайл в json', need_result=False)
+    helper.run_in_pool(JsonContainerDecoder.decode, tasks, pool=pool, title='Конвертируем скобкофайл в json',
+                       need_result=False)
 
 
 def _decode(src_dir, dest_dir, tasks):
@@ -359,7 +368,8 @@ def json_encode(src_dir, dest_dir, *, pool=None):
     tasks = []
     helper.clear_dir(dest_dir)
     _encode(src_dir, dest_dir, tasks)
-    helper.run_in_pool(JsonContainerDecoder.encode, tasks, pool=pool, title='Конвертироуем json в скобковайл', need_result=False)
+    helper.run_in_pool(JsonContainerDecoder.encode, tasks, pool=pool, title='Конвертироуем json в скобковайл',
+                       need_result=False)
 
 
 def _encode(src_dir, dest_dir, tasks):
@@ -384,11 +394,19 @@ def _encode(src_dir, dest_dir, tasks):
                         with open(src_entry_path, 'r', encoding=encoding) as entry_file:
                             with open(dest_entry_path[:-3], 'w', encoding=encoding) as f:
                                 f.write(entry_file.read())
-                elif extension == 'bin':
-                    with open(src_entry_path, 'rb') as entry_file:
-                        with open(dest_entry_path[:-3], 'wb') as f:
-                            f.write(entry_file.read())
+                elif extension == 'bin' or extension == 'c1b64':
+                    shutil.copy2(
+                        os.path.join(src_dir, entry),
+                        os.path.join(dest_dir, os.path.basename(entry))
+                    )
+                    # with open(src_entry_path, 'rb') as entry_file:
+                    #     with open(dest_entry_path[:-3], 'wb') as f:
+                    #         f.write(entry_file.read())
                 else:
                     tasks.append((src_dir, entry, dest_dir))
         except Exception as err:
             raise ExtException(parent=err, detail=f'{entry} {src_dir}', action='json_encode')
+
+
+class BigBase64(Exception):
+    pass

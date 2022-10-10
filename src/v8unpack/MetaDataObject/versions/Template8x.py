@@ -1,5 +1,6 @@
 import os
-from base64 import b64decode, b64encode
+import shutil
+from base64 import b64decode
 from enum import Enum
 
 from ..core.Simple import Simple
@@ -94,16 +95,23 @@ class Template8x(Simple):
         try:
             data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
         except FileNotFoundError:
+            file_name = f'{self.header["uuid"]}.0.c1b64'
+            if os.path.isfile(os.path.join(src_dir, file_name)):
+                # todo сюда можно вставить выдергивание бинарника из файла если кому то хочется
+                shutil.copy2(
+                    os.path.join(src_dir, file_name),
+                    os.path.join(dest_dir, f'{self.header["name"]}.c1b64')
+                )
             return
         if data[0][1] and data[0][1][0]:
             self.data = b64decode(data[0][1][0][8:])
             data[0][1][0] = '"данные в отдельном файле"'
-            extension = helper.get_extension_from_comment(self.header['comment'])
             if write:
+                extension = helper.get_extension_from_comment(self.header['comment'])
                 helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.{extension}')
 
     def decode_html_data(self, src_dir, dest_dir, write):
-        self._decode_html_data(src_dir, dest_dir, "html0")
+        self._decode_html_data(src_dir, dest_dir, self.new_dest_file_name)
 
     def decode_header(self, header):
         self.tmpl_type = TmplType(header[0][1][1])
@@ -153,11 +161,19 @@ class Template8x(Simple):
 
     def encode_base64_data(self, src_dir, dest_dir):
         extension = helper.get_extension_from_comment(self.header['comment'])
-        bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
-        self._encode_bin_data(bin_data, dest_dir)
+        try:
+            bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
+            self._encode_bin_data(bin_data, dest_dir)
+        except FileNotFoundError:
+            file_name = f'{self.header["name"]}.c1b64'
+            if os.path.isfile(os.path.join(src_dir, file_name)):
+                shutil.copy2(
+                    os.path.join(src_dir, file_name),
+                    os.path.join(dest_dir, f'{self.header["uuid"]}.0.c1b64')
+                )
 
     def encode_html_data(self, src_dir, dest_dir):
-        self._encode_html_data(src_dir, self.header["name"], dest_dir, "html0")
+        self._encode_html_data(src_dir, self.header["name"], dest_dir)
 
     def _encode_bin_data(self, bin_data, dest_dir):
         self.raw_data = [[
