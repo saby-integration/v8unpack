@@ -4,7 +4,7 @@ from ..MetaDataObject.core.Container import Container
 class Task(Container):
     ext_code = {
         'obj': 6,
-        # 'mgr': хз
+        'mgr': 7
     }
     help_file_number = 5
     # @classmethod

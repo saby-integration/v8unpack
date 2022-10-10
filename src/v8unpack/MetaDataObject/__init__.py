@@ -1,5 +1,4 @@
 import os
-from base64 import b64decode, b64encode
 
 from .. import helper
 from ..MetaObject import MetaObject
@@ -10,6 +9,7 @@ class MetaDataObject(MetaObject):
     versions = None
     version = None
     _obj_name = None
+    help_file_number = None
 
     def __init__(self):
         super().__init__()
@@ -114,45 +114,3 @@ class MetaDataObject(MetaObject):
     def write_encode_object(self, dest_dir):
         helper.json_write(self.header['data'], dest_dir, f'{self.header["uuid"]}.json')
         self.write_encode_code(dest_dir)
-
-    def _decode_html_data(self, src_dir, dest_dir, header_field, file_number=0):
-        try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.{file_number}.json')
-        except FileNotFoundError:
-            return
-        try:
-            if data[0][3] and data[0][3][0]:
-                bin_data = self._extract_b64_data(data[0][3])
-                helper.bin_write(bin_data, dest_dir, f'{self.new_dest_file_name}.html')
-        except IndexError:
-            pass
-        self.header[header_field] = data
-
-    def _extract_b64_data(self, raw_data):
-        if raw_data[0].startswith('##base64:'):
-            bin_data = b64decode(raw_data[0][9:])
-            raw_data[0] = '##base64:'
-        elif raw_data[0].startswith('#base64:'):
-            bin_data = b64decode(raw_data[0][8:])
-            raw_data[0] = '#base64:'
-        else:
-            raise NotImplementedError('decode_html_data')
-        return bin_data
-
-    def _encode_html_data(self, src_dir, file_name, dest_dir, header_field, file_number=0):
-        try:
-            bin_data = helper.bin_read(src_dir, f'{file_name}.html')
-        except FileNotFoundError:
-            bin_data = None
-        header = self.header.get(header_field)
-        if header and len(header[0]) > 2 and bin_data:
-            header[0][3][0] += b64encode(bin_data).decode(encoding='utf-8')
-        if header:
-            helper.json_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}.json')
-
-    @staticmethod
-    def _get_b64_string(bin_data):
-        if not bin_data:
-            return "##base64:"
-        else:
-            return "#base64:" + b64encode(bin_data).decode(encoding='utf-8')

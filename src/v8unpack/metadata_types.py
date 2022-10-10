@@ -10,6 +10,7 @@ class MetaDataTypes(Enum):
     AccumulationRegister = 'b64d9a40-1642-11d6-a3c7-0050bae0a776'  # Регистры накопления
     AccumulationRegisterForm = 'b64d9a44-1642-11d6-a3c7-0050bae0a776'  # Регистры накопления форма
     BusinessProcess = 'fcd3404e-1523-48ce-9bc0-ecdb822684a1'  # Бизнес-процессы
+    BusinessProcessCommand = '7a3e533c-f232-40d5-a932-6a311d2480bf'
     BusinessProcessForm = '3f7a8120-b71a-4265-98bf-4d9bc09b7719'
     CalculationRegister = 'f2de87a8-64e5-45eb-a22d-b3aedab050e7'  # Регистры расчета
     CalculationRegisterForm = 'a2cb086c-db98-43e4-a1a9-0760ab048f8d'  # Регистры расчета
@@ -39,12 +40,14 @@ class MetaDataTypes(Enum):
     DocumentCommand = 'b544fc6a-2ba3-4885-8fb2-cb289fb6d65e'  # Команда документа
     DocumentForm = "fb880e93-47d7-4127-9357-a20e69c17545"  # Форма документа
     DocumentJournal = '4612bd75-71b7-4a5c-8cc5-2b0b65f9fa0d'  # Журналы документов
+    DocumentJournalCommand = "a49a35ce-120a-4c80-8eea-b0618479cd70"
     DocumentJournalForm = 'ec81ad10-ca07-11d5-b9a5-0050bae0a95d'
     DocumentNumerators = '36a8e346-9aaa-4af9-bdbd-83be3c177977'  # Нумератор документа
     Enum = "f6a80749-5ad7-400b-8519-39dc5dff2542"  # Перечисления
     EnumForm = "33f2e54b-37ce-4a7a-a569-b648d7aa4634"  # Перечисления
     EventSubscription = '4e828da6-0f44-4b5b-b1c0-a2b3cfe7bdcc'  # Подписки на события
     ExchangePlan = '857c4a91-e5f4-4fac-86ec-787626f1c108'  # План обмена
+    ExchangePlanCommand = 'd5207c64-11d5-4d46-bba2-55b7b07ff4eb'
     ExchangePlanForm = '87c509ab-3d38-4d67-b379-aca796298578'  # План обмена Form
     ExternalDataProcessor = 'c3831ec8-d8d5-4f93-8a22-f9bfae07327f'  # Внешняя обработка
     FilterCriterion = '3e7bfcc0-067d-11d6-a3c7-0050bae0a776'  # Критерии отбора
@@ -73,6 +76,7 @@ class MetaDataTypes(Enum):
     Subsystem = '37f2fa9a-b276-11d4-9435-004095e12fc7'  # Подсистемы
     TabularSectionAttribute = '2bcef0d1-0981-11d6-b9b8-0050bae0a95d'  # Атрибут Табличной части Внешней обработки
     Task = '3e63355c-1378-4953-be9b-1deb5fb6bec5'  # Задачи
+    TaskCommand = 'f27c2152-a2c9-4c30-adb1-130f5eb2590f'
     TaskForm = '3f58cbfb-4172-4e54-be49-561a579bb38b'
     Template = '3daea016-69b7-4ed4-9453-127911372fe6'  # Макет внешней обработки
     WebService = '8657032e-7740-4e1d-a3ba-5dd6e8afb78f'  # Веб-сервис

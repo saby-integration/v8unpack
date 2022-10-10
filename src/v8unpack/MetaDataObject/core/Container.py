@@ -1,11 +1,9 @@
-import os
+from ... import helper
 from ...MetaDataObject import MetaDataObject
 from ...ext_exception import ExtException
-from ... import helper
 
 
 class Container(MetaDataObject):
-    help_file_number = None
     predefined_file_number = None
 
     @classmethod
@@ -22,7 +20,8 @@ class Container(MetaDataObject):
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
         if self.help_file_number is not None:
-            self._decode_html_data(src_dir, self.new_dest_dir, 'help', self.help_file_number)
+            self._decode_html_data(src_dir, self.new_dest_dir, self.new_dest_file_name, header_field='help',
+                                   file_number=self.help_file_number)
         if self.predefined_file_number is not None:
             self._decode_predefined(src_dir, self.new_dest_dir)
         self.decode_code(src_dir)
@@ -39,7 +38,7 @@ class Container(MetaDataObject):
 
     def encode_object(self, src_dir, file_name, dest_dir, version):
         if self.help_file_number is not None:
-            self._encode_html_data(src_dir, file_name, dest_dir, 'help', self.help_file_number)
+            self._encode_html_data(src_dir, file_name, dest_dir, header_field='help', file_number=self.help_file_number)
         if self.predefined_file_number is not None:
             self._encode_predefined(src_dir, dest_dir)
         self.encode_code(src_dir, self.__class__.__name__)
