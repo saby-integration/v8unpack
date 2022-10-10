@@ -10,7 +10,7 @@ from struct import pack, calcsize
 
 from . import helper
 from .json_container_decoder import JsonContainerDecoder
-from datetime import datetime
+from datetime import datetime, timedelta
 from tqdm.auto import tqdm
 
 
@@ -35,7 +35,7 @@ def epoch2int(epoch_time):
     """
     # Начало эпохи на разных системах - разная дата
     # Поэтому явно вычисляем разницу между указанной датой и 0001.01.01
-    return (datetime.datetime.fromtimestamp(epoch_time) - datetime.datetime(1, 1, 1)) // datetime.timedelta(
+    return (datetime.fromtimestamp(epoch_time) - datetime(1, 1, 1)) // timedelta(
         microseconds=100)
 
 

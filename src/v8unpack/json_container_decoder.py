@@ -397,7 +397,7 @@ def _encode(src_dir, dest_dir, tasks):
                 elif extension == 'bin' or extension == 'c1b64':
                     shutil.copy2(
                         os.path.join(src_dir, entry),
-                        os.path.join(dest_dir, os.path.basename(entry))
+                        os.path.join(dest_dir, os.path.splitext(entry)[0])
                     )
                     # with open(src_entry_path, 'rb') as entry_file:
                     #     with open(dest_entry_path[:-3], 'wb') as f:
