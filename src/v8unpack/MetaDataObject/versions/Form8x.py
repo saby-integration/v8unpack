@@ -19,6 +19,7 @@ class Form8x(SimpleNameFolder):
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header_data):
         self.set_header_data(header_data)
+        self.set_write_decode_mode(dest_dir, dest_path)
         self.decode_data(src_dir, uuid)
         self.decode_code(src_dir)
 

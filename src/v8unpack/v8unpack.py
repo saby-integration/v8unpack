@@ -44,7 +44,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         if not index and index is not None:
             return
 
-        print(f"{helper.str_time(begin0)} Начали        ", end='')
+        print(f"Начали")
 
         if descent is None:
             helper.clear_dir(os.path.normpath(out_dir_name))
@@ -61,28 +61,20 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
         pool = helper.get_pool()
 
-        begin1 = datetime.now()
-        print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Распаковываем ", end='')
         container_extract(in_filename, dir_stage0, False, False)
         decompress_and_extract(dir_stage0, dir_stage1, pool=pool)
 
-        begin2 = datetime.now()
-        print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Конвертируем  ", end='')
         json_decode(dir_stage1, dir_stage2, pool=pool)
 
-        begin3 = datetime.now()
-        print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Раcшифровываем", end='')
         decode(dir_stage2, dir_stage3, pool=pool, version=version)
 
-        begin4 = datetime.now()
-        print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Организуем    ", end='')
         if descent:
             FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
         else:
             FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
 
         end = datetime.now()
-        print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
+        print(f'{"Готово":30}: {end - begin0}')
 
         helper.close_pool(pool)
         if clear_temp_dir:
@@ -102,7 +94,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         if not index and index is not None:
             return
 
-        print(f"{helper.str_time(begin0)} Начали        ", end='')
+        print(f"Начали")
 
         clear_temp_dir = False
         if temp_dir is None:
@@ -117,33 +109,26 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         pool = helper.get_pool()
 
-        begin1 = datetime.now()
-        print(f" - {begin1 - begin0}\n{helper.str_time(begin1)} Собираем      ", end='')
         if descent:
             FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
         else:
             FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
 
-        begin2 = datetime.now()
-        print(f" - {begin2 - begin1}\n{helper.str_time(begin2)} Зашифровываем ", end='')
         encode(dir_stage3, dir_stage2, version=version, pool=pool, gui=gui,
                file_name=os.path.basename(out_file_name), **kwargs)
 
-        begin3 = datetime.now()
-        print(f" - {begin3 - begin2}\n{helper.str_time(begin0)} Конвертируем  ", end='')
         json_encode(dir_stage2, dir_stage1, pool=pool)
 
-        begin4 = datetime.now()
-        print(f" - {begin4 - begin3}\n{helper.str_time(begin0)} Запаковываем  ", end='')
         compress_and_build(dir_stage1, dir_stage0, pool=pool)
         container_build(dir_stage0, out_file_name, True)
-
-        end = datetime.now()
-        print(f" - {end - begin4}\n{helper.str_time(end)} Готово         - {end - begin0}")
 
         helper.close_pool(pool)
         if clear_temp_dir:
             shutil.rmtree(temp_dir, ignore_errors=True)
+
+        end = datetime.now()
+        print(f'{"Готово":30}: {end - begin0}')
+
     except Exception as err:
         print(err)
 

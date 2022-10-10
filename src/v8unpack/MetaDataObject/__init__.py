@@ -9,10 +9,12 @@ class MetaDataObject(MetaObject):
     versions = None
     version = None
     _obj_name = None
+    help_file_number = None
 
     def __init__(self):
         super().__init__()
         self.path = ''
+        self.title = self.__class__.__name__
         self.new_dest_path = None
         self.new_dest_dir = None
         self.new_dest_file_name = None
@@ -26,18 +28,19 @@ class MetaDataObject(MetaObject):
         if cls.versions is None:
             return cls
         try:
-            return cls.versions[version]
+            return cls.versions.get(version, cls.versions['803'])
         except KeyError:
             raise Exception(f'Нет реализации {cls.__name__} для версии "{version}"')
 
     @classmethod
-    def decode(cls, src_dir, file_name, dest_dir, dest_path, version):
+    def decode(cls, src_dir, file_name, dest_dir, dest_path, version, *, parent_type=None):
         try:
             header_data = helper.json_read(src_dir, f'{file_name}.json')
             self = cls()
+            if parent_type:
+                self.title = parent_type
             self.version = version
             self.decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
-            self.set_write_decode_mode(dest_dir, dest_path)
             tasks = self.decode_includes(src_dir, dest_dir, self.new_dest_path, header_data)
             self.write_decode_object(dest_dir, self.new_dest_path, self.new_dest_file_name, version)
             return tasks
@@ -63,6 +66,7 @@ class MetaDataObject(MetaObject):
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         self.set_header_data(header_data)
+        self.set_write_decode_mode(dest_dir, dest_path)
 
     def write_decode_object(self, dest_dir, dest_path, file_name, version):
         dest_full_path = os.path.join(dest_dir, dest_path)

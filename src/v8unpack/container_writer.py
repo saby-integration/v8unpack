@@ -10,6 +10,9 @@ from struct import pack, calcsize
 
 from . import helper
 from .json_container_decoder import JsonContainerDecoder
+from datetime import datetime, timedelta
+from tqdm.auto import tqdm
+
 
 # INT32_MAX
 END_MARKER = 2147483647
@@ -32,7 +35,7 @@ def epoch2int(epoch_time):
     """
     # Начало эпохи на разных системах - разная дата
     # Поэтому явно вычисляем разницу между указанной датой и 0001.01.01
-    return (datetime.datetime.fromtimestamp(epoch_time) - datetime.datetime(1, 1, 1)) // datetime.timedelta(
+    return (datetime.fromtimestamp(epoch_time) - datetime(1, 1, 1)) // timedelta(
         microseconds=100)
 
 
@@ -237,9 +240,12 @@ def build(folder, filename, nested=False):
     :param filename: имя файла контейнера
     :type filename: string
     """
+    begin = datetime.now()
+    print(f'{"Запаковываем бинарник":30}:', end="")
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w+b') as f, ContainerWriter(f) as container:
         add_entries(container, folder, nested)
+    print(f" - {datetime.now() - begin}")
 
 
 def calc_sha1(src_folder, dest_folder):
@@ -284,16 +290,18 @@ def compress_and_build(src_folder, dest_folder, *, pool=None, nested=False):
     helper.clear_dir(dest_folder)
     entries = sorted(os.listdir(src_folder))
 
-    for filename in entries:
-        src_path = os.path.join(src_folder, filename)
-        dest_path = os.path.join(dest_folder, filename)
-        # add_entry(container, src_folder, filename)
-        if os.path.isdir(src_path):
-            with open(dest_path, 'w+b') as dest_fd:
-                with tempfile.TemporaryFile() as tmp:
-                    with ContainerWriter(tmp) as nested_container:
-                        add_entries(nested_container, src_path, nested=True)
-                    ContainerWriter.compress(None, tmp, dest_fd, ContainerWriter.write_block_data)
-        else:
-            compress_and_build_simple_file(src_path, dest_path)
-    calc_sha1(src_folder, dest_folder)
+    with tqdm(desc=f'{"Архивируем контейнеры":30}', total=len(entries)) as pbar:
+        for filename in entries:
+            src_path = os.path.join(src_folder, filename)
+            dest_path = os.path.join(dest_folder, filename)
+            # add_entry(container, src_folder, filename)
+            if os.path.isdir(src_path):
+                with open(dest_path, 'w+b') as dest_fd:
+                    with tempfile.TemporaryFile() as tmp:
+                        with ContainerWriter(tmp) as nested_container:
+                            add_entries(nested_container, src_path, nested=True)
+                        ContainerWriter.compress(None, tmp, dest_fd, ContainerWriter.write_block_data)
+            else:
+                compress_and_build_simple_file(src_path, dest_path)
+            pbar.update()
+        calc_sha1(src_folder, dest_folder)

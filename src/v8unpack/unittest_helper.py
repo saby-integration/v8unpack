@@ -3,10 +3,12 @@ import os
 import sys
 import unittest
 
+from tqdm.auto import tqdm
+
 from . import helper
 from .container_reader import extract, decompress_and_extract
 from .container_writer import build, compress_and_build
-from .decoder import decode, encode, Decoder
+from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
 from .json_container_decoder import JsonContainerDecoder
@@ -17,17 +19,15 @@ class HelperTestDecode(unittest.TestCase):
     pool = None
     processes = None
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        if cls.pool is None:
-            cls.pool = helper.get_pool(processes=cls.processes)
-        # cls.maxDiff = None
-
-    # @classmethod
-    # def tearDownClass(cls) -> None:
-    #     helper.close_pool(cls.pool)
+    def tearDown(self) -> None:
+        helper.close_pool(self.pool)
 
     def setUp(self) -> None:
+        if not sys.warnoptions:
+            import warnings
+            warnings.simplefilter("ignore")
+
+        self.pool = helper.get_pool(processes=self.processes)
         self.src_dir = os.path.join(sys.path[0])  # абсолютный путь до папки с исходным файлом
         self.src_file = ''  # имя исходного файла
         self.test_dir = ''  # абсолютный путь до временной папки c файлами промежуточных стадий
@@ -114,7 +114,7 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
     def encode_stage3(self, *, gui=None):
-        encode(self.encode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool,
+        encode(self.decode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool,
                file_name=os.path.basename(self.src_file), gui=gui)
         self.assert_stage(self.decode_dir_stage2, self.encode_dir_stage2)
         if self.result:
@@ -150,30 +150,43 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(template_files), self.result['count_templates_files'])
 
     def assert_stage(self, decode_dir, encode_dir):
-        problems = self._assert_stage(decode_dir, encode_dir)
-        self.assertTrue(not problems, f'file not equal\n{problems}')
+        problems = []
+        self._assert_stage(decode_dir, encode_dir, problems, True)
+        if problems:
+            with open(f'{encode_dir}.txt', 'w', encoding='utf-8') as log:
+                for problem in problems:
+                    log.write(problem)
+        self.assertTrue(not problems, f'files not equal')
 
-    def _assert_stage(self, decode_dir, encode_dir):
+    def _assert_stage(self, decode_dir, encode_dir, problems, root=False):
         entries = os.listdir(decode_dir)
-        problems = ''
         include_problems = ''
+        pbar = None
+        if root:
+            pbar = tqdm(desc=f'{"Сравниваем с оригиналом":30}', total=len(entries))
         for entry in entries:
+            if pbar:
+                pbar.update()
             if entry.startswith('configinfo'):
                 continue
             path_decode_entry = os.path.join(decode_dir, entry)
             path_encode_entry = os.path.join(encode_dir, entry)
             if os.path.isdir(path_decode_entry):
-                include_problems += self._assert_stage(path_decode_entry, path_encode_entry)
+                self._assert_stage(path_decode_entry, path_encode_entry, problems)
             else:
                 try:
-                    problems += compare_file(path_decode_entry, path_encode_entry)
+                    problem = compare_file(path_decode_entry, path_encode_entry, problems)
                 except NotEqualLine as err:
-                    problems += str(err)
-        if problems:
-            problems = f'   {decode_dir}\n   {encode_dir}{problems}\n'
-        if include_problems:
-            problems += '\n' + include_problems
-        return problems
+                    problem = str(err)
+                if problem:
+                    problems.append(problem)
+        # if problems:
+        #     problems = f'   {decode_dir}\n   {encode_dir}{problems}\n'
+        # if include_problems:
+        #     problems += '\n' + include_problems
+        if pbar:
+            pbar.close()
+        # return pr
 
     @classmethod
     def remove_closing_brackets(cls, file_data):
@@ -186,14 +199,6 @@ class HelperTestDecode(unittest.TestCase):
                 os.path.join(encode_dest_dir, entity_name),
                 os.path.join(decode_dir, entity_name)
             )
-
-    # def tmpl_decode(self, *, encode_src_dir='', entity_name='', encode_dest_dir='', decode_dir=''):
-    #     Decoder.decode(encode_src_dir, f'{entity_name}.json', encode_dest_dir)
-    #     if decode_dir:
-    #         self.assertUtfFile(
-    #             os.path.join(encode_dest_dir, entity_name),
-    #             os.path.join(decode_dir, entity_name)
-    #         )
 
     def assertUtfFile(self, src, dest):
         with open(src, 'r', encoding='utf-8') as file:
@@ -214,11 +219,30 @@ class NotEqualLine(Exception):
     pass
 
 
-def compare_file(path_decode_entry, path_encode_entry):
+def compare_file(path_decode_entry, path_encode_entry, problems):
+    def ignore():
+        if encode_line.endswith(b'\r\n'):
+            if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
+                encode_file.readline()
+                # problems += f'\n      {entry:38} {i:6} \\r {decode_line}'
+                return True
+            if decode_line.endswith(b'\n') and decode_line[:-1] == encode_line[:-2]:
+                return True
+            if encode_line[:-2] == decode_line:
+                return True
+            if decode_line.endswith(b'\r\n') \
+                    and decode_line[-3] == b','[0] \
+                    and (len(decode_line) - len(encode_line)) == 1:
+                return True
+        if encode_line.startswith(b'#base64') and encode_line[8:] == decode_line[9:]:
+            return True
+        return False
+
     problems = ''
     entry = os.path.basename(path_encode_entry)
     folder = os.path.basename(os.path.dirname(path_encode_entry))
-    title = os.path.join(folder,entry)
+    title = os.path.join(folder, entry)
+
     with open(path_decode_entry, 'rb') as decode_file:
         try:
             i = 0
@@ -229,15 +253,10 @@ def compare_file(path_decode_entry, path_encode_entry):
                     i += 1
                     encode_line = encode_file.readline()
                     if decode_line != encode_line:
-                        if encode_line.endswith(b'\r\n'):
-                            if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
-                                encode_file.readline()
-                                # problems += f'\n      {entry:38} {i:6} \\r {decode_line}'
-                                continue
-                            if encode_line[:-2] == decode_line:
-                                continue
-                        problems += f'\n      {title:73} {i:5} {decode_line}'
-                        problems += f'\n      {"":80} {encode_line}'
+                        if ignore():
+                            continue
+                        problems += f'\n      {title:73} {i:5} {encode_line[:30]}'
+                        problems += f'\n      {"":79} {decode_line[:30]}'
                         raise NotEqualLine(problems)
                     elif decode_line.hex() != encode_line.hex():
                         a = 1
@@ -245,8 +264,8 @@ def compare_file(path_decode_entry, path_encode_entry):
                     i += 1
                     if encode_line == b'}\r\n' or b'}':
                         continue
-                    problems += f'\n      {entry:38} {i:6} {encode_line}'
+                    problems += f'\n      {title:73} {i:5} {encode_line[:30]}'
                     raise NotEqualLine(problems)
         except FileNotFoundError:
-            problems += f'\n      {entry} not encode file'
+            problems += f'\n      {title:73}  not encode file'
     return problems

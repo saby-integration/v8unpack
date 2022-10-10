@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import collections
-import datetime
 import io
 import os
 import zlib
+from datetime import datetime, timedelta
 from struct import pack, unpack, calcsize
 
 from . import helper
+from .ext_exception import ExtException
 
 # INT32_MAX 7fffffff
 END_MARKER = 2147483647
@@ -141,7 +142,7 @@ def parse_datetime(time):
     :rtype: datetime
     """
     # TODO проверить работу на *nix, т.к там начало эпохи - другая дата
-    return datetime.datetime(1, 1, 1) + datetime.timedelta(microseconds=time * 100)
+    return datetime(1, 1, 1) + timedelta(microseconds=(time * 100))
 
 
 def read_entries(file):
@@ -257,29 +258,59 @@ def extract(filename, folder, deflate=True, recursive=True):
     :param recursive: рекурсивно достаем все контейнеры
     :type recursive: boolean
     """
+    begin = datetime.now()
+    print(f'{"Распаковываем бинарник":30}:', end="")
     with open(filename, 'rb') as f:
         ContainerReader(f).extract(folder, deflate, recursive)
+    print(f"{datetime.now() - begin}")
 
 
 def decompress_and_extract(src_folder, dest_folder, *, pool=None):
     helper.clear_dir(dest_folder)
     entries = os.listdir(src_folder)
-
+    tasks = []
     for filename in entries:
-        src_path = os.path.join(src_folder, filename)
-        dest_path = os.path.join(dest_folder, filename)
-        with open(src_path, 'rb') as f:
-            # wbits = -15 т.к. у архивированных файлов нет заголовков
-            decompressor = zlib.decompressobj(-15)
-            data = decompressor.decompress(f.read())
+        tasks.append([src_folder, filename, dest_folder])
+
+    helper.run_in_pool(decompress_file_and_extract, tasks)
+
+
+def decompress_file_and_extract(params):
+    src_folder, filename, dest_folder = params
+    src_path = os.path.join(src_folder, filename)
+    dest_path = os.path.join(dest_folder, filename)
+    file_is_container = None
+
+    # wbits = -15 т.к. у архивированных файлов нет заголовков
+    decompressor = zlib.decompressobj(-15)
+    try:
+        with open(dest_path, 'wb') as dest:
+            with open(src_path, 'rb') as src:
+                while True:
+                    buf = decompressor.unconsumed_tail
+                    if buf == b'':
+                        buf = src.read(8192)
+                        if buf == b'':
+                            break
+                    data = decompressor.decompress(buf)
+                    if file_is_container is None:
+                        file_is_container = data[0:4] == b'\xFF\xFF\xFF\x7F'
+                    if data == b'':
+                        break
+                    dest.write(data)
 
         # Каждый файл внутри контейнера может быть контейнером
         # Для проверки является ли файл контейнером проверим первые 4 бита
         # Способ проверки ненадежный - нужно придумать что-то другое
-        file_is_container = data[0:4] == b'\xFF\xFF\xFF\x7F'
 
         if file_is_container:
-            ContainerReader(io.BytesIO(data)).extract(dest_path, recursive=True)
-        else:
-            with open(dest_path, 'wb') as f:
-                f.write(data)
+            temp_filename = dest_path + ".temp"
+            os.rename(dest_path, temp_filename)
+            with open(temp_filename, 'rb') as f:
+                ContainerReader(f).extract(dest_path, recursive=True)
+            os.remove(temp_filename)
+
+    except Exception as err:
+        raise ExtException(
+            parent=err, message="Ошибка при разархифировании контейнера",
+            detail=f'{filename} ({err})')
