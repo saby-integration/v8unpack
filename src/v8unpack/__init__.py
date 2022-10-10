@@ -1,5 +1,3 @@
-__version__ = '0.10.0'
-
 import sys
 
 from .index import update_index

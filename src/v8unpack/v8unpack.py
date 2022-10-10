@@ -6,7 +6,7 @@ import sys
 import tempfile
 from datetime import datetime
 
-from . import __version__
+from .version import __version__
 from . import helper
 from .container_reader import extract as container_extract, decompress_and_extract
 from .container_writer import build as container_build, compress_and_build
