@@ -86,7 +86,7 @@ class Template8x(Simple):
         except FileNotFoundError:
             return
         if write:
-            helper.txt_write(self.data, dest_dir, f'{self.header["name"]}.bin', encoding=encoding)
+            helper.txt_write(self.data, dest_dir, f'{self.header["name"]}.txt', encoding=encoding)
 
     def decode_extension_data(self, src_dir, dest_dir, write):
         self.decode_base64_data(src_dir, dest_dir, write)
@@ -151,7 +151,7 @@ class Template8x(Simple):
 
     def encode_text_data(self, src_dir, dest_dir):
         try:
-            raw_data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["name"]}.bin')
+            raw_data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["name"]}.txt')
             helper.txt_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.bin', encoding=encoding)
         except FileNotFoundError:
             pass
