@@ -1,5 +1,10 @@
+import sys
+
 import setuptools
-from src.v8unpack import __version__
+
+sys.path[0:0] = ['src\\v8unpack']
+
+from version import __version__
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -26,11 +31,11 @@ setuptools.setup(
     keywords='1C CF CFE EPF V8UNPACK SABY SBIS СБИС 1С',
     python_requires='>=3.6',
     zip_safe=False,
+    packages=['v8unpack'],
+    package_dir={"v8unpack": "src/v8unpack"},
     install_requires=[
-        'tqdm'
+        'tqdm>=4'
     ],
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
     entry_points={
         'console_scripts':
             [
