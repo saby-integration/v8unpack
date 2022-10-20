@@ -1,4 +1,4 @@
-from .. import __version__
+from ..version import __version__
 from .. import helper
 from ..MetaObject import MetaObject
 
