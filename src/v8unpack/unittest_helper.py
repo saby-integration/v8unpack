@@ -156,7 +156,7 @@ class HelperTestDecode(unittest.TestCase):
             with open(f'{encode_dir}.txt', 'w', encoding='utf-8') as log:
                 for problem in problems:
                     log.write(problem)
-        self.assertTrue(not problems, f'files not equal')
+        self.assertTrue(not problems, f'files not equal - log in {encode_dir}.txt')
 
     def _assert_stage(self, decode_dir, encode_dir, problems, root=False):
         entries = os.listdir(decode_dir)

@@ -1,9 +1,9 @@
 import PyInstaller.__main__
 
-from v8unpack import __version__
+# from v8unpack.version import __version__
 # from PyInstaller.utils.hooks import collect_submodules
 
-_version = __version__.split('.')
+# _version = __version__.split('.')
 
 # modules = ' '.join(collect_submodules('v8unpack'))
 

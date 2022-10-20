@@ -12,7 +12,6 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setuptools.setup(
     name='v8unpack',
     version=__version__,
-    test_requires=[],
     url='https://github.com/saby-integration/v8unpack',
     license='MIT',
     author='Razgovorov Mikhail',

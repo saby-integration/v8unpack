@@ -16,3 +16,4 @@ temp/
 tests/*/src/
 tests/*/core/
 *.spec
+/tests/metadata/data/
