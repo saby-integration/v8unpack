@@ -2,7 +2,7 @@ import os
 import shutil
 from base64 import b64encode
 
-from .. import __version__
+from ..version import __version__
 from .. import helper
 from ..MetaObject import MetaObject
 
