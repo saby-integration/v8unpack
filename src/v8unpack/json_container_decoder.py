@@ -8,6 +8,7 @@ from .ext_exception import ExtException
 
 READ_PARAM = 1
 BEGIN_READ_STRING_VALUE = 2
+BEGIN_READ_MULTI_STRING_VALUE = 6
 END_READ_STRING_VALUE = 3
 READ_B64 = 4
 READ_TEXT_FILE = 5
@@ -25,6 +26,7 @@ class JsonContainerDecoder:
         self.file_name = file_name
         self.path = []
         self.params_in_line = 0
+        self.line_number = None
 
     @classmethod
     def decode_mp(cls, params):
@@ -83,18 +85,18 @@ class JsonContainerDecoder:
     def decode_file(self, file):
         self.mode = READ_PARAM
         self.data = []
-        i = 1
+        self.line_number = 1
         for line in file:
             try:
                 self.decode_line(line)
-                i += 1
+                self.line_number += 1
             except BigBase64 as err:
                 raise err from err
             except Exception as err:
                 raise ExtException(
                     parent=err,
                     message="Ошибка при разборе скобкофайла",
-                    detail=f'{os.path.basename(self.src_dir)}/{self.file_name} проблема до строки {i}',
+                    detail=f'{os.path.basename(self.src_dir)}/{self.file_name} проблема до строки {self.line_number}',
                     dump=dict(
                         mode=self.mode,
                         current_object=self.current_object,
@@ -144,6 +146,8 @@ class JsonContainerDecoder:
                         f'неожиданное начало объекта file:{self.src_dir}/{self.file_name}, path:{self.path})')
         elif self.mode == BEGIN_READ_STRING_VALUE:
             self.decode_object(line)
+        elif self.mode == BEGIN_READ_MULTI_STRING_VALUE:
+            self.decode_multi_string_value(line)
         elif self.mode == READ_B64:
             if line == '\n':
                 return
@@ -153,19 +157,6 @@ class JsonContainerDecoder:
         else:
             raise NotImplemented(f'mode {self.mode}')
 
-    def decode_b64_line(self, line, start_pos):
-        end_pos = line.find('}')
-        if end_pos >= 0:
-            self.current_value += line[start_pos:end_pos]
-            if start_pos == 1:  # b64 не зарбит на строки
-                self.current_value = "#" + self.current_value
-            self._end_current_object()
-            self.decode_object(line[end_pos + 1:])
-            return True
-        else:
-            self.current_value += line[start_pos:-1]
-            return False
-
     def decode_object(self, line):
         for char in line:
             if self.mode == READ_PARAM:
@@ -174,8 +165,13 @@ class JsonContainerDecoder:
                 elif char == '}':
                     self._end_current_object()
                 elif char == '"':
-                    self.mode = BEGIN_READ_STRING_VALUE
-                    self._add_to_current_value(char)
+                    if line.startswith(',"\n'):
+                        self.mode = BEGIN_READ_MULTI_STRING_VALUE
+                        self._add_to_current_value(line[1:])
+                        break
+                    else:
+                        self.mode = BEGIN_READ_STRING_VALUE
+                        self._add_to_current_value(char)
                     pass
                 elif char == '\n':
                     break
@@ -202,6 +198,28 @@ class JsonContainerDecoder:
         # if self.current_value:
         #     self.current_object.append(self.current_value)
         #     self.current_value = ''
+
+    def decode_b64_line(self, line, start_pos):
+        end_pos = line.find('}')
+        if end_pos >= 0:
+            self.current_value += line[start_pos:end_pos]
+            if start_pos == 1:  # b64 не зарбит на строки
+                self.current_value = "#" + self.current_value
+            self._end_current_object()
+            self.decode_object(line[end_pos + 1:])
+            return True
+        else:
+            self.current_value += line[start_pos:-1]
+            return False
+
+    def decode_multi_string_value(self, line):
+        if line.startswith('",'):
+            self.mode = END_READ_STRING_VALUE
+            self._add_to_current_value('"')
+            self.decode_object(line[1:])
+        else:
+            self.current_value += line
+            return False
 
     def _add_to_current_value(self, value):
         try:
