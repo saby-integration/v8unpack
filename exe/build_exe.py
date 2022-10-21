@@ -10,11 +10,10 @@ import PyInstaller.__main__
 PyInstaller.__main__.run([
     'source.py',
     '--onefile',
-    # '-n', f'v8unpack_{"_".join(_version[:-1])}',
     '-n', 'v8unpack',
     # '--hidden-import', modules,
-    '--collect-submodules', 'v8unpack',
-    '--collect-submodules', 'v8unpack.MetaObject',
-    '--collect-submodules', 'v8unpack.MetaDataObject',
+    '--collect-all', 'v8unpack',
+    '--hidden-import', 'tqdm',
+    '--hidden-import', 'os',
     '--distpath', '.'
 ])
