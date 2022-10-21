@@ -30,8 +30,8 @@ setuptools.setup(
     keywords='1C CF CFE EPF V8UNPACK SABY SBIS СБИС 1С',
     python_requires='>=3.6',
     zip_safe=False,
-    packages=['v8unpack'],
-    package_dir={"v8unpack": "src/v8unpack"},
+    packages=setuptools.find_packages(where='src'),
+    package_dir={"": "src"},
     install_requires=[
         'tqdm>=4'
     ],
