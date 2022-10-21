@@ -272,7 +272,7 @@ def decompress_and_extract(src_folder, dest_folder, *, pool=None):
     for filename in entries:
         tasks.append([src_folder, filename, dest_folder])
 
-    helper.run_in_pool(decompress_file_and_extract, tasks)
+    helper.run_in_pool(decompress_file_and_extract, tasks, pool=pool, title=f'{"Распаковываем контейнеры":30}')
 
 
 def decompress_file_and_extract(params):
