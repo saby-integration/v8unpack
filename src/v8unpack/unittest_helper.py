@@ -40,7 +40,7 @@ class HelperTestDecode(unittest.TestCase):
         if not self.test_dir:
             self.test_dir = os.path.join(self.src_dir, 'tmp')
 
-        os.makedirs(self.test_dir, exist_ok=True)
+        helper.makedirs(self.test_dir, exist_ok=True)
 
         self.decode_dir_stage0 = self.get_decode_folder(0)
         self.decode_dir_stage1 = self.get_decode_folder(1)

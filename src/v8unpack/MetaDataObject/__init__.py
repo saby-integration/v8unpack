@@ -77,7 +77,7 @@ class MetaDataObject(MetaObject):
         self.new_dest_path = os.path.join(dest_path, self.header['name'])
         self.new_dest_dir = os.path.join(dest_dir, self.new_dest_path)
         self.new_dest_file_name = self.get_obj_name()
-        os.makedirs(self.new_dest_dir)
+        helper.makedirs(self.new_dest_dir)
 
     def set_mode_decode_in_root_folder(self, dest_dir, dest_path):
         self.new_dest_path = dest_path
