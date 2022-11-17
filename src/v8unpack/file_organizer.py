@@ -41,7 +41,7 @@ class FileOrganizer:
         dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
 
         if dest_entry_path:
-            os.makedirs(dest_full_path, exist_ok=True)
+            helper.makedirs(dest_full_path, exist_ok=True)
 
         src_full_path = os.path.join(src_path, src_file_name)
 
@@ -78,7 +78,6 @@ class FileOrganizer:
                     descent_full_dest_path, descent_file_name = _file['dest_path'], _file['file_name']
 
                 if descent_file_name:
-                    os.makedirs(descent_full_dest_path, exist_ok=True)
                     helper.txt_write(_file['data'], descent_full_dest_path, descent_file_name)
         except Exception as err:
             raise ExtException(
@@ -179,7 +178,7 @@ class FileOrganizer:
     @classmethod
     def _pack(cls, src_dir, dest_dir, path, tasks, index, index_code_areas, descent=None):
         if path:
-            os.makedirs(os.path.join(dest_dir, path), exist_ok=True)
+            helper.makedirs(os.path.join(dest_dir, path), exist_ok=True)
         entries = cls.list_descent_dir(src_dir, path, descent)
         for entry in entries:
             try:
@@ -211,5 +210,5 @@ class FileOrganizer:
             shutil.copy(_src_path, _dest_path)
         except FileNotFoundError:
             _dest_dir = os.path.dirname(_dest_path)
-            os.makedirs(_dest_dir, exist_ok=True)
+            helper.makedirs(_dest_dir, exist_ok=True)
             shutil.copy(_src_path, _dest_path)

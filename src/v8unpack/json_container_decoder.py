@@ -359,7 +359,7 @@ def _decode(src_dir, dest_dir, tasks):
         dest_entry_path = os.path.join(dest_dir, entry)
         if os.path.isdir(src_entry_path):
             try:
-                os.makedirs(dest_entry_path, exist_ok=True)
+                helper.makedirs(dest_entry_path, exist_ok=True)
             except Exception as err:
                 raise ExtException(
                     parent=err, message='Ошибка при создании папки',

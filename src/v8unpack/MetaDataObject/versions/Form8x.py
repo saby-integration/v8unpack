@@ -79,7 +79,7 @@ class Form8x(SimpleNameFolder):
         helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
         if self.header.get('code_info_obj'):
             _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.0'
-            os.makedirs(_code_dir, exist_ok=True)
+            helper.makedirs(_code_dir, exist_ok=True)
             helper.json_write(self.form[0], _code_dir, 'form.json')
             _encoding = self.header.get('code_encoding_obj', 'utf-8-sig')
             self.write_raw_code(self.code.get('obj', ''), _code_dir, 'module.bin', encoding=_encoding)

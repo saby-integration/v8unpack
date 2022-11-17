@@ -124,7 +124,7 @@ class CodeOrganizer:
                 )
 
                 try:
-                    os.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
+                    helper.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
                 except FileExistsError:
                     pass
                 return _path, _file
