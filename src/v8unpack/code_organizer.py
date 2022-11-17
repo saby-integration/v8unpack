@@ -79,8 +79,15 @@ class CodeOrganizer:
                                                   pack_get_descent_filename)
                     line = file.readline()
                 return data
+        except ExtException as err:
+            raise ExtException(
+                parent=err,
+                action=f'{cls.__name__}.pack_file {file_name}') from err
         except Exception as err:
-            raise ExtException(parent=err, action=f'{cls.__name__}.pack_file', detail=f'{path} {file_name}')
+            raise ExtException(
+                parent=err,
+                action=f'{cls.__name__}.pack_file {file_name}',
+                message='Ошибка упаковки файла', detail=f'{os.path.join(path, file_name)}: {err}') from err
 
     @staticmethod
     def parse_include_path(include_path, path, file_name, index_code_areas, descent):
@@ -117,7 +124,7 @@ class CodeOrganizer:
                 )
 
                 try:
-                    os.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
+                    helper.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
                 except FileExistsError:
                     pass
                 return _path, _file

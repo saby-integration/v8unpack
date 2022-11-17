@@ -242,7 +242,7 @@ def build(folder, filename, nested=False):
     """
     begin = datetime.now()
     print(f'{"Запаковываем бинарник":30}:', end="")
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    helper.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w+b') as f, ContainerWriter(f) as container:
         add_entries(container, folder, nested)
     print(f" - {datetime.now() - begin}")

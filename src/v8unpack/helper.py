@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import shutil
 import uuid
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
@@ -18,7 +19,7 @@ def json_read(path, file_name):
 
 def json_write(data, path, file_name):
     _path = os.path.join(path, file_name)
-    os.makedirs(path, exist_ok=True)
+    makedirs(path, exist_ok=True)
     with open(_path, 'w', encoding='utf-8') as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 
@@ -39,14 +40,20 @@ def txt_write(data, path, file_name, encoding='utf-8'):
     if data is None:
         return
     _path = os.path.join(path, file_name)
-    os.makedirs(path, exist_ok=True)
-    with open(_path, 'w', encoding=encoding) as file:
-        file.write(data)
+    makedirs(path, exist_ok=True)
+    for i in range(3):
+        try:
+            with open(_path, 'w', encoding=encoding) as file:
+                file.write(data)
+            return
+        except PermissionError:
+            time.sleep(0.5)
+    raise PermissionError(_path)
 
 
 def bin_write(data, path, file_name):
     _path = os.path.join(path, file_name)
-    os.makedirs(path, exist_ok=True)
+    makedirs(path, exist_ok=True)
     with open(_path, 'wb') as file:
         file.write(data)
 
@@ -80,7 +87,7 @@ def decode_header(obj: dict, header: list):
 
 def clear_dir(path: str) -> None:
     shutil.rmtree(path, ignore_errors=True)
-    os.makedirs(path, exist_ok=True)
+    makedirs(path, exist_ok=True)
 
 
 def str_encode(data: str) -> str:
@@ -222,7 +229,7 @@ def get_near_descent_file_name(path, file_name, descent):
     try:
         entities = os.listdir(path)
     except FileNotFoundError:
-        os.makedirs(path, exist_ok=True)
+        makedirs(path, exist_ok=True)
         entities = []
     descents = []
     for entity in entities:
@@ -254,3 +261,13 @@ def remove_descent_from_filename(file_name):
             return '.'.join(_name)
     except Exception:
         return file_name
+
+
+def makedirs(name, exist_ok=False):
+    for i in range(3):
+        try:
+            os.makedirs(name, exist_ok=exist_ok)
+            return
+        except PermissionError:
+            time.sleep(0.5)
+    raise PermissionError(name)
