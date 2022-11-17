@@ -204,7 +204,7 @@ class MetaObject:
                 self.write_raw_code(self.code[code_name], dest_dir, _code_file_name, encoding=encoding)
             else:
                 _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
-                os.makedirs(_code_dir)
+                helper.makedirs(_code_dir)
                 helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
                 if encoding in self.encrypted_types:
                     helper.bin_write(self.code[code_name], _code_dir, encoding)
