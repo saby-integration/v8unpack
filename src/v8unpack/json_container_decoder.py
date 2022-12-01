@@ -2,23 +2,27 @@ import json
 import os
 import shutil
 from base64 import b64decode
+from enum import Enum
 
 from . import helper
 from .ext_exception import ExtException
 
-READ_PARAM = 1
-BEGIN_READ_STRING_VALUE = 2
-BEGIN_READ_MULTI_STRING_VALUE = 6
-END_READ_STRING_VALUE = 3
-READ_B64 = 4
-READ_TEXT_FILE = 5
+
+class Mode(Enum):
+    READ_PARAM = 1
+    BEGIN_READ_STRING_VALUE = 2
+    BEGIN_READ_MULTI_STRING_VALUE = 6
+    END_READ_MULTI_STRING_VALUE = 7
+    END_READ_STRING_VALUE = 3
+    READ_B64 = 4
+    READ_TEXT_FILE = 5
 
 
 class JsonContainerDecoder:
     def __init__(self, *, src_dir=None, file_name=None):
         self.data = None
         self.raw_data = None
-        self.mode = READ_PARAM
+        self.mode = Mode.READ_PARAM
         self.current_object = None
         self.current_value = None
         self.previous_char = None
@@ -83,7 +87,7 @@ class JsonContainerDecoder:
                 raise Exception(f'Не поддерживаемый тип данных {type(data)}')
 
     def decode_file(self, file):
-        self.mode = READ_PARAM
+        self.mode = Mode.READ_PARAM
         self.data = []
         self.line_number = 1
         for line in file:
@@ -102,90 +106,101 @@ class JsonContainerDecoder:
                         current_object=self.current_object,
                         path=self.path
                     ))
+        if self.mode != Mode.READ_PARAM:
+            raise ExtException(
+                message="Ошибка при разборе скобкофайла",
+                detail=f'{os.path.basename(self.src_dir)}/{self.file_name} файл занчен в режиме {self.mode}',
+                dump=dict(
+                    mode=self.mode,
+                    current_object=self.current_object,
+                    path=self.path
+                ))
         if not self.data:
             return ''
         return self.data
 
     def decode_line(self, line):
-        if self.mode == READ_PARAM:
-            if line[0] == '{':  # новый объект, исходим из того, что формат записи предполагает только один новый объект
-                if self.current_object is None:
-                    self.current_object = []
-                    self.data.append(self.current_object)
-                    self.path.append(self.current_object)
-                else:
-                    self.current_object.append([])
-                    self.current_object = self.current_object[-1]
-                    self.path.append(self.current_object)
+        return getattr(self, f'_decode_line_{self.mode.name.lower()}')(line)
 
-                self.current_value = ''
-                if line.startswith('{#base64'):
-                    # это скорее всего файл целиком из двоичных данных
-                    if len(self.data) == 1 and len(self.data[0]) == 2 and self.data[0][0] == '1':
-                        raise BigBase64()
-                    self.mode = READ_B64
-                    self.decode_b64_line(line, 1)
-                else:
-                    self.decode_object(line[1:])
-            elif line[0] == '}':
-                self._end_current_object()
-                self.decode_object(line[1:])
-            elif line[0] == '\n' and self.current_value and len(self.current_value) == 64:
-                # self.current_value = self.current_value
-                self.mode = READ_B64
-                return
+    def _decode_line_read_b64(self, line):
+        if line == '\n':
+            return
+        self.decode_b64_line(line, 0)
+
+    def _decode_line_read_text_file(self, line):
+        self.data += line
+
+    def _decode_line_read_param(self, line):
+        if line[0] == '{':  # новый объект, исходим из того, что формат записи предполагает только один новый объект
+            if self.current_object is None:
+                self.current_object = []
+                self.data.append(self.current_object)
+                self.path.append(self.current_object)
             else:
-                if not self.data and self.current_value is None:
-                    self.data = line
-                    self.mode = READ_TEXT_FILE
-                elif self.data == [[]] and self.current_value == '':  # текстовый файл с json
-                    self.data = '{\n' + line
-                    self.mode = READ_TEXT_FILE
-                else:
-                    raise Exception(
-                        f'неожиданное начало объекта file:{self.src_dir}/{self.file_name}, path:{self.path})')
-        elif self.mode == BEGIN_READ_STRING_VALUE:
-            self.decode_object(line)
-        elif self.mode == BEGIN_READ_MULTI_STRING_VALUE:
-            self.decode_multi_string_value(line)
-        elif self.mode == READ_B64:
-            if line == '\n':
-                return
-            self.decode_b64_line(line, 0)
-        elif self.mode == READ_TEXT_FILE:
-            self.data += line
+                self.current_object.append([])
+                self.current_object = self.current_object[-1]
+                self.path.append(self.current_object)
+
+            self.current_value = ''
+            if line.startswith('{#base64'):
+                # это скорее всего файл целиком из двоичных данных
+                if len(self.data) == 1 and len(self.data[0]) == 2 and self.data[0][0] == '1':
+                    raise BigBase64()
+                self.mode = Mode.READ_B64
+                self.decode_b64_line(line, 1)
+            else:
+                self.decode_object(line[1:])
+        elif line[0] == '}':
+            self._end_current_object()
+            self.decode_object(line[1:])
+        elif line[0] == '\n' and self.current_value and len(self.current_value) == 64:
+            # self.current_value = self.current_value
+            self.mode = Mode.READ_B64
+            return
         else:
-            raise NotImplemented(f'mode {self.mode}')
+            if not self.data and self.current_value is None:
+                self.data = line
+                self.mode = Mode.READ_TEXT_FILE
+            elif self.data == [[]] and self.current_value == '':  # текстовый файл с json
+                self.data = '{\n' + line
+                self.mode = Mode.READ_TEXT_FILE
+            else:
+                raise ExtException(
+                    message='Неожиданное начало объекта',
+                    detailf=f'в файле :{self.src_dir}/{self.file_name}, path:{self.path})')
+
+    def _decode_line_begin_read_string_value(self, line):
+        self.decode_object(line)
 
     def decode_object(self, line):
         for char in line:
-            if self.mode == READ_PARAM:
+            if self.mode == Mode.READ_PARAM:
                 if char == ',':
                     self._end_value()
                 elif char == '}':
                     self._end_current_object()
                 elif char == '"':
-                    if line.startswith(',"\n'):
-                        self.mode = BEGIN_READ_MULTI_STRING_VALUE
+                    if line.endswith(',"\n'):
+                        self.mode = Mode.BEGIN_READ_MULTI_STRING_VALUE
                         self._add_to_current_value(line[1:])
                         break
                     else:
-                        self.mode = BEGIN_READ_STRING_VALUE
+                        self.mode = Mode.BEGIN_READ_STRING_VALUE
                         self._add_to_current_value(char)
                     pass
                 elif char == '\n':
                     break
                 else:
                     self._add_to_current_value(char)
-            elif self.mode == BEGIN_READ_STRING_VALUE:
+            elif self.mode == Mode.BEGIN_READ_STRING_VALUE:
                 if char == '"':
-                    self.mode = END_READ_STRING_VALUE
+                    self.mode = Mode.END_READ_STRING_VALUE
                     self._add_to_current_value(char)
                 else:
                     self._add_to_current_value(char)
-            elif self.mode == END_READ_STRING_VALUE:
+            elif self.mode == Mode.END_READ_STRING_VALUE:
                 if char == '"':
-                    self.mode = BEGIN_READ_STRING_VALUE
+                    self.mode = Mode.BEGIN_READ_STRING_VALUE
                     self._add_to_current_value(char)
                 elif char == ',':
                     self._end_value()
@@ -212,14 +227,22 @@ class JsonContainerDecoder:
             self.current_value += line[start_pos:-1]
             return False
 
-    def decode_multi_string_value(self, line):
-        if line.startswith('",'):
-            self.mode = END_READ_STRING_VALUE
-            self._add_to_current_value('"')
-            self.decode_object(line[1:])
+    def _decode_line_begin_read_multi_string_value(self, line):
+        if line.endswith('",\n'):
+            self._add_to_current_value(line[:-2])
+            self.mode = Mode.END_READ_MULTI_STRING_VALUE
         else:
             self.current_value += line
             return False
+
+    def _decode_line_end_read_multi_string_value(self, line):
+        if line[0] in ['{', '}']:
+            self._end_value()
+            self._decode_line_read_param(line)
+        else:
+            self.mode = Mode.BEGIN_READ_MULTI_STRING_VALUE
+            self.current_value += ",\n"
+            self._decode_line_begin_read_multi_string_value(line)
 
     def _add_to_current_value(self, value):
         try:
@@ -228,7 +251,6 @@ class JsonContainerDecoder:
             self.current_value = value
 
     def _end_current_object(self):
-        self.mode = READ_PARAM
         self._end_value()
         if self.path:  # могут быль лишние закрывающие скобки
             self.path.pop()
@@ -236,7 +258,7 @@ class JsonContainerDecoder:
         self.current_value = None
 
     def _end_value(self):
-        self.mode = READ_PARAM
+        self.mode = Mode.READ_PARAM
         if self.current_value is not None:
             self.current_object.append(self.current_value)
             self.current_value = ''
