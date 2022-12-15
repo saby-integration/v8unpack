@@ -5,12 +5,12 @@ from ....ext_exception import ExtException
 
 
 class FormItemTypes(Enum):
-    FormField = '77ffcc29-7f2d-4223-b22f-19666e7250ba'
-    FormButton = 'a9f3b1ac-f51b-431e-b102-55a69acdecad'
-    FormDecoration = '3d3cb80c-508b-41fa-8a18-680cdf5f1712'
-    FormGroup = 'cd5394d0-7dda-4b56-8927-93ccbe967a01'
-    FormTable = '143c00f7-a42d-4cd7-9189-88e4467dc768'
-    FormItemAddition = 'c5259a1d-518a-4afd-b98d-0176027e4feb'
+    Field = '77ffcc29-7f2d-4223-b22f-19666e7250ba'
+    Button = 'a9f3b1ac-f51b-431e-b102-55a69acdecad'
+    Decoration = '3d3cb80c-508b-41fa-8a18-680cdf5f1712'
+    Group = 'cd5394d0-7dda-4b56-8927-93ccbe967a01'
+    Table = '143c00f7-a42d-4cd7-9189-88e4467dc768'
+    ItemAddition = 'c5259a1d-518a-4afd-b98d-0176027e4feb'
 
 
 class FormElement:
@@ -119,7 +119,7 @@ class _FormRoot:
         for i in range(element_count):
             result.append(cls.decode(items[i + index_element_count + 1]))
         items[index_element_count] = 'Дочерние элементы отдельно'
-        del items[index_element_count + 1:index_element_count + 1 + element_count ]
+        del items[index_element_count + 1:index_element_count + 1 + element_count]
         return result
 
     @classmethod
