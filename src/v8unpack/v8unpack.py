@@ -107,7 +107,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
         dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
 
-        pool = helper.get_pool()
+        pool = helper.get_pool(processes=1)
 
         if descent:
             FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)

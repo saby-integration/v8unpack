@@ -17,34 +17,36 @@ class TestFileOrganizerCE(unittest.TestCase):
 
     def test_decode_raw_text_json_object(self):
         helper.clear_dir(self.temp_dir)
-        res = JsonContainerDecoder.decode(self.data_dir, 'raw_text_json_object')
+        res = JsonContainerDecoder.decode([self.data_dir, 'raw_text_json_object', self.temp_dir])
         pass
 
     def test_decode_raw_text_json_object_no_format(self):
         helper.clear_dir(self.temp_dir)
-        res = JsonContainerDecoder.decode(self.data_dir, 'raw_text_json_object_no_format')
+        res = JsonContainerDecoder.decode([self.data_dir, 'raw_text_json_object_no_format', self.temp_dir])
         pass
 
     def test_decode_raw_text_json_array(self):
         helper.clear_dir(self.temp_dir)
-        res = JsonContainerDecoder.decode(self.data_dir, 'raw_text_json_array')
+        res = JsonContainerDecoder.decode([self.data_dir, 'raw_text_json_array', self.temp_dir])
         pass
 
     def test_decode_raw_text_bin(self):
         helper.clear_dir(self.temp_dir)
-        res = JsonContainerDecoder.decode(self.data_dir, 'raw_text_bin')
+        res = JsonContainerDecoder.decode([self.data_dir, 'raw_text_bin', self.temp_dir])
         pass
 
     def test_decode_raw_b64_and_string(self):
-        file_name = 'raw_b64_and_string'
+        file_name = '041e0f14-4650-472f-ab76-bc17d5000d3d.0'
         helper.clear_dir(self.temp_dir)
         helper.clear_dir(self.temp_dir2)
-        res1 = JsonContainerDecoder.decode(self.data_dir, file_name, self.temp_dir)
-        JsonContainerDecoder.encode(self.temp_dir, f'{file_name}.json', self.temp_dir2)
+        res1 = JsonContainerDecoder.decode([self.data_dir, file_name, self.temp_dir])
+        JsonContainerDecoder.encode([self.temp_dir, f'{file_name}.json', self.temp_dir2])
+        problems = ''
         try:
             result = compare_file(
                 os.path.join(self.data_dir, file_name),
-                os.path.join(self.temp_dir2, file_name)
+                os.path.join(self.temp_dir2, file_name),
+                problems
             )
         except NotEqualLine as err:
             result = err
