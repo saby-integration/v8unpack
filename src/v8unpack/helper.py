@@ -1,7 +1,7 @@
 import json
 import os
-import time
 import shutil
+import time
 import uuid
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from multiprocessing import Pool, cpu_count
@@ -13,19 +13,28 @@ from .ext_exception import ExtException
 
 def json_read(path, file_name):
     _path = os.path.join(path, file_name)
-    with open(_path, 'r', encoding='utf-8') as file:
-        return json.load(file)
+    try:
+        with open(_path, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except Exception as err:
+        raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({_path})')
 
 
 def json_write(data, path, file_name):
     _path = os.path.join(path, file_name)
     makedirs(path, exist_ok=True)
-    with open(_path, 'w', encoding='utf-8') as file:
-        json.dump(data, file, ensure_ascii=False, indent=2)
+    try:
+        with open(_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file, ensure_ascii=False, indent=2)
+    except Exception as err:
+        raise ExtException(message='Ошибка записи', detail=f'{err} в файле ({_path})')
 
 
 def txt_read(path, file_name, encoding='utf-8-sig'):
-    return txt_read_detect_encoding(path, file_name, encoding=encoding)[0]
+    try:
+        return txt_read_detect_encoding(path, file_name, encoding=encoding)[0]
+    except Exception as err:
+        raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({file_name})')
 
 
 def txt_read_detect_encoding(path, file_name, encoding='utf-8'):
@@ -37,18 +46,21 @@ def txt_read_detect_encoding(path, file_name, encoding='utf-8'):
 
 
 def txt_write(data, path, file_name, encoding='utf-8'):
-    if data is None:
-        return
-    _path = os.path.join(path, file_name)
-    makedirs(path, exist_ok=True)
-    for i in range(3):
-        try:
-            with open(_path, 'w', encoding=encoding) as file:
-                file.write(data)
+    try:
+        if data is None:
             return
-        except PermissionError:
-            time.sleep(0.5)
-    raise PermissionError(_path)
+        _path = os.path.join(path, file_name)
+        makedirs(path, exist_ok=True)
+        for i in range(3):
+            try:
+                with open(_path, 'w', encoding=encoding) as file:
+                    file.write(data)
+                return
+            except PermissionError:
+                time.sleep(0.5)
+        raise PermissionError(_path)
+    except Exception as err:
+        raise ExtException(message='Ошибка записи файла', detail=f'{err} в файле {path}')
 
 
 def bin_write(data, path, file_name):

@@ -98,6 +98,7 @@ class Decoder:
         encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])
         # возвращает список вложенных объектов MetaDataObject
         tasks = encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui, **kwargs)
+
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
             tasks = helper.run_in_pool(cls.encode_include, tasks, pool, title=f'{"Собираем вложенные объекты":30}',
                                        need_result=True)
