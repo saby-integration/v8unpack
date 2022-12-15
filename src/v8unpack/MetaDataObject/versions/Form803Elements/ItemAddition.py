@@ -1,5 +1,5 @@
 from .FormElement import FormElement
 
 
-class FormItemAddition(FormElement):
+class ItemAddition(FormElement):
     pass

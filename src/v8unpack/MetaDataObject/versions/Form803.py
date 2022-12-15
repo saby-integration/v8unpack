@@ -1,6 +1,6 @@
 import re
 
-from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands
+from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
 from .Form8x import Form8x
 from ... import helper
 from ...ext_exception import ExtException
@@ -55,9 +55,16 @@ class Form803(Form8x):
         self.form.append(form)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
+        if not self.form[0]:
+            return
         try:
-            if not self.form[0]:
+            supported_form = ['4-49']
+            if f'{self.form[0][0][0]}-{self.form[0][0][1][0]}' not in supported_form:
                 return
+        except:
+            return
+
+        try:
             self.decode_elements(src_dir, dest_dir, dest_path, header_data)
             self.params = FormParams.decode_list(self, self.form[0][0])
             self.commands = FormCommands.decode_list(self, self.form[0][0])
@@ -85,6 +92,26 @@ class Form803(Form8x):
         except Exception as err:
             raise ExtException(parent=err, message='Ошибка при разборе формы')
 
+    def get_form_elem_index(self):
+        try:
+            x = int(self.form[0][0][0])
+            root_data = self.form[0][0][1]
+            z = int(self.form[0][0][1][0])
+
+            index_command_panel_count = calc_offset([(18, 2)], root_data) + 2
+            command_panel_count = int(root_data[index_command_panel_count])
+            index_root_elem_count = index_command_panel_count + command_panel_count + 1
+            index = [x, z, command_panel_count]
+            if str(index) != '[4, 49, 1]':
+                raise ExtException(
+                    message='случай требующий анализа, предоставьте образец формы разработчикам',
+                    detail=f'{self.header["name"]}, {index}')
+            return index_root_elem_count, index_command_panel_count
+        except Exception as err:
+            raise ExtException(
+                message='случай требующий анализа, предоставьте образец формы разработчикам',
+                detail=f'{self.header["name"]}, {err}')
+
     def write_decode_object(self, dest_dir, dest_path, file_name, version):
         super().write_decode_object(dest_dir, dest_path, file_name, version)
         if self.commands:
@@ -93,20 +120,6 @@ class Form803(Form8x):
             helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.ver}.json')
         if self.command_panels:
             helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.ver}.json')
-
-    def get_form_elem_index(self):
-        x = int(self.form[0][0][0])
-        z = int(self.form[0][0][1][0])
-        index_command_panel_count = 21
-        command_panel_count = int(self.form[0][0][1][21])
-        index_root_elem_count = index_command_panel_count + command_panel_count + 1
-        index = [x, z, command_panel_count]
-        if str(index) != '[4, 49, 1]':
-            raise ExtException(
-                message='случай требующий анализа, предоставьте образец формы разработчикам',
-                detail=f'{self.header["name"]}, {index}')
-        index.append(index_root_elem_count)
-        return index_root_elem_count, index_command_panel_count
 
     @classmethod
     def get_last_level_array(cls, data):
@@ -222,9 +235,15 @@ class Form803(Form8x):
         return self.form
 
     def encode_includes(self, src_dir, file_name, dest_dir, version):
+        if not self.form[0]:
+            return
         try:
-            if not self.form[0]:
+            supported_form = ['4-49']
+            if f'{self.form[0][0][0]}-{self.form[0][0][1][0]}' not in supported_form:
                 return
+        except:
+            return
+        try:
             self.encode_elements(src_dir, file_name, dest_dir, version)
             FormParams.encode_list(self, src_dir, file_name, version)
             FormCommands.encode_list(self, src_dir, file_name, version)
