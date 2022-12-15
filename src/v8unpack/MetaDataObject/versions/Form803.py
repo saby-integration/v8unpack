@@ -58,8 +58,9 @@ class Form803(Form8x):
         if not self.form[0]:
             return
         try:
-            supported_form = ['4-49']
-            if f'{self.form[0][0][0]}-{self.form[0][0][1][0]}' not in supported_form:
+            supported_form = ['4-49', '3-49']  # not supported 27-18, контур вероятно обычные формы
+            current_form = f'{self.form[0][0][0]}-{self.form[0][0][1][0]}'
+            if current_form not in supported_form:
                 return
         except:
             return
@@ -94,18 +95,10 @@ class Form803(Form8x):
 
     def get_form_elem_index(self):
         try:
-            x = int(self.form[0][0][0])
             root_data = self.form[0][0][1]
-            z = int(self.form[0][0][1][0])
-
             index_command_panel_count = calc_offset([(18, 2)], root_data) + 2
             command_panel_count = int(root_data[index_command_panel_count])
             index_root_elem_count = index_command_panel_count + command_panel_count + 1
-            index = [x, z, command_panel_count]
-            if str(index) != '[4, 49, 1]':
-                raise ExtException(
-                    message='случай требующий анализа, предоставьте образец формы разработчикам',
-                    detail=f'{self.header["name"]}, {index}')
             return index_root_elem_count, index_command_panel_count
         except Exception as err:
             raise ExtException(
