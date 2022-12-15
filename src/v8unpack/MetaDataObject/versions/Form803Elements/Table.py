@@ -1,5 +1,5 @@
 from .FormElement import FormElement
 
 
-class FormTable(FormElement):
+class Table(FormElement):
     pass

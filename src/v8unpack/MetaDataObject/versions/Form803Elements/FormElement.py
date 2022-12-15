@@ -4,6 +4,17 @@ from .... import helper
 from ....ext_exception import ExtException
 
 
+def calc_offset(counters, raw_data):
+    # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
+    index = 0
+    for counter_index, size in counters:
+        index += counter_index
+        value = int(raw_data[index])
+        index += 1
+        index += value * size
+    return index
+
+
 class FormItemTypes(Enum):
     Field = '77ffcc29-7f2d-4223-b22f-19666e7250ba'
     Button = 'a9f3b1ac-f51b-431e-b102-55a69acdecad'
@@ -14,6 +25,7 @@ class FormItemTypes(Enum):
 
 
 class FormElement:
+
     @classmethod
     def decode_header(cls, raw_data):
         return dict(
@@ -33,34 +45,37 @@ class FormElement:
 
     @classmethod
     def decode_list(cls, form, raw_data, index_element_count):
-        result = []
-        element_count = int(raw_data[index_element_count])
-        if not element_count:
-            return
+        try:
+            result = []
+            element_count = int(raw_data[index_element_count])
+            if not element_count:
+                return
 
-        for i in range(element_count):
-            metadata_type_uuid = raw_data[index_element_count + i * 2 + 1]
-            elem_raw_data = raw_data[index_element_count + i * 2 + 2]
-            try:
-                metadata_type = FormItemTypes(metadata_type_uuid)
-            except ValueError:
-                raise ExtException(
-                    message='Неизвестный тип элемента формы',
-                    detail=f'Форма {form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid}'
-                )
-            try:
-                handler = cls.get_class_form_elem(metadata_type.name)
-            except Exception as err:
-                raise ExtException(
-                    message='Проблема с парсером элемента формы',
-                    detail=f'{metadata_type.name} - {err}'
-                )
-            elem_data = handler.decode(form, elem_raw_data)
-            result.append(elem_data)
+            for i in range(element_count):
+                metadata_type_uuid = raw_data[index_element_count + i * 2 + 1]
+                elem_raw_data = raw_data[index_element_count + i * 2 + 2]
+                try:
+                    metadata_type = FormItemTypes(metadata_type_uuid)
+                except ValueError:
+                    raise ExtException(
+                        message='Неизвестный тип элемента формы',
+                        detail=f'Форма {form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid}'
+                    )
+                try:
+                    handler = cls.get_class_form_elem(metadata_type.name)
+                except Exception as err:
+                    raise ExtException(
+                        message='Проблема с парсером элемента формы',
+                        detail=f'{metadata_type.name} - {err}'
+                    )
+                elem_data = handler.decode(form, elem_raw_data)
+                result.append(elem_data)
 
-        raw_data[index_element_count] = 'Дочерние элементы отдельно'
-        del raw_data[index_element_count + 1:index_element_count + 1 + element_count * 2]
-        return result
+            raw_data[index_element_count] = 'Дочерние элементы отдельно'
+            del raw_data[index_element_count + 1:index_element_count + 1 + element_count * 2]
+            return result
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @staticmethod
     def get_class_form_elem(name):
@@ -107,20 +122,23 @@ class _FormRoot:
 
     @classmethod
     def decode_list(cls, form, raw_data):
-        if len(raw_data) < cls.index:
-            return
-        items = raw_data[cls.index]
-        index_element_count = 1
-        element_count = int(items[index_element_count])
-        if not element_count:
-            return
+        try:
+            if len(raw_data) < cls.index:
+                return
+            items = raw_data[cls.index]
+            index_element_count = 1
+            element_count = int(items[index_element_count])
+            if not element_count:
+                return
 
-        result = []
-        for i in range(element_count):
-            result.append(cls.decode(items[i + index_element_count + 1]))
-        items[index_element_count] = 'Дочерние элементы отдельно'
-        del items[index_element_count + 1:index_element_count + 1 + element_count]
-        return result
+            result = []
+            for i in range(element_count):
+                result.append(cls.decode(items[i + index_element_count + 1]))
+            items[index_element_count] = 'Дочерние элементы отдельно'
+            del items[index_element_count + 1:index_element_count + 1 + element_count]
+            return result
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @classmethod
     def encode_list(cls, form, src_dir, file_name, version):

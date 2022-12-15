@@ -1,5 +1,5 @@
 from .FormElement import FormElement
 
 
-class FormField(FormElement):
+class Field(FormElement):
     pass
