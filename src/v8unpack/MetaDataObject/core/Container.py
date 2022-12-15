@@ -15,7 +15,7 @@ class Container(MetaDataObject):
         try:
             return [header_data[0]]
         except IndexError:
-            raise ExtException(msg='Include types not found', detail=cls.__name__)
+            raise ExtException(message='Include types not found', detail=cls.__name__)
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)

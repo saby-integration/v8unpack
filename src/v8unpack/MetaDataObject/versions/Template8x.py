@@ -131,7 +131,7 @@ class Template8x(Simple):
         except AttributeError:
             raise Exception(f'Не реализованный тип макета {self.header["type"]}')
 
-        helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.bin')
+        # helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.bin')
 
     def encode_table_data(self, src_dir, dest_dir):
         self.encode_scheme_data(src_dir, dest_dir)

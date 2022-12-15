@@ -16,7 +16,7 @@ class XDTOPackage(MetaDataObject):
     def decode_includes(self, src_dir, dest_dir, dest_path, header):
         return []
 
-    def encode_includes(self, src_dir, dest_dir):
+    def encode_includes(self, src_dir, file_name, dest_dir, version):
         return []
 
     def encode_object(self, src_dir, file_name, dest_dir, version):

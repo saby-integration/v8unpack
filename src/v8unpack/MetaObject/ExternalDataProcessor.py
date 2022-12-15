@@ -78,7 +78,7 @@ class ExternalDataProcessor(MetaObject):
                 helper.json_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1.json')
             self.encode_code(src_dir, 'ExternalDataProcessor')
             self.write_encode_code(dest_dir)
-            tasks = self.encode_includes(src_dir, dest_dir)
+            tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
             return tasks
         except Exception as err:
             raise ExtException(parent=err)
