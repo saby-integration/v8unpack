@@ -97,7 +97,7 @@ class Configuration803(MetaObject):
         self._encode_info(src_dir, file_name, dest_dir)
         self.write_encode_code(dest_dir)
         helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
-        tasks = self.encode_includes(src_dir, dest_dir)
+        tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
         return tasks
 
     def encode_version(self):

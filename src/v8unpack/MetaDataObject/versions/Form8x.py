@@ -15,7 +15,7 @@ class Form8x(SimpleNameFolder):
     def __init__(self):
         super().__init__()
         self.form = []
-        self.elements = None
+        self.elements = []
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header_data):
         self.set_header_data(header_data)
@@ -39,6 +39,8 @@ class Form8x(SimpleNameFolder):
     def write_decode_object(self, dest_dir, dest_path, file_name, version):
         super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name, version)
         helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.ver}.json')
+        if self.elements:
+            helper.json_write(self.elements, self.new_dest_dir, f'{file_name}.elements{self.ver}.json')
         return []
 
     def decode_data(self, src_dir, uuid):
