@@ -1,5 +1,5 @@
 from .FormElement import FormElement
 
 
-class FormButton(FormElement):
+class Decoration(FormElement):
     pass

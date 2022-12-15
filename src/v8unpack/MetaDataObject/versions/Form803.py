@@ -18,7 +18,6 @@ class Form803(Form8x):
         super().__init__()
         self.command_panels = []
         self.params = []
-        self.props = []
         self.commands = []
 
     def decode_data(self, src_dir, uuid):
@@ -90,8 +89,6 @@ class Form803(Form8x):
         super().write_decode_object(dest_dir, dest_path, file_name, version)
         if self.commands:
             helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.ver}.json')
-        if self.props:
-            helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.ver}.json')
         if self.params:
             helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.ver}.json')
         if self.command_panels:
@@ -100,12 +97,11 @@ class Form803(Form8x):
     def get_form_elem_index(self):
         x = int(self.form[0][0][0])
         z = int(self.form[0][0][1][0])
-        z2 = int(self.form[0][0][1][9])
         index_command_panel_count = 21
         command_panel_count = int(self.form[0][0][1][21])
         index_root_elem_count = index_command_panel_count + command_panel_count + 1
-        index = [x, z, z2, command_panel_count]
-        if str(index) != '[4, 49, 1, 1]':
+        index = [x, z, command_panel_count]
+        if str(index) != '[4, 49, 1]':
             raise ExtException(
                 message='случай требующий анализа, предоставьте образец формы разработчикам',
                 detail=f'{self.header["name"]}, {index}')

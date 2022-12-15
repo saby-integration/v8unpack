@@ -2,7 +2,7 @@ from .FormElement import FormElement
 from ....ext_exception import ExtNotImplemented
 
 
-class FormGroup(FormElement):
+class Group(FormElement):
     pass
 
     @classmethod
