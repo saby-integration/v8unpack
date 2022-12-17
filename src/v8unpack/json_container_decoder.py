@@ -42,31 +42,36 @@ class JsonContainerDecoder:
         _src_path = os.path.join(src_dir, file_name)
         self = cls(src_dir=src_dir, file_name=file_name)
         encoding = None
-        read_as_byte = False
-        try:
-            with open(os.path.join(src_dir, file_name), 'r', encoding='utf-8-sig') as entry_file:  # replace BOM
-                try:
-                    if entry_file.read(1) == '{':
-                        entry_file.seek(0)
-                        json.load(entry_file)  # если в файле чистый json воспринимаем его как бинарный файл
-                        read_as_byte = True
-                    else:
-                        read_as_byte = True
-                except json.JSONDecodeError as err:
-                    entry_file.seek(0)
-                    data = self.decode_file(entry_file)
-        except UnicodeDecodeError:
+        read_as_byte = True
+        for code_page in ['utf-8-sig', 'windows-1251']:
             try:
-                with open(os.path.join(src_dir, file_name), 'r', encoding='windows-1251') as entry_file:  # replace BOM
-                    data = self.decode_file(entry_file)
-                    encoding = 'windows-1251'
+                with open(os.path.join(src_dir, file_name), 'r', encoding=code_page) as entry_file:  # replace BOM
+                    try:
+                        if entry_file.read(1) == '{':
+                            entry_file.seek(0)
+                            json.load(entry_file)  # если в файле чистый json воспринимаем его как бинарный файл
+                            read_as_byte = True
+                        else:
+                            read_as_byte = True
+                    except json.JSONDecodeError as err:
+                        entry_file.seek(0)
+                        data = self.decode_file(entry_file)
+                        read_as_byte = False
+                        encoding = code_page
+                        break
             except UnicodeDecodeError:
-                read_as_byte = True
-        except BigBase64:
-            shutil.copy2(os.path.join(src_dir, file_name), os.path.join(dest_dir, file_name + '.c1b64'))
-            return
-        except Exception as err:
-            raise ExtException(parent=err, message=f'Json decode {file_name} error: {err}')
+                continue
+            #     try:
+            #         with open(os.path.join(src_dir, file_name), 'r', encoding='windows-1251') as entry_file:  # replace BOM
+            #             data = self.decode_file(entry_file)
+            #             encoding = 'windows-1251'
+            #     except UnicodeDecodeError:
+            #         read_as_byte = True
+            except BigBase64:
+                shutil.copy2(os.path.join(src_dir, file_name), os.path.join(dest_dir, file_name + '.c1b64'))
+                return
+            except Exception as err:
+                raise ExtException(parent=err, message=f'Json decode {file_name} error: {err}')
         if read_as_byte:
             shutil.copy2(os.path.join(src_dir, file_name), os.path.join(dest_dir, file_name + '.bin'))
             # with open(os.path.join(src_dir, file_name), 'rb') as entry_file:
@@ -109,12 +114,14 @@ class JsonContainerDecoder:
         if self.mode != Mode.READ_PARAM:
             raise ExtException(
                 message="Ошибка при разборе скобкофайла",
-                detail=f'{os.path.basename(self.src_dir)}/{self.file_name} файл занчен в режиме {self.mode}',
-                dump=dict(
-                    mode=self.mode,
-                    current_object=self.current_object,
-                    path=self.path
-                ))
+                detail=f'{os.path.basename(self.src_dir)}/{self.file_name} файл закончен в режиме {self.mode}, '
+                       f'создайте проблему на github, укажите текст ошибки и приложите указанный файл'
+                # dump=dict(
+                #     mode=self.mode,
+                #     current_object=self.current_object,
+                #     path=self.path
+                # )
+            )
         if not self.data:
             return ''
         return self.data
@@ -167,22 +174,22 @@ class JsonContainerDecoder:
             else:
                 raise ExtException(
                     message='Неожиданное начало объекта',
-                    detailf=f'в файле :{self.src_dir}/{self.file_name}, path:{self.path})')
+                    detail=f'в файле :{self.src_dir}/{self.file_name}, path:{self.path})')
 
     def _decode_line_begin_read_string_value(self, line):
         self.decode_object(line)
 
     def decode_object(self, line):
-        for char in line:
+        for i, char in enumerate(line):
             if self.mode == Mode.READ_PARAM:
                 if char == ',':
                     self._end_value()
                 elif char == '}':
                     self._end_current_object()
                 elif char == '"':
-                    if line.endswith(',"\n'):
+                    if line.endswith(',"\n') and i == len(line) - 2:
                         self.mode = Mode.BEGIN_READ_MULTI_STRING_VALUE
-                        self._add_to_current_value(line[1:])
+                        self._add_to_current_value(line[i:])
                         break
                     else:
                         self.mode = Mode.BEGIN_READ_STRING_VALUE
