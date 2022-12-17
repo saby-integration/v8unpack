@@ -287,3 +287,7 @@ def makedirs(name, exist_ok=False):
         except PermissionError:
             time.sleep(0.5)
     raise PermissionError(name)
+
+
+class FuckingBrackets(ExtException):
+    pass

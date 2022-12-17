@@ -9,10 +9,23 @@ def calc_offset(counters, raw_data):
     index = 0
     for counter_index, size in counters:
         index += counter_index
-        value = int(raw_data[index])
-        index += 1
-        index += value * size
+        if size:
+            value = int(raw_data[index])
+            index += value * size
     return index
+
+
+def check_count_element(counters, raw_data):
+    # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
+    index = 0
+    var_len = 0
+    for counter_index, size in counters:
+        index += counter_index
+        if size:
+            value = int(raw_data[index])
+            index += value * size
+            var_len += value * size
+    return len(raw_data) - var_len
 
 
 class FormItemTypes(Enum):
@@ -27,17 +40,20 @@ class FormItemTypes(Enum):
 class FormElement:
 
     @classmethod
-    def decode_header(cls, raw_data):
-        return dict(
-            name=raw_data[7],
-            type=cls.__name__,
-            raw=raw_data
-        )
+    def get_name_node_offset(cls, raw_data):
+        return calc_offset([(3, 1), (1, 0)], raw_data)
 
     @classmethod
     def decode(cls, form, raw_data):
-        data = cls.decode_header(raw_data)
-        return data
+        offset = cls.get_name_node_offset(raw_data)
+        name = raw_data[offset]
+        if not isinstance(name, str) or not name:
+            raise ExtException(message='form elem name not string')
+        return dict(
+            name=helper.str_decode(name),
+            type=cls.__name__,
+            raw=raw_data
+        )
 
     @classmethod
     def encode(cls, form, data):
@@ -65,15 +81,27 @@ class FormElement:
                     handler = cls.get_class_form_elem(metadata_type.name)
                 except Exception as err:
                     raise ExtException(
+                        parent=err,
                         message='Проблема с парсером элемента формы',
                         detail=f'{metadata_type.name} - {err}'
                     )
-                elem_data = handler.decode(form, elem_raw_data)
+                try:
+                    elem_data = handler.decode(form, elem_raw_data)
+                except helper.FuckingBrackets as err:
+                    raise err
+                except Exception as err:
+                    raise ExtException(
+                        parent=err,
+                        detail=f'{metadata_type.name} - {err}',
+                        message='Ошибка разбора элемента формы'
+                    )
                 result.append(elem_data)
 
             raw_data[index_element_count] = 'Дочерние элементы отдельно'
             del raw_data[index_element_count + 1:index_element_count + 1 + element_count * 2]
             return result
+        except helper.FuckingBrackets as err:
+            raise err
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -109,6 +137,7 @@ class FormElement:
 
 
 class _FormRoot:
+    element_node_offset = [[2, 1], [3, 1], [4, 1]]
     name = 0
     index = 0
     index_name = 0
@@ -123,7 +152,7 @@ class _FormRoot:
     @classmethod
     def decode_list(cls, form, raw_data):
         try:
-            if len(raw_data) < cls.index:
+            if len(raw_data) <= cls.index:
                 return
             items = raw_data[cls.index]
             index_element_count = 1
@@ -138,13 +167,13 @@ class _FormRoot:
             del items[index_element_count + 1:index_element_count + 1 + element_count]
             return result
         except Exception as err:
-            raise ExtException(parent=err)
+            pass
 
     @classmethod
     def encode_list(cls, form, src_dir, file_name, version):
         raw_data = form.form[0][0]
 
-        if len(raw_data) < cls.index:
+        if len(raw_data) <= cls.index:
             return
         raw_data = raw_data[cls.index]
         result = []

@@ -1,4 +1,5 @@
 import re
+import json
 
 from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
 from .Form8x import Form8x
@@ -74,6 +75,7 @@ class Form803(Form8x):
             raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def decode_elements(self, src_dir, dest_dir, dest_path, header_data):
+        backup = json.dumps(self.form)
         try:
             index = self.get_form_elem_index()
             root_data = self.form[0][0][1]
@@ -90,13 +92,15 @@ class Form803(Form8x):
             if form_items_count:
                 self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
             pass
+        except helper.FuckingBrackets as err:
+            self.form = json.loads(backup)
         except Exception as err:
             raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def get_form_elem_index(self):
         try:
             root_data = self.form[0][0][1]
-            index_command_panel_count = calc_offset([(18, 2)], root_data) + 2
+            index_command_panel_count = calc_offset([(18, 2), (3, 0)], root_data)
             command_panel_count = int(root_data[index_command_panel_count])
             index_root_elem_count = index_command_panel_count + command_panel_count + 1
             return index_root_elem_count, index_command_panel_count
@@ -231,7 +235,7 @@ class Form803(Form8x):
         if not self.form[0]:
             return
         try:
-            supported_form = ['4-49']
+            supported_form = ['4-49', '3-49']
             if f'{self.form[0][0][0]}-{self.form[0][0][1][0]}' not in supported_form:
                 return
         except:
