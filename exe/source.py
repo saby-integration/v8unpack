@@ -1,6 +1,6 @@
 import v8unpack
-import multiprocessing
+from multiprocessing import freeze_support
 
 if __name__ == '__main__':
-    multiprocessing.freeze_support()
+    freeze_support()
     v8unpack.main()

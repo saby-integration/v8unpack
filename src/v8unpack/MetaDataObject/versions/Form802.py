@@ -1,5 +1,7 @@
+from .Form802Elements.FormElement import FormElement, FormProps
 from .Form8x import Form8x
 from ... import helper
+from ...ext_exception import ExtException
 
 
 class Form802(Form8x):
@@ -10,6 +12,15 @@ class Form802(Form8x):
 
     def decode_data(self, src_dir, uuid):
         pass
+
+    def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
+        try:
+            if not self.form[0]:
+                return
+            self.elements = FormElement.decode_list(self, self.form[0][0][1][2][2])
+            self.props = FormProps.decode_list(self, self.form[0][0][2][2])
+        except Exception as err:
+            raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def write_encode_object(self, dest_dir):
         self.write_old_encode_object(dest_dir)
@@ -45,6 +56,15 @@ class Form802(Form8x):
             ],
             "0"
         ]]
+
+    def encode_includes(self, src_dir, file_name, dest_dir, version):
+        try:
+            if not self.form[0]:
+                return
+            FormElement.encode_list(self, src_dir, file_name, version, self.form[0][0][1][2][2])
+            FormProps.encode_list(self, src_dir, file_name, version, self.form[0][0][2][2])
+        except Exception as err:
+            raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def encode_empty_form(self):
         return [[

@@ -112,14 +112,17 @@ class FileOrganizer:
     def pack(cls, src_dir, dest_dir, *, pool=None, index=None, descent=None):
         begin = datetime.now()
         print(f'{"Собираем код":30}')
-        helper.clear_dir(dest_dir)
-        tasks = []
-        src_dir = os.path.abspath(src_dir)
-        index_code_areas = index.get('Области include') if index else None
-        if index:
-            cls._pack_index(src_dir, dest_dir, tasks, index, index_code_areas, [''], descent)
-        cls._pack(src_dir, dest_dir, '', tasks, index, index_code_areas, descent)
-        helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool, title=f'{"Собираем код из файлов":30}')
+        try:
+            helper.clear_dir(dest_dir)
+            tasks = []
+            src_dir = os.path.abspath(src_dir)
+            index_code_areas = index.get('Области include') if index else None
+            if index:
+                cls._pack_index(src_dir, dest_dir, tasks, index, index_code_areas, [''], descent)
+            cls._pack(src_dir, dest_dir, '', tasks, index, index_code_areas, descent)
+            helper.run_in_pool(CodeOrganizer.pack, tasks, pool=pool, title=f'{"Собираем код из файлов":30}')
+        except Exception as err:
+            raise ExtException(parent=err)
         print(f'{"Собираем код - готово":30}: {datetime.now() - begin}')
 
     @classmethod
