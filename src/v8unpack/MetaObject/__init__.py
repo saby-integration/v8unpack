@@ -84,7 +84,7 @@ class MetaObject:
     def get_decode_includes(cls, header_data: list) -> list:
         raise Exception(f'Не метаданных {cls.__name__} не указана ссылка на includes')
 
-    def encode_includes(self, src_dir, dest_dir):
+    def encode_includes(self, src_dir, file_name, dest_dir, version):
         tasks = []
         includes = []
         entries = sorted(os.listdir(src_dir))

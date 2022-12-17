@@ -1,6 +1,7 @@
 from ..version import __version__
 from .. import helper
 from ..MetaObject import MetaObject
+from ..ext_exception import ExtException
 
 
 class ExternalDataProcessor(MetaObject):
@@ -55,29 +56,32 @@ class ExternalDataProcessor(MetaObject):
 
     @classmethod
     def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
-        self = cls()
-        helper.clear_dir(dest_dir)
-        _file_name = self.get_class_name_without_version()
-        self.header = helper.json_read(src_dir, f'{_file_name}.json')
-        helper.check_version(__version__, self.header.get('v8unpack', ''))
         try:
-            self.data = helper.json_read(src_dir, f'{_file_name}.data{self.version}.json')
-        except FileNotFoundError:
-            self.data = self.encode_empty_data()
+            self = cls()
+            helper.clear_dir(dest_dir)
+            _file_name = self.get_class_name_without_version()
+            self.header = helper.json_read(src_dir, f'{_file_name}.json')
+            helper.check_version(__version__, self.header.get('v8unpack', ''))
+            try:
+                self.data = helper.json_read(src_dir, f'{_file_name}.data{self.version}.json')
+            except FileNotFoundError:
+                self.data = self.encode_empty_data()
 
-        self.set_product_info(src_dir, file_name)
+            self.set_product_info(src_dir, file_name)
 
-        helper.json_write(self.encode_root(), dest_dir, 'root.json')
-        helper.json_write(self.encode_version(), dest_dir, 'version.json')
-        helper.json_write(self.header['versions'], dest_dir, 'versions.json')
-        helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
-        helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
-        if self.data.get('form1'):
-            helper.json_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1.json')
-        self.encode_code(src_dir, 'ExternalDataProcessor')
-        self.write_encode_code(dest_dir)
-        tasks = self.encode_includes(src_dir, dest_dir)
-        return tasks
+            helper.json_write(self.encode_root(), dest_dir, 'root.json')
+            helper.json_write(self.encode_version(), dest_dir, 'version.json')
+            helper.json_write(self.header['versions'], dest_dir, 'versions.json')
+            helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
+            helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
+            if self.data.get('form1'):
+                helper.json_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1.json')
+            self.encode_code(src_dir, 'ExternalDataProcessor')
+            self.write_encode_code(dest_dir)
+            tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
+            return tasks
+        except Exception as err:
+            raise ExtException(parent=err)
 
     def encode_root(self):
         return [[

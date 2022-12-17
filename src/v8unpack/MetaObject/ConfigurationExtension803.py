@@ -79,7 +79,7 @@ class ConfigurationExtension803(Configuration803):
                 helper.json_write(self.header[f'info{i}'], dest_dir, f'{self.header["uuid"]}.{i}.json')
             except KeyError:
                 pass
-        tasks = self.encode_includes(src_dir, dest_dir)
+        tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
         return tasks
 
     def set_product_version(self, product_version):
