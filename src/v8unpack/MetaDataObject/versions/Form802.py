@@ -20,7 +20,7 @@ class Form802(Form8x):
             self.elements = FormElement.decode_list(self, self.form[0][0][1][2][2])
             self.props = FormProps.decode_list(self, self.form[0][0][2][2])
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы')
+            raise ExtException(parent=err)
 
     def write_encode_object(self, dest_dir):
         self.write_old_encode_object(dest_dir)

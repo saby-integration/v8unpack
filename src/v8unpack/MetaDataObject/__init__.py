@@ -49,7 +49,7 @@ class MetaDataObject(MetaObject):
             raise ExtException(
                 parent=err,
                 message="Ошибка декодирования",
-                detail=f'объекта метаданных {cls.__name__} файл {problem_file} - {err.message} + {err.detail}',
+                detail=f'объекта метаданных {cls.__name__} файл {problem_file}: {err.message} - {err.detail}',
                 action=f'{cls.__name__}.decode'
             ) from err
         except Exception as err:
