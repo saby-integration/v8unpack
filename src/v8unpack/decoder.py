@@ -82,10 +82,7 @@ class Decoder:
         except ExtException as err:
             raise ExtException(
                 parent=err,
-                message=f'{err.message} - {err.detail}',
-                detail=f'decode include {include_type}',
-                dump={'decode_params': decode_params},
-                action=f'{cls.__name__}.decode_include'
+                action=f'{cls.__name__}.decode_include {include_type}'
             )
         except Exception as err:
             raise ExtException(parent=err, action=f'{cls.__name__}.decode_include')

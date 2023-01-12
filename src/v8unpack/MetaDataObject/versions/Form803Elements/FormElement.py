@@ -75,7 +75,7 @@ class FormElement:
                 except ValueError:
                     raise ExtException(
                         message='Неизвестный тип элемента формы',
-                        detail=f'Форма {form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid}'
+                        detail=f'{form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid}'
                     )
                 try:
                     handler = cls.get_class_form_elem(metadata_type.name)
@@ -118,7 +118,7 @@ class FormElement:
             except ValueError:
                 raise ExtException(
                     message='Неизвестный тип элемента формы',
-                    detail=f'Форма {form.__class__.__name__} {form.header["name"]} : {item["type"]}'
+                    detail=f'{form.__class__.__name__} {form.header["name"]} : {item["type"]}'
                 )
             try:
                 handler = cls.get_class_form_elem(metadata_type.name)
