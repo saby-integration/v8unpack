@@ -19,6 +19,7 @@ class FormItemTypes(Enum):
     Label = '0fc7e20d-f241-460c-bdf4-5ad88e5474a5'
     ListField = '19f8b798-314e-4b4e-8121-905b2a7a03f5'
     Separator = '36e52348-5d60-4770-8e89-a16ed50a2006'
+    FieldHtml = 'd92a805c-98ae-4750-9158-d9ce7cec2f20'
 
 
 class FormElement:
@@ -48,7 +49,8 @@ class FormElement:
         except ValueError:
             raise ExtException(
                 message='Неизвестный тип элемента формы',
-                detail=f'Форма {form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid} {name}'
+                detail=f'{metadata_type_uuid} {name} - {form.__class__.__name__} {form.header["name"]}',
+                action='Form802Element.decode'
             )
         elem_data = dict(
             name=name,
