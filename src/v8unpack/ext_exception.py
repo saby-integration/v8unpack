@@ -104,17 +104,21 @@ class ExtException(Exception):
         self.stack += parent.stack
         if not parent.action:
             return
-        parent.dump['action'] = parent.action
         if not self.stack:
             data = self.get_sys_exc_info()
             if data:
                 parent.dump['traceback'] = data['traceback']
 
+        _stack = {
+            'action': parent.action
+        }
         if parent.new_msg:
-            parent.dump['message'] = parent.message
+            _stack['message'] = parent.message
             if parent.detail:
-                parent.dump['detail'] = parent.detail
-        self.stack.append(parent.dump)
+                _stack['detail'] = parent.detail
+        if parent.dump:
+            _stack['dump'] = parent.dump
+        self.stack.append(_stack)
 
     def add_sys_exc_to_stack(self):
         try:
