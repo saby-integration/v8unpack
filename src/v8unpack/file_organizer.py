@@ -22,39 +22,48 @@ class FileOrganizer:
     def _unpack(cls, src_dir, dest_dir, path, tasks, index, descent=None):
         entries = os.listdir(os.path.join(src_dir, path))
         for entry in entries:
-            src_entry_path = os.path.join(src_dir, path, entry)
+            try:
+                src_entry_path = os.path.join(src_dir, path, entry)
 
-            if os.path.isdir(src_entry_path):
-                new_path = os.path.join(path, entry)
-                cls._unpack(src_dir, dest_dir, new_path, tasks, index, descent)
-                continue
-            if entry[-3:] == '.1c':
-                tasks.append((src_dir, path, entry, dest_dir, index, descent))
-            else:
-                src_path = os.path.join(src_dir, path)
-                cls.unpack_file(src_path, entry, dest_dir, path, entry, index, descent)
+                if os.path.isdir(src_entry_path):
+                    new_path = os.path.join(path, entry)
+                    cls._unpack(src_dir, dest_dir, new_path, tasks, index, descent)
+                    continue
+                if entry[-3:] == '.1c':
+                    tasks.append((src_dir, path, entry, dest_dir, index, descent))
+                else:
+                    src_path = os.path.join(src_dir, path)
+                    cls.unpack_file(src_path, entry, dest_dir, path, entry, index, descent)
+            except Exception as err:
+                raise ExtException(
+                    parent=err,
+                    action=f'{cls.__name__}._unpack {path}.{entry}'
+                   ) from err
 
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
-        dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, dest_path, dest_file_name, index,
-                                                                      descent)
-        dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
+        try:
+            dest_entry_path, dest_file_name = CodeOrganizer.get_dest_path(dest_dir, dest_path, dest_file_name, index,
+                                                                          descent)
+            dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
 
-        if dest_entry_path:
-            helper.makedirs(dest_full_path, exist_ok=True)
+            if dest_entry_path:
+                helper.makedirs(dest_full_path, exist_ok=True)
 
-        src_full_path = os.path.join(src_path, src_file_name)
+            src_full_path = os.path.join(src_path, src_file_name)
 
-        if dest_full_path.startswith(dest_dir):  # файлы вне папки исходников не версионируются
-            descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name, None,
-                                                                                        dest_full_path, dest_file_name,
-                                                                                        descent,
-                                                                                        cls.equal_binary_file)
-        else:
-            descent_full_dest_path, descent_file_name = os.path.join(dest_dir, dest_entry_path), dest_file_name
+            if dest_full_path.startswith(dest_dir):  # файлы вне папки исходников не версионируются
+                descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name, None,
+                                                                                            dest_full_path, dest_file_name,
+                                                                                            descent,
+                                                                                            cls.equal_binary_file)
+            else:
+                descent_full_dest_path, descent_file_name = os.path.join(dest_dir, dest_entry_path), dest_file_name
 
-        if descent_file_name:
-            shutil.copy(src_full_path, os.path.join(descent_full_dest_path, descent_file_name))
+            if descent_file_name:
+                shutil.copy(src_full_path, os.path.join(descent_full_dest_path, descent_file_name))
+        except Exception as err:
+            raise ExtException(parent=err, action=f'{cls.__name__}.unpack_file {src_file_name}') from err
 
     @classmethod
     def unpack_code_file(cls, params):
