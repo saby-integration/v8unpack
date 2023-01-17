@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
+from .ext_exception import ExtException
 
 from .version import __version__
 from . import helper
@@ -80,7 +81,8 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         if clear_temp_dir:
             shutil.rmtree(temp_dir, ignore_errors=True)
     except Exception as err:
-        print(err)
+        error = ExtException(parent=err)
+        print(f'\n\n{error}')
 
 
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
@@ -130,7 +132,8 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         print(f'{"Готово":30}: {end - begin0}')
 
     except Exception as err:
-        print(err)
+        error = ExtException(parent=err)
+        print(f'\n\n{error}')
 
 
 def main():
