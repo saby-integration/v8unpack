@@ -56,7 +56,7 @@ class Form803(Form8x):
         self.form.append(form)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
-        if not self.form[0]:
+        if not self.form or not self.form[0]:
             return
         try:
             supported_form = ['4-49', '3-49']  # not supported 27-18, контур вероятно обычные формы
@@ -232,7 +232,7 @@ class Form803(Form8x):
         return self.form
 
     def encode_includes(self, src_dir, file_name, dest_dir, version):
-        if not self.form[0]:
+        if not self.form or not self.form[0]:
             return
         try:
             supported_form = ['4-49', '3-49']

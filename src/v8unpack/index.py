@@ -2,15 +2,23 @@ import json
 import os
 
 from .helper import remove_descent_from_filename
+from .ext_exception import ExtException
 
 
 def get(index: dict, path: str, file_name: str):
-    _index = index
-    if path:
-        _path = path.split('\\')
-        for _dir in _path:
-            _index = _index[_dir]
-    return _index[file_name]
+    try:
+        _index = index
+        if path:
+            _path = path.split('\\')
+            for _dir in _path:
+                _index = _index[_dir]
+        return _index[file_name]
+    except TypeError:
+        raise ExtException(
+            message="Ошибка c уровнями вложенности в Index.json",
+            detail=f'{path}\{file_name}',
+            action='index.get'
+        )
 
 
 def update_index(src_dir: str, index_file_name: str, dest_dir: str):
