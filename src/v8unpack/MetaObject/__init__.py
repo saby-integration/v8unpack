@@ -13,9 +13,9 @@ class MetaObject:
     encrypted_types = ['text.json', 'image.json']
     _obj_info = None
 
-    re_meta_data_obj = re.compile(r'^[^.]+\.json$')
-    directive_1c_uncomment = re.compile(r'(?P<n>\\n)(?P<d>[#|&])')
-    directive_1c_comment = re.compile(r'(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
+    re_meta_data_obj = re.compile('^[^.]+\.json$')
+    directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
+    directive_1c_comment = re.compile('(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
 
     def __init__(self):
         self.header = {}
