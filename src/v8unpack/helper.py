@@ -1,4 +1,5 @@
 import json
+import copy
 import os
 import shutil
 import time
@@ -291,3 +292,57 @@ def makedirs(name, exist_ok=False):
 
 class FuckingBrackets(ExtException):
     pass
+
+
+def update_dict(*args):
+    size = len(args)
+    if size == 1:
+        return _update_dict({}, args[0])
+    elif size > 1:
+        result = args[0]
+        for i in range(size - 1):
+            result = _update_dict(result, args[i + 1])
+        return result
+
+def _update_dict(base, new, _path=''):
+    if not new:
+        return base
+    for element in new:
+        try:
+            if element in base and base[element] is not None:
+                if isinstance(new[element], dict):
+                    if isinstance(base[element], dict):
+                        base[element] = _update_dict(base[element], new[element], f'{_path}.{element}')
+                    else:
+                        raise ExtException(
+                            message='type mismatch',
+                            detail=f'{type(base[element])} in {_path}.{element}',
+                            dump={'value': str(base[element])}
+                        )
+                elif isinstance(new[element], list):
+                    raise NotImplementedError('update list')
+                    # base[element] = ArrayHelper.unique_extend(base[element], new[element])
+                else:
+                    base[element] = new[element]
+            else:
+                try:
+                    base[element] = copy.deepcopy(new[element])
+                except TypeError as e:
+                    if not base:
+                        base = {
+                            element: copy.deepcopy(new[element])
+                        }
+                    else:
+                        raise NotImplementedError()
+        except ExtException as err:
+            raise ExtException(parent=err) from err
+        except Exception as err:
+            raise ExtException(
+                parent=err,
+                action='Helper.update_dict',
+                detail='{0}({1})'.format(err, _path),
+                dump={
+                    'element': element,
+                    'message': str(err)
+                })
+    return base
