@@ -42,7 +42,7 @@ def _check_index(index_filename):
         if sub_index:
             for elem in sub_index:
                 index.append(load_json(elem))
-        index.append(load_json(_index))
+        index.append(_index)
         data = update_dict(*index)
         return data
     return None
