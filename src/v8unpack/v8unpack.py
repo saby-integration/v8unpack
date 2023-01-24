@@ -16,16 +16,18 @@ from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
 from .index import update_index
 from .json_container_decoder import json_decode, json_encode
+from .helper import update_dict
 
 
-def _check_index(index):
-    if index:
+def _check_index(index_filename):
+    def load_json(filename):
         try:
-            with open(index, 'r', encoding='utf-8') as f:
-                index = json.load(f)
-            if not isinstance(index, dict):
+            with open(filename, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
                 print(f'Error: Bad index file - not dict\n')
                 return False
+            return data
         except FileNotFoundError:
             print(f'Error: index file not found - {index}')
             return False
@@ -33,7 +35,17 @@ def _check_index(index):
             print(f'Error: Bad index file - {err}\n')
             return False
 
-    return index
+    if index_filename:
+        index = []
+        _index = load_json(index_filename)
+        sub_index = _index.pop('index.json', None)
+        if sub_index:
+            for elem in sub_index:
+                index.append(load_json(elem))
+        index.append(_index)
+        data = update_dict(*index)
+        return data
+    return None
 
 
 def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None, descent=None):
