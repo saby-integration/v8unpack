@@ -5,43 +5,41 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
-from .ext_exception import ExtException
 
-from .version import __version__
 from . import helper
 from .container_reader import extract as container_extract, decompress_and_extract
 from .container_writer import build as container_build, compress_and_build
 from .decoder import decode, encode
+from .ext_exception import ExtException
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
+from .helper import update_dict
 from .index import update_index
 from .json_container_decoder import json_decode, json_encode
-from .helper import update_dict
+from .version import __version__
+
+
+def _load_json(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise Exception(f'Error: Bad index file - not dict\n')
+        return data
+    except FileNotFoundError:
+        raise Exception(f'Error: index file not found - {filename}')
+    except Exception as err:
+        raise Exception(f'Error: Bad index file - {err}\n')
 
 
 def _check_index(index_filename):
-    def load_json(filename):
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            if not isinstance(data, dict):
-                print(f'Error: Bad index file - not dict\n')
-                return False
-            return data
-        except FileNotFoundError:
-            print(f'Error: index file not found - {index}')
-            return False
-        except Exception as err:
-            print(f'Error: Bad index file - {err}\n')
-            return False
-
     if index_filename:
         index = []
-        _index = load_json(index_filename)
+        _index = _load_json(index_filename)
         sub_index = _index.pop('index.json', None)
         if sub_index:
             for elem in sub_index:
-                index.append(load_json(elem))
+                index.append(_load_json(elem))
         index.append(_index)
         data = update_dict(*index)
         return data
@@ -82,7 +80,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         decode(dir_stage2, dir_stage3, pool=pool, version=version)
 
         if descent:
-            FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
+            FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=int(descent))
         else:
             FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
 
@@ -124,7 +122,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         pool = helper.get_pool(processes=1)
 
         if descent:
-            FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
+            FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=int(descent))
         else:
             FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
 
@@ -143,6 +141,43 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         end = datetime.now()
         print(f'{"Готово":30}: {end - begin0}')
 
+    except Exception as err:
+        error = ExtException(parent=err)
+        print(f'\n\n{error}')
+
+
+def build_all(product_file_name: str, product_code: str = None):
+    try:
+        products = _load_json(os.path.abspath(product_file_name))
+        if product_code:
+            products = [products[product_code]]
+        for product, params in products.items():
+            print(f'\nСобираем {product}\n')
+            build(
+                params['src'], params['bin'],
+                temp_dir=params.get('temp'), index=params.get('index'),
+                version=params.get('version'), descent=params.get('descent'),
+                gui=params.get('gui')
+            )
+        pass
+    except Exception as err:
+        error = ExtException(parent=err)
+        print(f'\n\n{error}')
+
+
+def extract_all(product_file_name: str, product_code: str = None):
+    try:
+        products = _load_json(product_file_name)
+        if product_code:
+            products = [products[product_code]]
+        for product, params in products.items():
+            print(f'\nСобираем {product}\n')
+            extract(
+                params['bin'], params['src'],
+                temp_dir=params.get('temp'), index=params.get('index'),
+                version=params.get('version'), descent=params.get('descent')
+            )
+        pass
     except Exception as err:
         error = ExtException(parent=err)
         print(f'\n\n{error}')
@@ -186,24 +221,43 @@ def main():
                              " 2- Такси. Разрешить Версия 8.2, 3 - Такси"
                              "для расширений устанавливается в соответствующий реквизит")
 
+    group.add_argument('-EA', nargs=1, metavar=('file', 'src'),
+                       help='разобрать файл 1С, используя параметры из списка продуктов '
+                            'file - путь до файла со списком продуктов и их параметрами, '
+                            'code - код продукта из файла, если не указан будут разобраны все найденные файлы продуктов')
+    group.add_argument('-BA', nargs=1, metavar=('file', 'src'),
+                       help='собрать файл 1С, параметры сборки из списка продуктов, где '
+                            'file - путь до файла со списком продуктов и их параметрами, '
+                            'code -  папка куда будут помещены исходники')
+
     if len(sys.argv) == 1:
         parser.print_help()
         return 1
 
     args = parser.parse_args()
-    descent = int(args.descent) if args.descent else None
     gui = args.gui if args.gui else None
 
     if args.E is not None:
         extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
                 index=args.index, temp_dir=args.temp, version=args.version, descent=descent)
+        return
 
     if args.B is not None:
         build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
               index=args.index, temp_dir=args.temp, version=args.version, descent=descent, gui=gui)
+        return
+
+    if args.BA is not None:
+        build_all(*args.BA)
+        return
+
+    if args.EA is not None:
+        extract_all(*args.EA)
+        return
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
+        return
 
 
 if __name__ == '__main__':
