@@ -150,9 +150,12 @@ def build_all(product_file_name: str, product_code: str = None):
     try:
         products = _load_json(os.path.abspath(product_file_name))
         if product_code:
-            products = [products[product_code]]
+            products = {product_code: products[product_code]}
+            products[product_code]['disable'] = False
         for product, params in products.items():
-            print(f'\nСобираем {product}\n')
+            if params.get('disable'):
+                continue
+            print(f'\nСобираем {product}')
             build(
                 params['src'], params['bin'],
                 temp_dir=params.get('temp'), index=params.get('index'),
@@ -167,11 +170,14 @@ def build_all(product_file_name: str, product_code: str = None):
 
 def extract_all(product_file_name: str, product_code: str = None):
     try:
-        products = _load_json(product_file_name)
+        products = _load_json(os.path.abspath(product_file_name))
         if product_code:
-            products = [products[product_code]]
+            products = {product_code: products[product_code]}
+            products[product_code]['disable'] = False
         for product, params in products.items():
-            print(f'\nСобираем {product}\n')
+            if params.get('disable'):
+                continue
+            print(f'\nРазбираем {product}\n')
             extract(
                 params['bin'], params['src'],
                 temp_dir=params.get('temp'), index=params.get('index'),
@@ -221,14 +227,12 @@ def main():
                              " 2- Такси. Разрешить Версия 8.2, 3 - Такси"
                              "для расширений устанавливается в соответствующий реквизит")
 
-    group.add_argument('-EA', nargs=1, metavar=('file', 'src'),
-                       help='разобрать файл 1С, используя параметры из списка продуктов '
-                            'file - путь до файла со списком продуктов и их параметрами, '
-                            'code - код продукта из файла, если не указан будут разобраны все найденные файлы продуктов')
-    group.add_argument('-BA', nargs=1, metavar=('file', 'src'),
-                       help='собрать файл 1С, параметры сборки из списка продуктов, где '
-                            'file - путь до файла со списком продуктов и их параметрами, '
-                            'code -  папка куда будут помещены исходники')
+    group.add_argument('-EA', nargs=1, metavar='file',
+                       help='разобрать файлы 1С, используя параметры из json списка продуктов'
+                            'file - путь до файла со списком продуктов и параметрами их сборки')
+    group.add_argument('-BA', nargs=1, metavar='file',
+                       help='собрать файлы 1С, параметры сборки из списка продуктов, где '
+                            'file - путь до файла со списком продуктов и параметрами их сборки')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -239,20 +243,20 @@ def main():
 
     if args.E is not None:
         extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
-                index=args.index, temp_dir=args.temp, version=args.version, descent=descent)
+                index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent)
         return
 
     if args.B is not None:
         build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
-              index=args.index, temp_dir=args.temp, version=args.version, descent=descent, gui=gui)
+              index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent, gui=gui)
         return
 
     if args.BA is not None:
-        build_all(*args.BA)
+        build_all(args.BA[0], args.index)
         return
 
     if args.EA is not None:
-        extract_all(*args.EA)
+        extract_all(args.EA[0], args.index)
         return
 
     if args.I is not None:
