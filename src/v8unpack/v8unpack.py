@@ -24,12 +24,12 @@ def _load_json(filename):
         with open(filename, 'r', encoding='utf-8') as f:
             data = json.load(f)
         if not isinstance(data, dict):
-            raise Exception(f'Error: Bad index file - not dict\n')
+            raise Exception(f'Index file not dict ({filename})\n')
         return data
     except FileNotFoundError:
-        raise Exception(f'Error: index file not found - {filename}')
+        raise Exception(f'Index file not found ({filename})')
     except Exception as err:
-        raise Exception(f'Error: Bad index file - {err}\n')
+        raise Exception(f'Bad index file ({filename}) - {err}\n')
 
 
 def _check_index(index_filename):
