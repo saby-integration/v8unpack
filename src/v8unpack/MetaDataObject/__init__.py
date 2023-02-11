@@ -35,7 +35,7 @@ class MetaDataObject(MetaObject):
     @classmethod
     def decode(cls, src_dir, file_name, dest_dir, dest_path, version, *, parent_type=None):
         try:
-            header_data = helper.json_read(src_dir, f'{file_name}.json')
+            header_data = helper.brace_file_read(src_dir, file_name)
             self = cls()
             if parent_type:
                 self.title = parent_type
@@ -105,5 +105,5 @@ class MetaDataObject(MetaObject):
         raise Exception(msg)
 
     def write_encode_object(self, dest_dir):
-        helper.json_write(self.header['data'], dest_dir, f'{self.header["uuid"]}.json')
+        helper.brace_file_write(self.header['data'], dest_dir, f'{self.header["uuid"]}')
         self.write_encode_code(dest_dir)

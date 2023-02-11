@@ -10,7 +10,7 @@ from ..metadata_types import MetaDataTypes
 class MetaObject:
     version = '803'
     ext_code = {'obj': 0}
-    encrypted_types = ['text.json', 'image.json']
+    encrypted_types = ['text', 'image']
     _obj_info = None
 
     re_meta_data_obj = re.compile('^[^.]+\.json$')
@@ -149,12 +149,14 @@ class MetaObject:
 
     def decode_code(self, src_dir):
         for code_name in self.ext_code:
+            if code_name in self.code:
+                continue  # код был в файле с формой
             _obj_code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
             if os.path.isdir(_obj_code_dir):
-                self.header[f'code_info_{code_name}'] = helper.json_read(_obj_code_dir, 'info.json')
+                self.header[f'code_info_{code_name}'] = helper.brace_file_read(_obj_code_dir, 'info')
                 try:
-                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text.bin')
-                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text.bin'), 'utf-8')
+                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
+                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
@@ -169,7 +171,7 @@ class MetaObject:
                         raise err from err
             else:
                 try:
-                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}.bin'
+                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                     self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
                     encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
                     self.header[f'code_info_{code_name}'] = 'file'
@@ -200,16 +202,16 @@ class MetaObject:
         for code_name in self.code:
             encoding = self.header.get(f'code_encoding_{code_name}', 'utf-8')
             if self.header[f'code_info_{code_name}'] == 'file':
-                _code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}.bin'
+                _code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                 self.write_raw_code(self.code[code_name], dest_dir, _code_file_name, encoding=encoding)
             else:
                 _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
                 helper.makedirs(_code_dir)
-                helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
+                helper.brace_file_write(self.header[f'code_info_{code_name}'], _code_dir, 'info')
                 if encoding in self.encrypted_types:
                     helper.bin_write(self.code[code_name], _code_dir, encoding)
                 else:
-                    self.write_raw_code(self.code[code_name], _code_dir, 'text.bin', encoding=encoding)
+                    self.write_raw_code(self.code[code_name], _code_dir, 'text', encoding=encoding)
 
     def set_product_version(self, product_version):
         pass
@@ -232,7 +234,7 @@ class MetaObject:
     def _decode_html_data(self, src_dir, dest_dir, dest_file_name, *, header_field='html', file_number=0,
                           extension='html'):
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.{file_number}.json')
+            data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{file_number}')
         except FileNotFoundError:
             return
         try:
@@ -250,6 +252,9 @@ class MetaObject:
         elif raw_data[0].startswith('#base64:'):
             bin_data = b64decode(raw_data[0][8:])
             raw_data[0] = '#base64:'
+        elif raw_data[0].startswith('#data:'):
+            bin_data = b64decode(raw_data[0][6:])
+            raw_data[0] = '#data:'
         else:
             raise NotImplementedError('decode_html_data')
         return bin_data
@@ -263,7 +268,7 @@ class MetaObject:
         if header and len(header[0]) > 2 and bin_data:
             header[0][3][0] += b64encode(bin_data).decode(encoding='utf-8')
         if header:
-            helper.json_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}.json')
+            helper.brace_file_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}')
 
     @staticmethod
     def _get_b64_string(bin_data):
@@ -276,7 +281,7 @@ class MetaObject:
         if self._obj_info:
             for elem in self._obj_info:
                 try:
-                    data = helper.json_read(src_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}.json')
+                    data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}')
                     helper.json_write(data, dest_dir, f'{dest_file_name}.{self._obj_info[elem]}.json')
 
                 except FileNotFoundError:
@@ -287,6 +292,6 @@ class MetaObject:
             for elem in self._obj_info:
                 try:
                     data = helper.json_read(src_dir, f'{file_name}.{self._obj_info[elem]}.json')
-                    helper.json_write(data, dest_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}.json')
+                    helper.brace_file_write(data, dest_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}')
                 except FileNotFoundError:
                     pass

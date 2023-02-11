@@ -16,7 +16,7 @@ class CommonPicture(Simple):
         try:
             super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
             try:
-                self.header['info'] = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
+                self.header['info'] = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.0')
             except FileNotFoundError:
                 return
             if self.header['info'][0][2] and self.header['info'][0][2][0] and self.header['info'][0][2][0][0]:
@@ -36,6 +36,6 @@ class CommonPicture(Simple):
         try:
             bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
             self.header['info'][0][2][0][0] += b64encode(bin_data).decode(encoding='utf-8')
-            helper.json_write(self.header['info'], dest_dir, f'{self.header["uuid"]}.0.json')
+            helper.brace_file_write(self.header['info'], dest_dir, f'{self.header["uuid"]}.0')
         except FileNotFoundError:
             pass

@@ -23,12 +23,12 @@ available_types = {
 class Decoder:
     @staticmethod
     def detect_version(src_dir):
-        if os.path.isfile(os.path.join(src_dir, 'root.json')):
-            version = helper.json_read(src_dir, 'version.json')
+        if os.path.isfile(os.path.join(src_dir, 'root')):
+            version = helper.brace_file_read(src_dir, 'version')
             if version[0][0][0] == "216":
                 _tmp = len(version[0][0])
-                root = helper.json_read(src_dir, 'root.json')
-                header = helper.json_read(src_dir, f'{root[0][1]}.json')
+                root = helper.brace_file_read(src_dir, 'root')
+                header = helper.brace_file_read(src_dir, root[0][1])
                 obj_type = MetaDataTypes(header[0][3][0])
                 if _tmp == 2:
                     obj_version = '802'
@@ -36,7 +36,7 @@ class Decoder:
                     obj_version = version[0][0][2][0][:3]
                     if len(obj_version) == 3:
                         pass
-                    elif obj_version == '2':
+                    elif obj_version in ['1', '2']:
                         obj_version = '802'
                     else:
                         raise Exception(f'Not supported version {obj_version}')
@@ -48,8 +48,8 @@ class Decoder:
                     raise Exception(f'Not supported version {obj_type.name}{obj_version}')
             elif version[0][0][0] == "106":
                 return ExternalDataProcessor801()
-        if os.path.isfile(os.path.join(src_dir, 'configinfo.json')):
-            version = helper.json_read(src_dir, 'configinfo.json')
+        if os.path.isfile(os.path.join(src_dir, 'configinfo')):
+            version = helper.brace_file_read(src_dir, 'configinfo')
             if version[0][1][0] == "216":
                 if len(version[0][1]) == 3:
                     obj_version = version[0][1][2][0]

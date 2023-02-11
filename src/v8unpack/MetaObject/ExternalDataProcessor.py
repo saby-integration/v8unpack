@@ -15,20 +15,20 @@ class ExternalDataProcessor(MetaObject):
         self = cls()
         self.header = {}
         self.data = {}
-        root = helper.json_read(src_dir, 'root.json')
+        root = helper.brace_file_read(src_dir, 'root')
         self.header["file_uuid"] = root[0][1]
-        _header_data = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
+        _header_data = helper.brace_file_read(src_dir, f'{self.header["file_uuid"]}')
         self.set_header_data(_header_data)
 
-        root = helper.json_read(src_dir, 'root.json')
+        root = helper.brace_file_read(src_dir, 'root')
         self.header['v8unpack'] = __version__
         self.header['file_uuid'] = root[0][1]
-        self.data['version'] = helper.json_read(src_dir, 'version.json')
-        self.header['versions'] = helper.json_read(src_dir, 'versions.json')
-        self.data['copyinfo'] = helper.json_read(src_dir, 'copyinfo.json')
+        self.data['version'] = helper.brace_file_read(src_dir, 'version')
+        self.header['versions'] = helper.brace_file_read(src_dir, 'versions')
+        self.data['copyinfo'] = helper.brace_file_read(src_dir, 'copyinfo')
 
         try:
-            form1 = helper.json_read(src_dir, f'{self.header["uuid"]}.1.json')
+            form1 = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.1')
         except FileNotFoundError:
             form1 = None
 
@@ -69,13 +69,13 @@ class ExternalDataProcessor(MetaObject):
 
             self.set_product_info(src_dir, file_name)
 
-            helper.json_write(self.encode_root(), dest_dir, 'root.json')
-            helper.json_write(self.encode_version(), dest_dir, 'version.json')
-            helper.json_write(self.header['versions'], dest_dir, 'versions.json')
-            helper.json_write(self.data['copyinfo'], dest_dir, 'copyinfo.json')
-            helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
+            helper.brace_file_write(self.encode_root(), dest_dir, 'root')
+            helper.brace_file_write(self.encode_version(), dest_dir, 'version')
+            helper.brace_file_write(self.header['versions'], dest_dir, 'versions')
+            helper.brace_file_write(self.data['copyinfo'], dest_dir, 'copyinfo')
+            helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
             if self.data.get('form1'):
-                helper.json_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1.json')
+                helper.brace_file_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1')
             self.encode_code(src_dir, 'ExternalDataProcessor')
             self.write_encode_code(dest_dir)
             tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
