@@ -93,6 +93,8 @@ class HelperTestDecode(unittest.TestCase):
 
     def decode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.decode_dir_stage4))
+        if not self.index:
+            return
         if descent:
             FileOrganizerCE.unpack(self.decode_dir_stage3, self.decode_dir_stage4,
                                    pool=self.pool, index=self.index, descent=descent)
@@ -105,6 +107,8 @@ class HelperTestDecode(unittest.TestCase):
 
     def encode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage3))
+        if not self.index:
+            return
         if descent:
             FileOrganizerCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
                                  pool=self.pool, index=self.index, descent=descent)
