@@ -1,5 +1,5 @@
-import json
 import copy
+import json
 import os
 import shutil
 import time
@@ -334,6 +334,7 @@ def update_dict(*args):
         for i in range(size - 1):
             result = _update_dict(result, args[i + 1])
         return result
+
 
 def _update_dict(base, new, _path=''):
     if not new:

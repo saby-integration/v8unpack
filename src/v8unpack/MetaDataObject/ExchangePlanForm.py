@@ -1,8 +1,5 @@
-from ..MetaDataObject.core.Simple import SimpleNameFolder
-from ..MetaDataObject.versions.DocumentForm803 import DocumentForm803
+from ..MetaDataObject.Form import Form
 
 
-class ExchangePlanForm(SimpleNameFolder):
-    versions = {
-        '803': DocumentForm803
-    }
+class ExchangePlanForm(Form):
+    pass

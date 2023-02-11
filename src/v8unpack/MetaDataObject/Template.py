@@ -8,5 +8,6 @@ class Template(MetaDataObject):
     versions = {
         '801': Template801,
         '802': Template802,
-        '803': Template803
+        '803': Template803,
+        2: Template803
     }
