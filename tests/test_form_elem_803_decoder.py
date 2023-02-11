@@ -5,6 +5,7 @@ import unittest
 sys.path.append("../../src/")
 from v8unpack import helper
 from v8unpack.MetaDataObject.versions.Form803 import Form803
+from v8unpack.MetaDataObject.versions.Form802 import Form802
 from v8unpack.unittest_helper import compare_file, NotEqualLine
 
 
@@ -26,22 +27,23 @@ class TestFormElem803(unittest.TestCase):
         self.assertEqual('', result)
 
     def test_decode_form_elem(self):
-        uuid = '10d9f164-4217-4355-9052-72f70f9fb977'
+        uuid = '0950028f-1316-4cc2-b5ef-1c2452770ce7'
         result = self.decode_form_elem(uuid)
         self.assertEqual('', result)
-
 
     def decode_form_elem(self, uuid):
         file_name = f'{uuid}.0'
         helper.clear_dir(self.temp_dir)
-        form803 = Form803()
-        form803.new_dest_dir = self.temp_dir
-        form803.form = [helper.brace_file_read(self.data_dir, file_name)]
-        form803.decode_includes(None, self.temp_dir, '', None)
+        raw_data = helper.brace_file_read(self.data_dir, file_name)
 
-        form803.write_decode_object(self.temp_dir, '', uuid, 803)
-        form803.encode_includes(self.temp_dir, uuid, self.temp_dir, 803)
-        helper.brace_file_write(form803.form[0], self.temp_dir, f'{uuid}.0')
+        form = Form802() if raw_data[0][0] == '2' else Form803()
+        form.new_dest_dir = self.temp_dir
+        form.form = [raw_data]
+        form.decode_includes(None, self.temp_dir, '', None)
+
+        form.write_decode_object(self.temp_dir, '', uuid, 803)
+        form.encode_includes(self.temp_dir, uuid, self.temp_dir, 803)
+        helper.brace_file_write(form.form[0], self.temp_dir, f'{uuid}.0')
         problems = ''
         try:
             result = compare_file(

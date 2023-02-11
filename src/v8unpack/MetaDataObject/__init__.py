@@ -18,6 +18,7 @@ class MetaDataObject(MetaObject):
         self.new_dest_path = None
         self.new_dest_dir = None
         self.new_dest_file_name = None
+        self.obj_version = None
 
     @classmethod
     def get_obj_name(cls):
@@ -28,15 +29,25 @@ class MetaDataObject(MetaObject):
         if cls.versions is None:
             return cls
         try:
-            return cls.versions.get(version, cls.versions['803'])
+            return cls.versions[version]
+            # return cls.versions.get(version, cls.versions['803'])
         except KeyError:
             raise Exception(f'Нет реализации {cls.__name__} для версии "{version}"')
+
+    @staticmethod
+    def brace_file_read(src_dir, file_name):
+        return helper.brace_file_read(src_dir, file_name)
+
+    @classmethod
+    def decode_get_handler(cls, src_dir, file_name, version):
+        return cls.get_version(version)()
 
     @classmethod
     def decode(cls, src_dir, file_name, dest_dir, dest_path, version, *, parent_type=None):
         try:
-            header_data = helper.brace_file_read(src_dir, file_name)
-            self = cls()
+            self = cls.decode_get_handler(src_dir, file_name, version)
+            header_data = cls.brace_file_read(src_dir, file_name)
+            # self = cls()
             if parent_type:
                 self.title = parent_type
             self.version = version
@@ -107,3 +118,15 @@ class MetaDataObject(MetaObject):
     def write_encode_object(self, dest_dir):
         helper.brace_file_write(self.header['data'], dest_dir, f'{self.header["uuid"]}')
         self.write_encode_code(dest_dir)
+
+    @staticmethod
+    def get_metadata_object_version(path, file_name):
+        _path = os.path.join(path, file_name)
+        with open(_path, 'r', encoding='utf-8-sig') as file:
+            header = file.read(9)
+            root = header.split('{')
+            if len(root) < 3 or root[1][0] != '1':
+                raise ExtException(message='Неизвестная версия объекта метаданных',
+                                   detail=file_name)
+            root = root[2].split(',')
+            return int(root[0])

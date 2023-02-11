@@ -21,8 +21,7 @@ class MetaObject:
         self.header = {}
         self.code = {}
 
-    @classmethod
-    def get_decode_header(cls, header_data):
+    def get_decode_header(self, header_data):
         return header_data[0][1][1]
 
     def set_header_data(self, header_data):
