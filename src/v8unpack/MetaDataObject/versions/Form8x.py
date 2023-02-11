@@ -27,13 +27,13 @@ class Form8x(SimpleNameFolder):
     def decode_old_form(self, src_dir):
         _code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.0'
         if os.path.isdir(_code_dir):
-            self.form.append(helper.json_read(_code_dir, 'form.json'))
+            self.form.append(helper.brace_file_read(_code_dir, 'form'))
             try:
-                encoding = helper.detect_by_bom(os.path.join(_code_dir, 'module.bin'), 'utf-8')
-                self.code['obj'] = self.read_raw_code(_code_dir, 'module.bin', encoding=encoding)
+                encoding = helper.detect_by_bom(os.path.join(_code_dir, 'module'), 'utf-8')
+                self.code['obj'] = self.read_raw_code(_code_dir, 'module', encoding=encoding)
             except UnicodeDecodeError:
                 encoding = 'windows-1251'
-                self.code['obj'] = self.read_raw_code(_code_dir, 'module.bin', encoding=encoding)
+                self.code['obj'] = self.read_raw_code(_code_dir, 'module', encoding=encoding)
             self.header['code_encoding_obj'] = encoding  # можно безболезненно поменять на utf-8-sig
             self.header[f'code_info_obj'] = 1
 
@@ -81,10 +81,10 @@ class Form8x(SimpleNameFolder):
         pass
 
     def write_old_encode_object(self, dest_dir):
-        helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
+        helper.brace_file_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}')
         if self.header.get('code_info_obj'):
             _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.0'
             helper.makedirs(_code_dir, exist_ok=True)
-            helper.json_write(self.form[0], _code_dir, 'form.json')
+            helper.brace_file_write(self.form[0], _code_dir, 'form')
             _encoding = self.header.get('code_encoding_obj', 'utf-8-sig')
-            self.write_raw_code(self.code.get('obj', ''), _code_dir, 'module.bin', encoding=_encoding)
+            self.write_raw_code(self.code.get('obj', ''), _code_dir, 'module', encoding=_encoding)

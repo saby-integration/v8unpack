@@ -10,6 +10,37 @@ from multiprocessing import Pool, cpu_count
 from tqdm.auto import tqdm
 
 from .ext_exception import ExtException
+from .json_container_decoder import JsonContainerDecoder, BigBase64
+
+
+def brace_file_read(path, file_name):
+    _path = os.path.join(path, file_name)
+    try:
+        for code_page in ['utf-8-sig', 'windows-1251']:
+            try:
+                with open(_path, 'r', encoding=code_page) as file:
+                    decoder = JsonContainerDecoder(src_dir=path, file_name=file_name)
+                    data = decoder.decode_file(file)
+                    return data
+            except UnicodeDecodeError:
+                continue
+        raise ExtException(message=f'Unknown code page in file {file_name}')
+    except (BigBase64, FileNotFoundError) as err:
+        raise err from err
+    except Exception as err:
+        raise ExtException(parent=err, message='Ошибка чтения', detail=f'{err} в файле ({_path})')
+
+
+def brace_file_write(data, path, file_name):
+    _path = os.path.join(path, file_name)
+    makedirs(path, exist_ok=True)
+    try:
+        with open(_path, 'w', encoding='utf-8') as file:
+            decoder = JsonContainerDecoder(src_dir=path, file_name=file_name)
+            raw_data = decoder.encode_root_object(data)
+            decoder.write_data(path, file_name, raw_data)
+    except Exception as err:
+        raise ExtException(message='Ошибка записи', detail=f'{err} в файле ({_path})')
 
 
 def json_read(path, file_name):

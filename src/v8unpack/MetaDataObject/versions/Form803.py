@@ -41,13 +41,13 @@ class Form803(Form8x):
 
     def decode_form0(self, src_dir, uuid):
         try:
-            form = helper.json_read(src_dir, f'{uuid}.0.json')
+            form = helper.brace_file_read(src_dir, f'{uuid}.0')
         except FileNotFoundError:
             self.form.append([])
             return
         try:
             _code = helper.str_decode(self.getset_form_code(form, 'Код в отдельном файле', self.header))
-            if _code:
+            if _code is not None:
                 _code = self.double_quotes.sub(r'"', _code)
                 self.code['obj'] = _code
                 self.header['code_info_obj'] = 'Код в отдельном файле'
@@ -95,7 +95,7 @@ class Form803(Form8x):
         except helper.FuckingBrackets as err:
             self.form = json.loads(backup)
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы')
+            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{dest_path}')
 
     def get_form_elem_index(self):
         try:
@@ -129,7 +129,7 @@ class Form803(Form8x):
     @classmethod
     def getset_form_code(cls, form, new_value=None, header=None):
         err_detail = f'{header["uuid"]} {header["name"]} ' \
-                     f'опытным путем подобрано, если у Вас код не где то не достается' \
+                     f'опытным путем подобрано, если у Вас код не достается' \
                      f'обновитесь до последней версии, и если не поможет создайте issue с дампом'
         len_form_0 = len(form[0])
         if len_form_0 > 2 and form[0][0] in ['4', '3']:
@@ -168,7 +168,7 @@ class Form803(Form8x):
 
     def decode_form1(self, src_dir, uuid):
         try:
-            form = helper.json_read(src_dir, f'{uuid}.1.json')
+            form = helper.brace_file_read(src_dir, f'{uuid}.1')
         except FileNotFoundError:
             return
         self.form.append(form)
@@ -267,11 +267,11 @@ class Form803(Form8x):
         if self.header['Тип формы'] == OLD_FORM:
             self.write_old_encode_object(dest_dir)
         else:
-            helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
+            helper.brace_file_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}')
             if self.form:
-                helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
+                helper.brace_file_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0')
         if self.form and len(self.form) > 1:
-            helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
+            helper.brace_file_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1')
 
     def encode_empty_form(self):
         return [[

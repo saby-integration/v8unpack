@@ -18,14 +18,14 @@ class ConfigurationExtension803(Configuration803):
     def decode(cls, src_dir, dest_dir, *, version=None):
         self = cls()
         self.header = {}
-        root = helper.json_read(src_dir, 'configinfo.json')
+        root = helper.brace_file_read(src_dir, 'configinfo')
         self.header['v8unpack'] = __version__
         self.header['file_uuid'] = root[1][1]
         self.header['version'] = root[0][1]
         # self.header['versions'] = root[2]
         self.header['copyinfo'] = root[1]
         # self.header['copyinfo'][2] = b64decode(self.header['copyinfo'][2])[:-16].hex()
-        self.header['data'] = helper.json_read(src_dir, f'{self.header["file_uuid"]}.json')
+        self.header['data'] = helper.brace_file_read(src_dir, f'{self.header["file_uuid"]}')
         _form_header = self.get_decode_header(self.header['data'])
         helper.decode_header(self.header, _form_header)
         product_version = self.header['data'][0][3][1][1][15]
@@ -39,7 +39,7 @@ class ConfigurationExtension803(Configuration803):
 
         for i in self.info:  # хз что это
             try:
-                self.header[f'info{i}'] = helper.json_read(src_dir, f'{self.header["uuid"]}.{i}.json')
+                self.header[f'info{i}'] = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{i}')
             except FileNotFoundError:
                 pass
         helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.bin', encoding='utf-8')
@@ -72,11 +72,11 @@ class ConfigurationExtension803(Configuration803):
         ]
         self.encode_code(src_dir, cls.__name__)
         self.write_encode_code(dest_dir)
-        helper.json_write(root, dest_dir, 'configinfo.json')
-        helper.json_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}.json')
+        helper.brace_file_write(root, dest_dir, 'configinfo')
+        helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
         for i in self.info:  # хз что это
             try:
-                helper.json_write(self.header[f'info{i}'], dest_dir, f'{self.header["uuid"]}.{i}.json')
+                helper.brace_file_write(self.header[f'info{i}'], dest_dir, f'{self.header["uuid"]}.{i}')
             except KeyError:
                 pass
         tasks = self.encode_includes(src_dir, file_name, dest_dir, version)

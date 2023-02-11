@@ -166,6 +166,8 @@ class JsonContainerDecoder:
             return
         else:
             if not self.data and self.current_value is None:
+                if line == '\n':
+                    return
                 self.data = line
                 self.mode = Mode.READ_TEXT_FILE
             elif self.data == [[]] and self.current_value == '':  # текстовый файл с json

@@ -8,40 +8,32 @@ from v8unpack.MetaDataObject.versions.Form803 import Form803
 from v8unpack.unittest_helper import compare_file, NotEqualLine
 
 
-class TestFormElem803(unittest.TestCase):
+class TestDecodeBraceFile(unittest.TestCase):
     def setUp(self) -> None:
         self.current_dir = os.path.dirname(__file__)
-        self.data_dir = os.path.join(self.current_dir, 'data/form_elem_803')
+        self.data_dir = os.path.join(self.current_dir, 'data/form')
         self.temp_dir = os.path.join(self.data_dir, 'temp')
         self.temp_dir2 = os.path.join(self.data_dir, 'temp2')
 
-    def test_decode_all_form_elem(self):
+    def test_decode_all_raw_data(self):
         test_files = os.listdir(self.data_dir)
         result = ''
         for file_name in test_files:
             if file_name == 'temp':
                 continue
             uuid, x = file_name.split('.')
-            result += self.decode_form_elem(uuid)
+            result += self.decode_raw_data(uuid)
         self.assertEqual('', result)
 
-    def test_decode_form_elem(self):
-        uuid = '10d9f164-4217-4355-9052-72f70f9fb977'
-        result = self.decode_form_elem(uuid)
+    def test_decode_file(self):
+        uuid = 'baa98fb9-819b-42e9-9287-5f1a8ac6a31c'
+        result = self.decode_raw_data(uuid)
         self.assertEqual('', result)
 
-
-    def decode_form_elem(self, uuid):
-        file_name = f'{uuid}.0'
+    def decode_raw_data(self, file_name):
         helper.clear_dir(self.temp_dir)
-        form803 = Form803()
-        form803.new_dest_dir = self.temp_dir
-        form803.form = [helper.brace_file_read(self.data_dir, file_name)]
-        form803.decode_includes(None, self.temp_dir, '', None)
-
-        form803.write_decode_object(self.temp_dir, '', uuid, 803)
-        form803.encode_includes(self.temp_dir, uuid, self.temp_dir, 803)
-        helper.brace_file_write(form803.form[0], self.temp_dir, f'{uuid}.0')
+        data = Form803.decode(self.data_dir, file_name, self.temp_dir, '', 803)
+        helper.brace_file_write(data, self.temp_dir, file_name)
         problems = ''
         try:
             result = compare_file(
@@ -51,6 +43,4 @@ class TestFormElem803(unittest.TestCase):
             )
         except NotEqualLine as err:
             result = err
-        if result:
-            print(result)
-        return result
+        print(result)

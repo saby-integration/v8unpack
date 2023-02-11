@@ -7,7 +7,7 @@ from v8unpack.unittest_helper import HelperTestDecode
 
 
 class TestDecode(HelperTestDecode):
-    # processes = 1
+    processes = 1
 
     def setUp(self):
         super(TestDecode, self).setUp()

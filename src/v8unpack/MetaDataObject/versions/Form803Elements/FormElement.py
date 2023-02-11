@@ -88,7 +88,7 @@ class FormElement:
                 try:
                     elem_data = handler.decode(form, elem_raw_data)
                 except helper.FuckingBrackets as err:
-                    raise err
+                    raise err from err
                 except Exception as err:
                     raise ExtException(
                         parent=err,
