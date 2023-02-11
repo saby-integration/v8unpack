@@ -189,6 +189,27 @@ def extract_all(product_file_name: str, product_code: str = None):
         print(f'\n\n{error}')
 
 
+def update_index_all(product_file_name: str, product_code: str = None, dest_dir: str = None):
+    try:
+        products = _load_json(os.path.abspath(product_file_name))
+        if product_code:
+            products = {product_code: products[product_code]}
+            products[product_code]['disable'] = False
+        for product, params in products.items():
+            if params.get('disable'):
+                continue
+            print(f'\nФормируем индекс {product}\n')
+            update_index(
+                params['src'],
+                params.get('index'),
+                dest_dir
+            )
+        pass
+    except Exception as err:
+        error = ExtException(parent=err)
+        print(f'\n\n{error}')
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog=f'v8unpack {__version__}',
@@ -234,6 +255,10 @@ def main():
                        help='собрать один или несколько файлов 1С, где '
                             'file - путь до json файла со списком продуктов и параметрами их сборки')
 
+    group.add_argument('-IA', nargs=1, metavar='file',
+                       help='сформировать index по одному или нескольким продуктам, где '
+                            'file - путь до json файла со списком продуктов и параметрами их сборки')
+
     if len(sys.argv) == 1:
         parser.print_help()
         return 1
@@ -261,6 +286,10 @@ def main():
 
     if args.I is not None:
         update_index(args.I[0], args.index, args.core)
+        return
+
+    if args.IA is not None:
+        update_index_all(args.IA[0], args.index, args.core)
         return
 
 
