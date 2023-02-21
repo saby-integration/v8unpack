@@ -11,7 +11,7 @@ class IncludeSimple(MetaDataObject):
         self.new_dest_dir = None
 
     @classmethod
-    def decode(cls, src_dir, file_name, dest_dir, dest_path, version, parent_type=None):
+    def decode(cls, src_dir, file_name, dest_dir, dest_path, version, parent_type, *, obj_type=None):
         raise Exception('Так быть не должно, этот класс обслуживает вложенные объекты')
 
     @classmethod

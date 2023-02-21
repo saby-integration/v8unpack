@@ -58,16 +58,19 @@ class Decoder:
         raise Exception('Не удалось определить парсер')
 
     @classmethod
-    def decode(cls, src_dir, dest_dir, *, pool=None, version=None):
+    def decode(cls, src_dir, dest_dir, *, pool=None, version=None, parent_type=None):
         begin = datetime.now()
         print(f'{"Разбираем объект":30}')
         decoder = cls.detect_version(src_dir)
         helper.clear_dir(dest_dir)
-        tasks = decoder.decode(src_dir, dest_dir,
-                               version=version)  # возвращает список вложенных объектов MetaDataObject
+        handler, tasks = decoder.decode(src_dir, dest_dir,
+                                        version=version,
+                                        parent_type=parent_type)  # возвращает список вложенных объектов MetaDataObject
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
-            tasks = helper.run_in_pool(cls.decode_include, tasks, pool, title=f'{"Разбираем вложенные объекты":30}',
-                                       need_result=True)
+            childs, tasks = helper.run_in_pool(cls.decode_include, tasks, pool,
+                                               title=f'{"Разбираем вложенные объекты":30}',
+                                               need_result=True)
+            handler.create_index_file(childs)
             # tasks = helper.list_merge(*tasks_list)
         print(f'{"Разбор объекта закончен":30}: {datetime.now() - begin}')
 
@@ -77,8 +80,14 @@ class Decoder:
         try:
             handler = helper.get_class_metadata_object(include_type)
             # handler = handler.get_version(decode_params[4])
-            tasks = handler.decode(*decode_params, parent_type=include_type)
-            return tasks
+            handler, tasks = handler.decode(*decode_params, obj_type=include_type)
+            return (dict(
+                parent_type=decode_params[5],
+                parent_dir=decode_params[2],
+                child_type=include_type,
+                child_name=handler.header['name'],
+                child_uuid=decode_params[1]
+            ), tasks)
         except ExtException as err:
             raise ExtException(
                 parent=err,

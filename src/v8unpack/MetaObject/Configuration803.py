@@ -34,7 +34,7 @@ class Configuration803(MetaObject):
         self.counter = {}
 
     @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
+    def decode(cls, src_dir, dest_dir, *, version=None, parent_type=None):
         self = cls()
         self.header = {}
         root = helper.brace_file_read(src_dir, 'root')

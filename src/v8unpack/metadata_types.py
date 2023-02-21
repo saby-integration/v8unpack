@@ -1,5 +1,7 @@
 from enum import Enum
 
+# class MetaTypes(Enum):
+#     pass
 
 class MetaDataTypes(Enum):
     # todo в синтаксис помощнике найти все английские названия искать строкой "ОбъектМетаданных: [хxx...]"

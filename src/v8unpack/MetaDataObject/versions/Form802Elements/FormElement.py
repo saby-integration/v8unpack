@@ -26,7 +26,7 @@ class FormElement:
     name = 'elements'
 
     @classmethod
-    def decode_list(cls, form, raw_data, index_element_count=0):
+    def decode_list(cls, form, raw_data, index_element_count=0, path=''):
         result = []
         element_count = int(raw_data[index_element_count])
         if not element_count:
@@ -34,16 +34,16 @@ class FormElement:
 
         for i in range(element_count):
             elem_raw_data = raw_data[index_element_count + i + 1]
-            result.append(cls.decode(form, elem_raw_data))
+            result.append(cls.decode(form, path, elem_raw_data))
 
         raw_data[index_element_count] = 'Дочерние элементы отдельно'
         del raw_data[index_element_count + 1:index_element_count + 1 + element_count]
         return result
 
     @classmethod
-    def decode(cls, form, elem_raw_data):
-        metadata_type_uuid = elem_raw_data[0]
-        name = helper.str_decode(elem_raw_data[4][1])
+    def decode(cls, form, path, raw_data):
+        metadata_type_uuid = raw_data[0]
+        name = helper.str_decode(raw_data[4][1])
         try:
             metadata_type = FormItemTypes(metadata_type_uuid)
         except ValueError:
@@ -52,37 +52,38 @@ class FormElement:
                 detail=f'{metadata_type_uuid} {name} - {form.__class__.__name__} {form.header["name"]}',
                 action='Form802Element.decode'
             )
+        form.elements_data[f'{path}/{helper.str_decode(name)}'] = raw_data
         elem_data = dict(
             name=name,
             type=metadata_type.name,
-            raw=elem_raw_data
+            # raw=raw_data
         )
         return elem_data
 
     @classmethod
-    def encode_list(cls, form, src_dir, file_name, version, raw_data):
+    def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
         result = []
         index_element_count = 0
         if raw_data[index_element_count] == 'Дочерние элементы отдельно':
             items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
             if items:
                 for item in items:
-                    result.append(cls.encode(form, item))
+                    result.append(cls.encode(form, path, item))
                 raw_data[index_element_count] = str(len(items))
                 raw_data[index_element_count + 1:index_element_count + 1] = result
             else:
                 raw_data[index_element_count] = '0'
 
     @classmethod
-    def encode(cls, form, data):
-        return data['raw']
+    def encode(cls, form, path, data):
+        return form.elements_data[f"{path}/{helper.str_decode(data['name'])}"]
 
 
 class FormProps(FormElement):
     name = 'props'
 
     @classmethod
-    def decode(cls, form, elem_raw_data):
+    def decode(cls, form, path, elem_raw_data):
         elem_data = dict(
             name=helper.str_decode(elem_raw_data[4]),
             raw=elem_raw_data

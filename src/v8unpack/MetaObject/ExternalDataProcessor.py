@@ -11,7 +11,7 @@ class ExternalDataProcessor(MetaObject):
         self.data = None
 
     @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
+    def decode(cls, src_dir, dest_dir, *, version=None, parent_type=None):
         self = cls()
         self.header = {}
         self.data = {}
@@ -42,7 +42,7 @@ class ExternalDataProcessor(MetaObject):
         self.write_decode_code(dest_dir, 'ExternalDataProcessor')
 
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
-        return tasks
+        return self, tasks
         # helper.run_in_pool(self.decode_include, tasks, pool)
         pass
 

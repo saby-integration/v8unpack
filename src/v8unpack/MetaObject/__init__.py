@@ -34,8 +34,10 @@ class MetaObject:
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
         tasks = []
+        _include_types = []
         includes = self.get_decode_includes(header_data)
-        for include in includes:
+        for include_index, include in enumerate(includes):
+            _index = []
             try:
                 count_include_types = int(include[2])
             except IndexError:
@@ -65,7 +67,8 @@ class MetaObject:
                         if j == 0:
                             os.mkdir(os.path.join(dest_dir, new_dest_path))
 
-                        tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
+                        tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version,
+                                                           self.get_class_name_without_version()]], include_index)
                     elif isinstance(obj_uuid, list):
                         if not metadata_type:
                             continue
@@ -83,9 +86,28 @@ class MetaObject:
     def get_decode_includes(cls, header_data: list) -> list:
         raise Exception(f'Не метаданных {cls.__name__} не указана ссылка на includes')
 
+    def create_index_file(self, childs):
+        index = {}
+        for child in childs:
+            if child['parent_type'] not in index:
+                index[child['parent_type']] = dict(
+                    dir=child['parent_dir'],
+                    child={}
+                )
+            if child['child_type'] not in index[child['parent_type']]['child']:
+                index[child['parent_type']]['child'][child['child_type']] = []
+            index[child['parent_type']]['child'][child['child_type']].append(child['child_name'])
+        for parent in index:
+            for child_type in index[parent]['child']:
+                index[parent]['child'][child_type] = sorted(index[parent]['child'][child_type])
+            data = dict(sorted(index[parent]['child'].items()))
+            helper.json_write(data, index[parent]['dir'], f'{parent}.include.json')
+        pass
+
     def encode_includes(self, src_dir, file_name, dest_dir, version):
         tasks = []
         includes = []
+        includes = helper.json_read(src_dir, f'{self.get_class_name_without_version()}.include.json')
         entries = sorted(os.listdir(src_dir))
         for entry in entries:
             src_entry_path = os.path.join(src_dir, entry)
@@ -129,7 +151,7 @@ class MetaObject:
 
     @classmethod
     def get_class_name_without_version(cls):
-        if cls.__name__.endswith(cls.version):
+        if cls.version and cls.__name__.endswith(cls.version):
             return cls.__name__[:len(cls.version) * -1]
         return cls.__name__
 
