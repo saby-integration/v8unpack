@@ -55,8 +55,9 @@ class HelperTestDecode(unittest.TestCase):
 
         index = kwargs.get('index')
         if index:
-            with open(index, 'r', encoding='utf-8') as f:
-                self.index = json.load(f)
+            self.index = helper.check_index(index)
+            # with open(index, 'r', encoding='utf-8') as f:
+            #     self.index = json.load(f)
 
         pass
 
