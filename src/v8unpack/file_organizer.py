@@ -1,10 +1,10 @@
 import os
 import shutil
+from datetime import datetime
 
 from . import helper
 from .code_organizer import CodeOrganizer
 from .ext_exception import ExtException
-from datetime import datetime
 
 
 class FileOrganizer:
@@ -38,7 +38,7 @@ class FileOrganizer:
                 raise ExtException(
                     parent=err,
                     action=f'{cls.__name__}._unpack {path}.{entry}'
-                   ) from err
+                ) from err
 
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
@@ -52,9 +52,12 @@ class FileOrganizer:
 
             src_full_path = os.path.join(src_path, src_file_name)
 
-            if dest_full_path.startswith(dest_dir):  # файлы вне папки исходников не версионируются
-                descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name, None,
-                                                                                            dest_full_path, dest_file_name,
+            # файлы вне папки исходников не версионируются
+            if dest_full_path.startswith(dest_dir) or dest_entry_path.find('/src/') >= 0:
+                descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name,
+                                                                                            None,
+                                                                                            dest_full_path,
+                                                                                            dest_file_name,
                                                                                             descent,
                                                                                             cls.equal_binary_file)
             else:
