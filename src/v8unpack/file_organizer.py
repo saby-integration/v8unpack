@@ -53,7 +53,7 @@ class FileOrganizer:
             src_full_path = os.path.join(src_path, src_file_name)
 
             # файлы вне папки исходников не версионируются
-            if dest_full_path.startswith(dest_dir) or dest_entry_path.find('/src/') >= 0:
+            if dest_full_path.startswith(dest_dir) or os.path.normcase(dest_entry_path).find('\\src\\') >= 0:
                 descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name,
                                                                                             None,
                                                                                             dest_full_path,
@@ -170,14 +170,19 @@ class FileOrganizer:
                         descent, func_descent_filename))
                 else:
                     _dest_path = os.path.join(dest_dir, *path)
-                    _src_full_path = os.path.join(
-                        src_dir,
+                    _src_path = os.path.join(
                         '..',
                         '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
                         index[entry]
                     )
+                    _src_full_path = os.path.join(
+                        src_dir,
+                        _src_path
+                    )
                     _src_path = os.path.dirname(_src_full_path)
                     _src_file_name = os.path.basename(_src_full_path)
+                    if os.path.normcase(_src_path).find('\\src\\') >= 0:
+                        _dest_path, _src_file_name = cls.pack_get_descent_filename(_src_path, _src_file_name, descent)
                     cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
             else:
                 raise Exception('Некорректный формат файла индекса')
