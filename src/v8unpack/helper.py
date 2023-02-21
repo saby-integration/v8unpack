@@ -170,23 +170,27 @@ def close_pool(local_pool: Pool, pool: Pool = None) -> None:
 
 def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     _pool = get_pool(pool=pool)
+    new_tasks = []
     result = []
-    # msg = f'pool {method}({len(list_args)})'
     try:
         with tqdm(desc=title, total=len(list_args)) as pbar:
             for _res in _pool.imap_unordered(method, list_args, chunksize=1):
-                if need_result and _res:
-                    result.extend(_res)
+                if need_result:
+                    if isinstance(_res, tuple):
+                        result.append(_res[0])
+                        if _res[1]:
+                            new_tasks.extend(_res[1])
+                    else:
+                        if _res:
+                            result.extend(_res)
                 pbar.update()
     except ExtException as err:
         raise ExtException(
             parent=err,
             action=f'run_in_pool {method.__qualname__}') from err
-    # except Exception as err:
-    #     raise ExtException(parent=err, detail=f'{method.__qualname__ {err.message}' action=f'run_in_pool {method.__qualname__}') from err
     finally:
         close_pool(_pool, pool)
-    return result
+    return result, new_tasks
 
 
 def list_merge(*args):

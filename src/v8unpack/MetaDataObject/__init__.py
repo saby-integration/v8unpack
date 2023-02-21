@@ -15,6 +15,7 @@ class MetaDataObject(MetaObject):
         super().__init__()
         self.path = ''
         self.title = self.__class__.__name__
+        self.parent_type = None
         self.new_dest_path = None
         self.new_dest_dir = None
         self.new_dest_file_name = None
@@ -43,18 +44,18 @@ class MetaDataObject(MetaObject):
         return cls.get_version(version)()
 
     @classmethod
-    def decode(cls, src_dir, file_name, dest_dir, dest_path, version, *, parent_type=None):
+    def decode(cls, src_dir, file_name, dest_dir, dest_path, version, parent_type, *, obj_type=None):
         try:
             self = cls.decode_get_handler(src_dir, file_name, version)
             header_data = cls.brace_file_read(src_dir, file_name)
-            # self = cls()
-            if parent_type:
-                self.title = parent_type
+            self.parent_type = parent_type
+            if obj_type:
+                self.title = obj_type
             self.version = version
             self.decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
             tasks = self.decode_includes(src_dir, dest_dir, self.new_dest_path, header_data)
             self.write_decode_object(dest_dir, self.new_dest_path, self.new_dest_file_name, version)
-            return tasks
+            return self, tasks
         except Exception as err:
             problem_file = os.path.join(os.path.basename(src_dir), file_name)
             raise ExtException(

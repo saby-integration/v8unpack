@@ -15,7 +15,7 @@ class ConfigurationExtension803(Configuration803):
         super(ConfigurationExtension803, self).__init__()
 
     @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
+    def decode(cls, src_dir, dest_dir, *, version=None, parent_type=None):
         self = cls()
         self.header = {}
         root = helper.brace_file_read(src_dir, 'configinfo')
@@ -46,7 +46,7 @@ class ConfigurationExtension803(Configuration803):
         helper.json_write(self.header, dest_dir, f'{cls.get_class_name_without_version()}.json')
         self.write_decode_code(dest_dir, cls.__name__)
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
-        return tasks
+        return self, tasks
 
     @classmethod
     def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, gui=None, **kwargs):
