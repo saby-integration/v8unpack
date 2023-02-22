@@ -253,8 +253,11 @@ def get_near_descent_file_name(path, file_name, descent):
     for entity in entities:
         if entity.startswith(startswith) and entity.endswith(endswith):
             _entity = entity.split('.')
-            if len(_entity) - 1 != size:
+            if entity == file_name:
                 is_without_descent = True
+                continue
+
+            if len(_entity) - 1 != size:
                 continue
             full_path = os.path.join(path, entity)
             if os.path.isfile(full_path):
