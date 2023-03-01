@@ -133,7 +133,8 @@ def build_all(product_file_name: str, product_code: str = None):
                 params['src'], params['bin'],
                 temp_dir=params.get('temp'), index=params.get('index'),
                 version=params.get('version'), descent=params.get('descent'),
-                gui=params.get('gui')
+                gui=params.get('gui'),
+                product=product
             )
         pass
     except Exception as err:

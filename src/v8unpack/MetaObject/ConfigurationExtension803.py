@@ -51,6 +51,7 @@ class ConfigurationExtension803(Configuration803):
     @classmethod
     def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, gui=None, **kwargs):
         self = cls()
+        self.product = kwargs.get('product')
         helper.clear_dir(dest_dir)
         self.header = helper.json_read(src_dir, f'{cls.get_class_name_without_version()}.json')
 
@@ -83,4 +84,7 @@ class ConfigurationExtension803(Configuration803):
         return tasks
 
     def set_product_version(self, product_version):
-        self.header['data'][0][3][1][1][15] = helper.str_encode(product_version)
+        _version = product_version
+        if self.product:
+            _version = f'{self.product}_{_version}'
+        self.header['data'][0][3][1][1][15] = helper.str_encode(_version)
