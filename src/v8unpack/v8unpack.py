@@ -52,7 +52,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
         decode(dir_stage2, dir_stage3, pool=pool, version=version)
 
-        if descent:
+        if descent is not None:
             FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=int(descent))
         else:
             FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
@@ -94,7 +94,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         pool = helper.get_pool(processes=1)
 
-        if descent:
+        if descent is not None:
             FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=int(descent))
         else:
             FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
