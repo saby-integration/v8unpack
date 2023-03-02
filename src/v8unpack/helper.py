@@ -233,6 +233,8 @@ def check_version(v8_version: str, src_version: str) -> None:
 
 
 def get_descent_file_name(file_name, descent):
+    if not descent:
+        return file_name
     name: list = file_name.split('.')
     name.insert(-1, str(descent))
     return '.'.join(name)
