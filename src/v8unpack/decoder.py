@@ -92,13 +92,37 @@ class Decoder:
         begin = datetime.now()
         print(f'{"Собираем объект":30}')
         helper.clear_dir(dest_dir)
-        encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])
+        encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])()
         # возвращает список вложенных объектов MetaDataObject
-        tasks = encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui, **kwargs)
+        helper.clear_dir(dest_dir)
 
-        while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
-            tasks = helper.run_in_pool(cls.encode_include, tasks, pool, title=f'{"Собираем вложенные объекты":30}',
-                                       need_result=True)
+        parent_id = encoder.get_class_name_without_version()
+        child_tasks = encoder.encode_includes(src_dir, file_name, dest_dir, encoder.version, parent_id)
+        include_index = {}
+        file_list = []
+        object_task = []
+        title = f'{"Собираем вложенные объекты":30}'
+        while object_task or child_tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
+            _file_list, _include_index, _object_task, child_tasks = helper.run_in_pool_encode_include(
+                cls.encode_include, child_tasks, pool,
+                title=title
+            )
+            if _file_list:
+                file_list.extend(_file_list)
+            if _include_index:
+                include_index.update(_include_index)
+            if _object_task:
+                object_task.append(_object_task)
+            if not child_tasks and object_task:
+                _object_task = object_task.pop()
+                for elem in _object_task:
+                    elem[1][5] = include_index.pop(f"{elem[1][4]}/{elem[0]}/{elem[1][1]}")
+                child_tasks = _object_task
+                title = f'{"Собираем составные объекты":30}'
+
+        encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui,
+                       include_index=include_index.pop(parent_id, None), file_list=file_list)
+
         print(f'{"Сборка объекта закончена":30}: {datetime.now() - begin}')
 
     @classmethod
@@ -126,9 +150,9 @@ class Decoder:
         try:
 
             handler = helper.get_class_metadata_object(include_type)
-            handler = handler.get_version(encode_params[3])
-            tasks = handler.encode(*encode_params)
-            return tasks
+            handler = handler.get_version(encode_params[3])()
+            object_task, child_tasks = handler.encode(*encode_params)
+            return object_task, child_tasks
         except Exception as err:
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
 

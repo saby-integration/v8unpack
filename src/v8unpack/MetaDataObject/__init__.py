@@ -87,25 +87,34 @@ class MetaDataObject(MetaObject):
         self.new_dest_dir = os.path.join(dest_dir, self.new_dest_path)
         self.new_dest_file_name = self.header['name']
 
-    @classmethod
-    def encode(cls, src_dir, file_name, dest_dir, version):
-        self = cls()
+    def encode(self, src_dir, file_name, dest_dir, version, parent_id, include_index):
         self.version = version
-        file_name = self.get_encode_file_name(file_name)
+        src_file_name = self.get_encode_file_name(file_name)
         try:
+            if not include_index:
+                current_obj_id = f"{parent_id}/{src_file_name}/{file_name}"
+                child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, version, current_obj_id)
+                if child_tasks:
+                    object_task = [self.__class__.__name__, [src_dir, file_name, dest_dir, version, parent_id, {}]]
+                    return object_task, child_tasks
             try:
-                self.header = helper.json_read(src_dir, f'{file_name}.json')
+                self.header = helper.json_read(src_dir, f'{src_file_name}.json')
             except FileNotFoundError:
                 return
-            self.encode_object(src_dir, file_name, dest_dir, version)
-            tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
+            self.fill_header_includes(include_index)
+            self.encode_object(src_dir, src_file_name, dest_dir, version)
             self.write_encode_object(dest_dir)
-            return tasks
+            return dict(
+                parent_id=parent_id,
+                file_list=self.file_list,
+                obj_type=self.get_class_name_without_version(self.version),
+                obj_uuid=self.header['uuid']
+            ), None
         except Exception as err:
             raise ExtException(
                 parent=err,
                 dump=dict(src_dir=src_dir, file_name=file_name),
-                action=f'{cls.__name__}.encode') from err
+                action=f'{self.__class__.__name__}.encode') from err
 
     @classmethod
     def get_encode_file_name(cls, file_name):
@@ -116,7 +125,9 @@ class MetaDataObject(MetaObject):
         raise Exception(msg)
 
     def write_encode_object(self, dest_dir):
-        helper.brace_file_write(self.header['data'], dest_dir, f'{self.header["uuid"]}')
+        file_name = f'{self.header["uuid"]}'
+        self.file_list.append(file_name)
+        helper.brace_file_write(self.header['data'], dest_dir, file_name)
         self.write_encode_code(dest_dir)
 
     @staticmethod

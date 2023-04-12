@@ -166,7 +166,7 @@ class Form803(Form8x):
             pass
         return self.form
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version):
+    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         if not self.form or not self.form[0]:
             return
         try:

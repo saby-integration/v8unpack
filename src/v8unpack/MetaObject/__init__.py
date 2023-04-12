@@ -20,6 +20,7 @@ class MetaObject:
     def __init__(self):
         self.header = {}
         self.code = {}
+        self.file_list = []
 
     def get_decode_header(self, header_data):
         return header_data[0][1][1]
@@ -44,13 +45,14 @@ class MetaObject:
                 _metadata = include[i + 3]
                 _count_obj = int(_metadata[1])
                 _metadata_type_uuid = _metadata[0]
-                if not _count_obj:
-                    continue
                 try:
                     metadata_type = MetaDataTypes(_metadata_type_uuid)
                 except ValueError:
                     # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
                     # continue
+
+                    if not _count_obj:
+                        continue
 
                     if not isinstance(_metadata[2], str):  # вложенный объект
                         continue
@@ -58,7 +60,11 @@ class MetaObject:
                     print(msg)
                     continue
                     # raise Exception(msg)
+                include[i + 3] = metadata_type.name
+                if not _count_obj:
+                    continue
                 new_dest_path = os.path.join(dest_path, metadata_type.name)
+                external_obj = False
                 for j in range(_count_obj):
                     obj_uuid = _metadata[j + 2]
                     if isinstance(obj_uuid, str):
@@ -66,6 +72,7 @@ class MetaObject:
                             os.mkdir(os.path.join(dest_dir, new_dest_path))
 
                         tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
+                        external_obj = True
                     elif isinstance(obj_uuid, list):
                         if not metadata_type:
                             continue
@@ -76,14 +83,33 @@ class MetaObject:
                         if j == 0:
                             os.mkdir(os.path.join(dest_dir, new_dest_path))
                         handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
-
+                        external_obj = True
+                if external_obj:
+                    _metadata = [_metadata[0], 0]
         return tasks
 
     @classmethod
     def get_decode_includes(cls, header_data: list) -> list:
-        raise Exception(f'Не метаданных {cls.__name__} не указана ссылка на includes')
+        raise NotImplementedError(f'Для метаданных {cls.__name__} не указана ссылка на includes')
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version):
+    def fill_header_includes(self, include_index):
+        try:
+            includes = self.get_decode_includes(self.header['data'])
+        except NotImplementedError:
+            return
+        for include in includes:
+            try:
+                count_include_types = int(include[2])
+            except IndexError:
+                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
+            for i in range(count_include_types):
+                _metadata = include[i + 3]
+                if isinstance(_metadata, str):
+                    metadata_type = MetaDataTypes[_metadata]
+                    include_objects = include_index.get(_metadata, [])
+                    include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
+
+    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         tasks = []
         includes = []
         entries = sorted(os.listdir(src_dir))
@@ -99,22 +125,24 @@ class MetaObject:
 
         for include in includes:
             _handler = helper.get_class_metadata_object(include)
-            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, _handler.get_obj_name(), tasks,
-                                            self.version)
+            _src_dir = os.path.join(src_dir, include)
+            _handler.encode_get_include_obj(_src_dir, dest_dir, _handler.get_obj_name(), tasks,
+                                            version, parent_id, {})
         return tasks
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version):
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
         """
         возвращает список задач на парсинг объектов этого типа
         """
         entries = os.listdir(src_dir)
         for entry in entries:
             if cls.re_meta_data_obj.fullmatch(entry):
-                tasks.append([include, [src_dir, entry[:-5], dest_dir, version]])
+                tasks.append([include, [src_dir, entry[:-5], dest_dir, version, parent_id, include_index]])
 
     @classmethod
-    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version):
+    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version, parent_id,
+                                                 include_index):
         """
         возвращает список задач на парсинг объектов этого типа
         """
@@ -122,15 +150,16 @@ class MetaObject:
         for entry in entries:
             if os.path.isdir(os.path.join(src_dir, entry)):
                 new_src_dir = os.path.join(src_dir, entry)
-                tasks.append([include, [new_src_dir, include, dest_dir, version]])
+                tasks.append([include, [new_src_dir, entry, dest_dir, version, parent_id, include_index]])
 
     def encode_version(self):
         return self.header['version']
 
     @classmethod
-    def get_class_name_without_version(cls):
-        if cls.__name__.endswith(cls.version):
-            return cls.__name__[:len(cls.version) * -1]
+    def get_class_name_without_version(cls, version=None):
+        _version = version if version else cls.version
+        if _version and cls.__name__.endswith(_version):
+            return cls.__name__[:len(_version) * -1]
         return cls.__name__
 
     def read_raw_code(self, src_dir, file_name, encoding='utf-8'):
