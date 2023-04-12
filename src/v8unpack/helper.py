@@ -189,6 +189,45 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     return result
 
 
+def run_in_pool_encode_include(method, list_args, pool=None, title=None):
+    _pool = get_pool(pool=pool)
+    file_list = []
+    include_index = {}
+    object_task = []
+    child_tasks = []
+    try:
+        with tqdm(desc=title, total=len(list_args)) as pbar:
+            for _object_task, _child_tasks in _pool.imap_unordered(method, list_args, chunksize=1):
+                if _child_tasks:
+                    child_tasks.extend(_child_tasks)
+                if isinstance(_object_task, list):
+                    object_task.append(_object_task)
+                elif isinstance(_object_task, dict):
+                    parent_id = _object_task['parent_id']
+                    obj_uuid = _object_task['obj_uuid']
+                    obj_type = _object_task['obj_type']
+
+                    if _object_task['file_list']:
+                        file_list.extend(_object_task['file_list'])
+                    if parent_id not in include_index:
+                        include_index[parent_id] = {}
+                    if obj_type not in include_index[parent_id]:
+                        include_index[parent_id][obj_type] = []
+                    include_index[parent_id][obj_type].append(obj_uuid)
+                else:
+                    raise NotImplementedError()
+                pbar.update()
+    except ExtException as err:
+        raise ExtException(
+            parent=err,
+            action=f'run_in_pool {method.__qualname__}') from err
+    # except Exception as err:
+    #     raise ExtException(parent=err, detail=f'{method.__qualname__ {err.message}' action=f'run_in_pool {method.__qualname__}') from err
+    finally:
+        close_pool(_pool, pool)
+    return file_list, include_index, object_task, child_tasks
+
+
 def list_merge(*args):
     result = []
     for lst in args:

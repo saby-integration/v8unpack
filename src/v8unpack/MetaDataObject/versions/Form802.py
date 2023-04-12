@@ -32,7 +32,7 @@ class Form802(Form8x):
     def write_encode_object(self, dest_dir):
         self.write_old_encode_object(dest_dir)
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version):
+    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         try:
             if not self.form[0]:
                 return

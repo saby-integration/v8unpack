@@ -37,11 +37,13 @@ class ExternalDataProcessor(MetaObject):
         self.decode_code(src_dir)
         pass
         _file_name = self.get_class_name_without_version()
+
+        tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
+
         helper.json_write(self.header, dest_dir, f'{_file_name}.json')
         helper.json_write(self.data, dest_dir, f'{_file_name}.data{self.version}.json')
         self.write_decode_code(dest_dir, 'ExternalDataProcessor')
 
-        tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
         return tasks
         # helper.run_in_pool(self.decode_include, tasks, pool)
         pass
@@ -54,10 +56,8 @@ class ExternalDataProcessor(MetaObject):
     def get_decode_header(cls, header_data):
         return header_data[0][3][1][1][3][1]
 
-    @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
+    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
         try:
-            self = cls()
             helper.clear_dir(dest_dir)
             _file_name = self.get_class_name_without_version()
             self.header = helper.json_read(src_dir, f'{_file_name}.json')

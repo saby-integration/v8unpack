@@ -56,9 +56,9 @@ class Configuration803(MetaObject):
         self._decode_images(src_dir, dest_dir)
         self._decode_info(src_dir, dest_dir, file_name)
 
-        helper.json_write(self.header, dest_dir, f'{file_name}.json')
-
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
+
+        helper.json_write(self.header, dest_dir, f'{file_name}.json')
         self.write_decode_code(dest_dir, file_name)
         return tasks
 
@@ -77,11 +77,8 @@ class Configuration803(MetaObject):
             header_data[0][8][1],
         ]
 
-    @classmethod
-    def encode(cls, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
-        self = cls()
-        helper.clear_dir(dest_dir)
-        file_name = cls.get_class_name_without_version()
+    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
+        file_name = self.get_class_name_without_version()
         self.header = helper.json_read(src_dir, f'{file_name}.json')
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
