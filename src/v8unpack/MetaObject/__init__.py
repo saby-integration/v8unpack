@@ -1,4 +1,5 @@
 import os
+from uuid import uuid4
 import re
 from base64 import b64decode, b64encode
 
@@ -12,12 +13,15 @@ class MetaObject:
     ext_code = {'obj': 0}
     encrypted_types = ['text', 'image']
     _obj_info = None
+    _obj_name = None
 
     re_meta_data_obj = re.compile('^[^.]+\.json$')
     directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
     directive_1c_comment = re.compile('(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
 
-    def __init__(self):
+    def __init__(self, *, obj_name=None):
+        self.title = obj_name if obj_name else \
+            self._obj_name if self._obj_name else self.get_class_name_without_version()
         self.header = {}
         self.code = {}
         self.file_list = []
@@ -60,7 +64,6 @@ class MetaObject:
                     print(msg)
                     continue
                     # raise Exception(msg)
-                include[i + 3] = metadata_type.name
                 if not _count_obj:
                     continue
                 new_dest_path = os.path.join(dest_path, metadata_type.name)
@@ -85,7 +88,7 @@ class MetaObject:
                         handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
                         external_obj = True
                 if external_obj:
-                    _metadata = [_metadata[0], 0]
+                    include[i + 3] = metadata_type.name
         return tasks
 
     @classmethod
@@ -124,10 +127,10 @@ class MetaObject:
                 includes.append(entry)
 
         for include in includes:
-            _handler = helper.get_class_metadata_object(include)
+            handler = helper.get_class_metadata_object(include)
             _src_dir = os.path.join(src_dir, include)
-            _handler.encode_get_include_obj(_src_dir, dest_dir, _handler.get_obj_name(), tasks,
-                                            version, parent_id, {})
+            handler.encode_get_include_obj(_src_dir, dest_dir, handler.get_obj_name(), tasks,
+                                           version, parent_id, {})
         return tasks
 
     @classmethod
@@ -139,6 +142,14 @@ class MetaObject:
         for entry in entries:
             if cls.re_meta_data_obj.fullmatch(entry):
                 tasks.append([include, [src_dir, entry[:-5], dest_dir, version, parent_id, include_index]])
+
+    @classmethod
+    def encode_versions(cls, file_list):
+        versions = ["1", str(len(file_list) + 1), helper.str_encode(""), str(uuid4())]
+        for file_name in file_list:
+            versions.append(helper.str_encode(file_name))
+            versions.append(str(uuid4()))
+        return [versions]
 
     @classmethod
     def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version, parent_id,
@@ -231,9 +242,12 @@ class MetaObject:
             encoding = self.header.get(f'code_encoding_{code_name}', 'utf-8')
             if self.header[f'code_info_{code_name}'] == 'file':
                 _code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
+                self.file_list.append(_code_file_name)
                 self.write_raw_code(self.code[code_name], dest_dir, _code_file_name, encoding=encoding)
             else:
-                _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
+                dir_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
+                _code_dir = os.path.join(dest_dir, dir_name)
+                self.file_list.append(dir_name)
                 helper.makedirs(_code_dir)
                 helper.brace_file_write(self.header[f'code_info_{code_name}'], _code_dir, 'info')
                 if encoding in self.encrypted_types:
@@ -320,6 +334,8 @@ class MetaObject:
             for elem in self._obj_info:
                 try:
                     data = helper.json_read(src_dir, f'{file_name}.{self._obj_info[elem]}.json')
-                    helper.brace_file_write(data, dest_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}')
+                    file_name = f'{self.header["uuid"]}.{self._obj_info[elem]}'
+                    helper.brace_file_write(data, dest_dir, file_name)
+                    self.file_list.append(file_name)
                 except FileNotFoundError:
                     pass

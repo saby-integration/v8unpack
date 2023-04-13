@@ -14,4 +14,6 @@ class SimpleWithInfo(Simple):
         super(Simple, self).write_encode_object(dest_dir)
         info = self.header.get('info')
         if info:
-            helper.brace_file_write(info, dest_dir, f'{self.header["uuid"]}.0')
+            file_name = f'{self.header["uuid"]}.0'
+            helper.brace_file_write(info, dest_dir, file_name)
+            self.file_list.append(file_name)

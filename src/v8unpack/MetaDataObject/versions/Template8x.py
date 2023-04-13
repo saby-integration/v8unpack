@@ -150,14 +150,18 @@ class Template8x(Simple):
     def encode_scheme_data(self, src_dir, dest_dir):
         try:
             raw_data = helper.bin_read(src_dir, f'{self.header["name"]}.bin')
-            helper.bin_write(raw_data, dest_dir, f'{self.header["uuid"]}.0')
+            file_name = f'{self.header["uuid"]}.0'
+            helper.bin_write(raw_data, dest_dir, file_name)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             self.encode_text_data(src_dir, dest_dir)
 
     def encode_text_data(self, src_dir, dest_dir):
         try:
             raw_data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["name"]}.txt')
-            helper.txt_write(raw_data, dest_dir, f'{self.header["uuid"]}.0', encoding=encoding)
+            file_name = f'{self.header["uuid"]}.0'
+            helper.txt_write(raw_data, dest_dir, file_name, encoding=encoding)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             pass
 
@@ -185,7 +189,10 @@ class Template8x(Simple):
             "1",
             [self._get_b64_string(bin_data)]
         ]]
-        helper.brace_file_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0')
+
+        file_name = f'{self.header["uuid"]}.0'
+        helper.brace_file_write(self.raw_data, dest_dir, file_name)
+        self.file_list.append(file_name)
 
     def encode_header(self):
         raise NotImplemented()

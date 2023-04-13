@@ -110,7 +110,7 @@ class Decoder:
             if _file_list:
                 file_list.extend(_file_list)
             if _include_index:
-                include_index.update(_include_index)
+                helper.update_dict(include_index, _include_index)
             if _object_task:
                 object_task.append(_object_task)
             if not child_tasks and object_task:
@@ -119,6 +119,7 @@ class Decoder:
                     elem[1][5] = include_index.pop(f"{elem[1][4]}/{elem[0]}/{elem[1][1]}")
                 child_tasks = _object_task
                 title = f'{"Собираем составные объекты":30}'
+            a = 1
 
         encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui,
                        include_index=include_index.pop(parent_id, None), file_list=file_list)
@@ -151,6 +152,7 @@ class Decoder:
 
             handler = helper.get_class_metadata_object(include_type)
             handler = handler.get_version(encode_params[3])()
+            handler.title = include_type
             object_task, child_tasks = handler.encode(*encode_params)
             return object_task, child_tasks
         except Exception as err:

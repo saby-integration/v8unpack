@@ -166,7 +166,7 @@ class Form803(Form8x):
             pass
         return self.form
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
+    def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         if not self.form or not self.form[0]:
             return
         try:
@@ -202,11 +202,16 @@ class Form803(Form8x):
         if self.header['Тип формы'] == OLD_FORM:
             self.write_old_encode_object(dest_dir)
         else:
-            helper.brace_file_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}')
+            helper.brace_file_write(self.encode_header(), dest_dir, self.header["uuid"])
+            self.file_list.append(self.header["uuid"])
             if self.form:
-                helper.brace_file_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0')
+                file_name = f'{self.header["uuid"]}.0'
+                helper.brace_file_write(self.form[0], dest_dir, file_name)
+                self.file_list.append(file_name)
         if self.form and len(self.form) > 1:
-            helper.brace_file_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1')
+            file_name = f'{self.header["uuid"]}.1'
+            helper.brace_file_write(self.form[1], dest_dir, file_name)
+            self.file_list.append(file_name)
 
     def encode_empty_form(self):
         return [[
