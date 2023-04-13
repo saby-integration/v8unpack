@@ -391,7 +391,7 @@ def _update_dict(base, new, _path=''):
                             dump={'value': str(base[element])}
                         )
                 elif isinstance(new[element], list):
-                    raise NotImplementedError('update list')
+                    base[element].extend(new[element])
                     # base[element] = ArrayHelper.unique_extend(base[element], new[element])
                 else:
                     base[element] = new[element]

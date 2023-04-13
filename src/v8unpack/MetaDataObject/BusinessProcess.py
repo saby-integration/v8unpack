@@ -22,7 +22,9 @@ class BusinessProcess(Container):
         res = super().encode_object(src_dir, file_name, dest_dir, version)
         try:
             package = helper.bin_read(src_dir, 'Карта маршрута.json')
-            helper.bin_write(package, dest_dir, f'{self.header["uuid"]}.7.json')
+            file_name = f'{self.header["uuid"]}.7.json'
+            helper.bin_write(package, dest_dir, file_name)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             return
         return res

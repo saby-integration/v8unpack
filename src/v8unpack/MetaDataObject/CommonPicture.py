@@ -36,6 +36,8 @@ class CommonPicture(Simple):
         try:
             bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
             self.header['info'][0][2][0][0] += b64encode(bin_data).decode(encoding='utf-8')
-            helper.brace_file_write(self.header['info'], dest_dir, f'{self.header["uuid"]}.0')
+            file_name = f'{self.header["uuid"]}.0'
+            helper.brace_file_write(self.header['info'], dest_dir, file_name)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             pass

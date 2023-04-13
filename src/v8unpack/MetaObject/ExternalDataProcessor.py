@@ -24,7 +24,7 @@ class ExternalDataProcessor(MetaObject):
         self.header['v8unpack'] = __version__
         self.header['file_uuid'] = root[0][1]
         self.data['version'] = helper.brace_file_read(src_dir, 'version')
-        self.header['versions'] = helper.brace_file_read(src_dir, 'versions')
+        # self.header['versions'] = helper.brace_file_read(src_dir, 'versions')
         self.data['copyinfo'] = helper.brace_file_read(src_dir, 'copyinfo')
 
         try:
@@ -56,9 +56,8 @@ class ExternalDataProcessor(MetaObject):
     def get_decode_header(cls, header_data):
         return header_data[0][3][1][1][3][1]
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
+    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None, **kwargs):
         try:
-            helper.clear_dir(dest_dir)
             _file_name = self.get_class_name_without_version()
             self.header = helper.json_read(src_dir, f'{_file_name}.json')
             helper.check_version(__version__, self.header.get('v8unpack', ''))
@@ -69,17 +68,29 @@ class ExternalDataProcessor(MetaObject):
 
             self.set_product_info(src_dir, file_name)
 
+            if include_index:
+                self.fill_header_includes(include_index)
+
             helper.brace_file_write(self.encode_root(), dest_dir, 'root')
+            file_list.append('root')
             helper.brace_file_write(self.encode_version(), dest_dir, 'version')
-            helper.brace_file_write(self.header['versions'], dest_dir, 'versions')
+            file_list.append('version')
             helper.brace_file_write(self.data['copyinfo'], dest_dir, 'copyinfo')
+            file_list.append('copyinfo')
+            # helper.brace_file_write(self.header['versions'], dest_dir, 'versions')
             helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
+            file_list.append(self.header["file_uuid"])
             if self.data.get('form1'):
-                helper.brace_file_write(self.data['form1'], dest_dir, f'{self.header["uuid"]}.1')
+                file_name = f'{self.header["uuid"]}.1'
+                helper.brace_file_write(self.data['form1'], dest_dir, file_name)
+                file_list.append(file_name)
             self.encode_code(src_dir, 'ExternalDataProcessor')
             self.write_encode_code(dest_dir)
-            tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
-            return tasks
+
+            file_list.append('versions')
+            versions = self.encode_versions(file_list)
+            helper.brace_file_write(versions, dest_dir, 'versions')
+            return None
         except Exception as err:
             raise ExtException(parent=err)
 

@@ -22,7 +22,9 @@ class XDTOPackage(MetaDataObject):
     def encode_object(self, src_dir, file_name, dest_dir, version):
         try:
             package = helper.bin_read(src_dir, f'{file_name}.bin')
-            helper.bin_write(package, dest_dir, f'{self.header["uuid"]}.0')
+            file_name = f'{self.header["uuid"]}.0'
+            helper.bin_write(package, dest_dir, file_name)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             return
         return []

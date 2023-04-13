@@ -15,4 +15,6 @@ class Subsystem(Container):
     def write_encode_object(self, dest_dir):
         super(Subsystem, self).write_encode_object(dest_dir)
         if self.header['info']:
-            helper.brace_file_write(self.header['info'], dest_dir, f'{self.header["uuid"]}.1')
+            file_name = f'{self.header["uuid"]}.1'
+            helper.brace_file_write(self.header['info'], dest_dir, file_name)
+            self.file_list.append(file_name)

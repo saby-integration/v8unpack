@@ -123,8 +123,12 @@ class Form8x(SimpleNameFolder):
         except FileNotFoundError:
             self.form = self.encode_empty_form()
         self.encode_data()
+        self.encode_nested_includes(src_dir, file_name, dest_dir, version, None)
 
     def encode_header(self):
+        raise NotImplemented()
+
+    def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         raise NotImplemented()
 
     def encode_data(self):
@@ -140,9 +144,12 @@ class Form8x(SimpleNameFolder):
         pass
 
     def write_old_encode_object(self, dest_dir):
-        helper.brace_file_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}')
+        helper.brace_file_write(self.encode_header(), dest_dir, self.header["uuid"])
+        self.file_list.append(self.header["uuid"])
         if self.header.get('code_info_obj'):
-            _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.0'
+            dir_name = f'{self.header["uuid"]}.0'
+            _code_dir = os.path.join(dest_dir, dir_name)
+            self.file_list.append(dir_name)
             helper.makedirs(_code_dir, exist_ok=True)
             helper.brace_file_write(self.form[0], _code_dir, 'form')
             _encoding = self.header.get('code_encoding_obj', 'utf-8-sig')

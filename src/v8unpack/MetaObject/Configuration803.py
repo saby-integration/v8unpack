@@ -77,14 +77,18 @@ class Configuration803(MetaObject):
             header_data[0][8][1],
         ]
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, **kwargs):
+    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None, **kwargs):
         file_name = self.get_class_name_without_version()
         self.header = helper.json_read(src_dir, f'{file_name}.json')
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
+        if include_index:
+            self.fill_header_includes(include_index)
+
         helper.brace_file_write(self.header["root_data"], dest_dir, 'root')
+        self.file_list.append('root')
         helper.brace_file_write(self.encode_version(), dest_dir, 'version')
-        helper.brace_file_write(self.header["versions"], dest_dir, 'versions')
+        self.file_list.append('version')
         # shutil.copy2(os.path.join(src_dir, 'versions.json'), os.path.join(dest_dir, 'versions.json'))
 
         self._encode_html_data(src_dir, 'help', dest_dir, header_field='help', file_number=self.help_file_number)
@@ -92,9 +96,12 @@ class Configuration803(MetaObject):
         self.encode_code(src_dir, file_name)
         self._encode_info(src_dir, file_name, dest_dir)
         self.write_encode_code(dest_dir)
-        helper.brace_file_write(self.header['data'], dest_dir, f'{self.header["file_uuid"]}')
-        tasks = self.encode_includes(src_dir, file_name, dest_dir, version)
-        return tasks
+        helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
+        self.file_list.append(self.header["file_uuid"])
+
+        file_list.append('versions')
+        helper.brace_file_write(self.encode_versions(self.file_list), dest_dir, 'versions')
+        return None
 
     def encode_version(self):
         return self.header['version']
@@ -125,4 +132,6 @@ class Configuration803(MetaObject):
                 if header and len(header[0]) > 1 and bin_data:
                     header[0][2][0][0] += b64encode(bin_data).decode(encoding='utf-8')
                 if header:
-                    helper.brace_file_write(header, dest_dir, f'{self.header["uuid"]}.{self._images[elem]}')
+                    file_name = f'{self.header["uuid"]}.{self._images[elem]}'
+                    helper.brace_file_write(header, dest_dir, file_name)
+                    self.file_list.append(file_name)

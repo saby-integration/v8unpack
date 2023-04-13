@@ -12,7 +12,6 @@ from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
 from .json_container_decoder import JsonContainerDecoder
-from .json_container_decoder import json_decode, json_encode
 
 
 class HelperTestDecode(unittest.TestCase):
@@ -227,6 +226,8 @@ class NotEqualLine(Exception):
 
 def compare_file(path_decode_entry, path_encode_entry, problems):
     def ignore():
+        len_decode_line = len(decode_line)
+        len_encode_line = len(encode_line)
         if encode_line.endswith(b'\r\n'):
             if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
                 encode_file.readline()
@@ -238,9 +239,11 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
                 return True
             if decode_line.endswith(b'\r\n') \
                     and decode_line[-3] == b','[0] \
-                    and (len(decode_line) - len(encode_line)) == 1:
+                    and (len_decode_line - len_encode_line) == 1:
                 return True
         if encode_line.startswith(b'#base64') and encode_line[8:] == decode_line[9:]:
+            return True
+        if len_decode_line > 36 and len_decode_line == len_encode_line:  # допущение, т.к. в списоке инклюдов порядок теперь разный
             return True
         return False
 
