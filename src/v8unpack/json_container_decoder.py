@@ -238,13 +238,9 @@ class JsonContainerDecoder:
             return False
 
     def _decode_line_begin_read_multi_string_value(self, line):
-        if line.endswith('",\n'):
-            self._add_to_current_value(line[:-2])
-            self.mode = Mode.END_READ_MULTI_STRING_VALUE
-        elif line.endswith('"}\n'):
-            self._add_to_current_value(line[:-2])
-            self._end_value()
-            self._end_current_object()
+        if line.count('""') * 2 != line.count('"'):
+            self.mode = Mode.BEGIN_READ_STRING_VALUE
+            self.decode_object(line)
         else:
             self.current_value += line
             return False

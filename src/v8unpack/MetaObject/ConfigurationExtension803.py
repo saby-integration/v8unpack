@@ -1,3 +1,5 @@
+import os
+
 from .. import helper
 from ..MetaObject.Configuration803 import Configuration803
 from ..version import __version__
@@ -38,8 +40,11 @@ class ConfigurationExtension803(Configuration803):
         self.decode_code(src_dir)
 
         for i in self.info:  # хз что это
+            file_name = f'{self.header["uuid"]}.{i}'
+            if os.path.isdir(os.path.join(src_dir, file_name)):
+                continue
             try:
-                self.header[f'info{i}'] = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{i}')
+                self.header[f'info{i}'] = helper.brace_file_read(src_dir, file_name)
             except FileNotFoundError:
                 pass
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
