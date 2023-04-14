@@ -88,6 +88,7 @@ class ExternalDataProcessor(MetaObject):
             self.write_encode_code(dest_dir)
 
             file_list.append('versions')
+            file_list.extend(self.file_list)
             versions = self.encode_versions(file_list)
             helper.brace_file_write(versions, dest_dir, 'versions')
             return None

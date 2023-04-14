@@ -127,7 +127,8 @@ class JsonContainerDecoder:
         return self.data
 
     def decode_line(self, line):
-        return getattr(self, f'_decode_line_{self.mode.name.lower()}')(line)
+        handler = getattr(self, f'_decode_line_{self.mode.name.lower()}')
+        return handler(line)
 
     def _decode_line_read_b64(self, line):
         if line == '\n':
@@ -240,6 +241,10 @@ class JsonContainerDecoder:
         if line.endswith('",\n'):
             self._add_to_current_value(line[:-2])
             self.mode = Mode.END_READ_MULTI_STRING_VALUE
+        elif line.endswith('"}\n'):
+            self._add_to_current_value(line[:-2])
+            self._end_value()
+            self._end_current_object()
         else:
             self.current_value += line
             return False
