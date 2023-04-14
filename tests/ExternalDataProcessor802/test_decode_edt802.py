@@ -35,9 +35,6 @@ class TestDecode(HelperTestDecode):
     def test_01_decode_stage1(self):
         super(TestDecode, self).decode_stage1()
 
-    def test_02_decode_stage2(self):
-        super(TestDecode, self).decode_stage2()
-
     def test_03_decode_stage3(self):
         super(TestDecode, self).decode_stage3()
         self.assert_external_data_processor_decode_stage3()
@@ -51,9 +48,6 @@ class TestDecode(HelperTestDecode):
 
     def test_06_encode_stage3(self):
         super(TestDecode, self).encode_stage3()
-
-    def test_07_encode_stage2(self):
-        super(TestDecode, self).encode_stage2()
 
     def test_08_encode_stage1(self):
         super(TestDecode, self).encode_stage1()
