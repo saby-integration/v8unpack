@@ -72,9 +72,13 @@ class Template8x(Simple):
 
     def decode_scheme_data(self, src_dir, dest_dir, write):
         try:
-            self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0')
-            if write:
-                helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
+            shutil.copy2(
+                os.path.join(src_dir, f'{self.header["uuid"]}.0'),
+                os.path.join(dest_dir, f'{self.header["name"]}.bin')
+            )
+            # self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0')
+            # if write:
+            #     helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
         except FileNotFoundError:
             self.decode_text_data(src_dir, dest_dir, write)
 
@@ -149,9 +153,11 @@ class Template8x(Simple):
 
     def encode_scheme_data(self, src_dir, dest_dir):
         try:
-            raw_data = helper.bin_read(src_dir, f'{self.header["name"]}.bin')
             file_name = f'{self.header["uuid"]}.0'
-            helper.bin_write(raw_data, dest_dir, file_name)
+            shutil.copy2(
+                os.path.join(src_dir, f'{self.header["name"]}.bin'),
+                os.path.join(dest_dir, file_name)
+            )
             self.file_list.append(file_name)
         except FileNotFoundError:
             self.encode_text_data(src_dir, dest_dir)

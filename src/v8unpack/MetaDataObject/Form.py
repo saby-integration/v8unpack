@@ -17,6 +17,7 @@ class Form(SimpleNameFolder):
         '5-5': OldForm801,
         '7-7': OldForm801,
         '9-9': OldForm802,
+        '12-12': OldForm802,
         '0-5': Form801,
         '0-7': Form801,
         '0-9': Form802,
@@ -31,7 +32,8 @@ class Form(SimpleNameFolder):
         "1": 4,
         "5": 2,
         "7": 2,
-        "9": 2
+        "9": 2,
+        "12": 2
     }
     @classmethod
     def decode_get_handler(cls, src_dir, file_name, version):
