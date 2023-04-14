@@ -1,5 +1,5 @@
-import json
 import copy
+import json
 import os
 import shutil
 import time
@@ -10,6 +10,37 @@ from multiprocessing import Pool, cpu_count
 from tqdm.auto import tqdm
 
 from .ext_exception import ExtException
+from .json_container_decoder import JsonContainerDecoder, BigBase64
+
+
+def brace_file_read(path, file_name):
+    _path = os.path.join(path, file_name)
+    try:
+        for code_page in ['utf-8-sig', 'windows-1251']:
+            try:
+                with open(_path, 'r', encoding=code_page) as file:
+                    decoder = JsonContainerDecoder(src_dir=path, file_name=file_name)
+                    data = decoder.decode_file(file)
+                    return data
+            except UnicodeDecodeError:
+                continue
+        raise ExtException(message=f'Unknown code page in file {file_name}')
+    except (BigBase64, FileNotFoundError) as err:
+        raise err from err
+    except Exception as err:
+        raise ExtException(parent=err, message='Ошибка чтения', detail=f'{err} в файле ({_path})')
+
+
+def brace_file_write(data, path, file_name):
+    _path = os.path.join(path, file_name)
+    makedirs(path, exist_ok=True)
+    try:
+        with open(_path, 'w', encoding='utf-8') as file:
+            decoder = JsonContainerDecoder(src_dir=path, file_name=file_name)
+            raw_data = decoder.encode_root_object(data)
+            decoder.write_data(path, file_name, raw_data)
+    except Exception as err:
+        raise ExtException(message='Ошибка записи', detail=f'{err} в файле ({_path})')
 
 
 def json_read(path, file_name):
@@ -158,6 +189,45 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     return result
 
 
+def run_in_pool_encode_include(method, list_args, pool=None, title=None):
+    _pool = get_pool(pool=pool)
+    file_list = []
+    include_index = {}
+    object_task = []
+    child_tasks = []
+    try:
+        with tqdm(desc=title, total=len(list_args)) as pbar:
+            for _object_task, _child_tasks in _pool.imap_unordered(method, list_args, chunksize=1):
+                if _child_tasks:
+                    child_tasks.extend(_child_tasks)
+                if isinstance(_object_task, list):
+                    object_task.append(_object_task)
+                elif isinstance(_object_task, dict):
+                    parent_id = _object_task['parent_id']
+                    obj_uuid = _object_task['obj_uuid']
+                    obj_type = _object_task['obj_type']
+
+                    if _object_task['file_list']:
+                        file_list.extend(_object_task['file_list'])
+                    if parent_id not in include_index:
+                        include_index[parent_id] = {}
+                    if obj_type not in include_index[parent_id]:
+                        include_index[parent_id][obj_type] = []
+                    include_index[parent_id][obj_type].append(obj_uuid)
+                else:
+                    raise NotImplementedError()
+                pbar.update()
+    except ExtException as err:
+        raise ExtException(
+            parent=err,
+            action=f'run_in_pool {method.__qualname__}') from err
+    # except Exception as err:
+    #     raise ExtException(parent=err, detail=f'{method.__qualname__ {err.message}' action=f'run_in_pool {method.__qualname__}') from err
+    finally:
+        close_pool(_pool, pool)
+    return file_list, include_index, object_task, child_tasks
+
+
 def list_merge(*args):
     result = []
     for lst in args:
@@ -304,6 +374,7 @@ def update_dict(*args):
             result = _update_dict(result, args[i + 1])
         return result
 
+
 def _update_dict(base, new, _path=''):
     if not new:
         return base
@@ -320,7 +391,7 @@ def _update_dict(base, new, _path=''):
                             dump={'value': str(base[element])}
                         )
                 elif isinstance(new[element], list):
-                    raise NotImplementedError('update list')
+                    base[element].extend(new[element])
                     # base[element] = ArrayHelper.unique_extend(base[element], new[element])
                 else:
                     base[element] = new[element]

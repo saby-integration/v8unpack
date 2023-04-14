@@ -1,4 +1,4 @@
-import re
+
 import json
 
 from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
@@ -12,8 +12,6 @@ UPR_FORM = '1'
 
 class Form803(Form8x):
     ver = '803'
-    double_quotes = re.compile(r'("")')
-    quotes = re.compile(r'(")')
 
     def __init__(self):
         super().__init__()
@@ -39,22 +37,6 @@ class Form803(Form8x):
         if self.header['Тип формы'] != OLD_FORM:
             self.decode_form0(src_dir, uuid)
 
-    def decode_form0(self, src_dir, uuid):
-        try:
-            form = helper.json_read(src_dir, f'{uuid}.0.json')
-        except FileNotFoundError:
-            self.form.append([])
-            return
-        try:
-            _code = helper.str_decode(self.getset_form_code(form, 'Код в отдельном файле', self.header))
-            if _code:
-                _code = self.double_quotes.sub(r'"', _code)
-                self.code['obj'] = _code
-                self.header['code_info_obj'] = 'Код в отдельном файле'
-        except Exception as err:
-            raise ExtException(parent=err, detail=self.header['uuid'])
-        self.form.append(form)
-
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
         if not self.form or not self.form[0]:
             return
@@ -72,7 +54,8 @@ class Form803(Form8x):
             self.commands = FormCommands.decode_list(self, self.form[0][0])
             self.props = FormProps.decode_list(self, self.form[0][0])
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы')
+            pass  # todo если какие то елементы формы не разбираются, не прерываем
+            # raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def decode_elements(self, src_dir, dest_dir, dest_path, header_data):
         backup = json.dumps(self.form)
@@ -95,7 +78,7 @@ class Form803(Form8x):
         except helper.FuckingBrackets as err:
             self.form = json.loads(backup)
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы')
+            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{dest_path}')
 
     def get_form_elem_index(self):
         try:
@@ -118,57 +101,9 @@ class Form803(Form8x):
         if self.command_panels:
             helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.ver}.json')
 
-    @classmethod
-    def get_last_level_array(cls, data):
-        while True:
-            if isinstance(data[-1], list):
-                return cls.get_last_level_array(data[-1])
-            else:
-                return data
-
-    @classmethod
-    def getset_form_code(cls, form, new_value=None, header=None):
-        err_detail = f'{header["uuid"]} {header["name"]} ' \
-                     f'опытным путем подобрано, если у Вас код не где то не достается' \
-                     f'обновитесь до последней версии, и если не поможет создайте issue с дампом'
-        len_form_0 = len(form[0])
-        if len_form_0 > 2 and form[0][0] in ['4', '3']:
-            code = form[0][2]
-            if not isinstance(code, str):
-                raise ExtException(
-                    message='Not supported forms',
-                    detail=err_detail,
-                    dump=form
-                )
-            form[0][2] = new_value
-            if len_form_0 != 10:
-                a = 1
-            return code
-
-        last_level = cls.get_last_level_array(form)
-        if len_form_0 < 10 and (last_level[0] == '49' or last_level[0] == '4'):
-            return ''
-
-        if len(last_level) > 10 \
-                and last_level[0] in ['22', '1'] \
-                and last_level[-1] == '0' \
-                and last_level[-2] == '0':
-            code_index = -8
-            code = last_level[code_index]
-            if not isinstance(code, str):
-                raise ExtException(
-                    message='Not supported forms',
-                    detail=err_detail,
-                    dump=form
-                )
-            if new_value is not None:
-                last_level[code_index] = new_value
-            return code
-        return ''
-
     def decode_form1(self, src_dir, uuid):
         try:
-            form = helper.json_read(src_dir, f'{uuid}.1.json')
+            form = helper.brace_file_read(src_dir, f'{uuid}.1')
         except FileNotFoundError:
             return
         self.form.append(form)
@@ -231,7 +166,7 @@ class Form803(Form8x):
             pass
         return self.form
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version):
+    def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         if not self.form or not self.form[0]:
             return
         try:
@@ -267,11 +202,16 @@ class Form803(Form8x):
         if self.header['Тип формы'] == OLD_FORM:
             self.write_old_encode_object(dest_dir)
         else:
-            helper.json_write(self.encode_header(), dest_dir, f'{self.header["uuid"]}.json')
+            helper.brace_file_write(self.encode_header(), dest_dir, self.header["uuid"])
+            self.file_list.append(self.header["uuid"])
             if self.form:
-                helper.json_write(self.form[0], dest_dir, f'{self.header["uuid"]}.0.json')
+                file_name = f'{self.header["uuid"]}.0'
+                helper.brace_file_write(self.form[0], dest_dir, file_name)
+                self.file_list.append(file_name)
         if self.form and len(self.form) > 1:
-            helper.json_write(self.form[1], dest_dir, f'{self.header["uuid"]}.1.json')
+            file_name = f'{self.header["uuid"]}.1'
+            helper.brace_file_write(self.form[1], dest_dir, file_name)
+            self.file_list.append(file_name)
 
     def encode_empty_form(self):
         return [[

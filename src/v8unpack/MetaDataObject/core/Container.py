@@ -52,9 +52,8 @@ class Container(MetaDataObject):
             return
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version):
-        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, version)
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
+        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, version, parent_id, include_index)
 
-    @classmethod
-    def get_encode_file_name(cls, file_name):
-        return cls.get_obj_name()
+    def get_encode_file_name(self, file_name):
+        return self.get_obj_name()

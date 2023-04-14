@@ -2,8 +2,7 @@ from .Form803 import Form803
 
 
 class CommonForm803(Form803):
-    @classmethod
-    def get_decode_obj_header(cls, header):
+    def get_decode_obj_header(self, header):
         return header[0][1]
 
     def decode_data(self, src_dir, uuid):

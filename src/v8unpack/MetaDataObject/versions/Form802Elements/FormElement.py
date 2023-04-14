@@ -20,6 +20,16 @@ class FormItemTypes(Enum):
     ListField = '19f8b798-314e-4b4e-8121-905b2a7a03f5'
     Separator = '36e52348-5d60-4770-8e89-a16ed50a2006'
     FieldHtml = 'd92a805c-98ae-4750-9158-d9ce7cec2f20'
+    Indicator = 'b1db1f86-abbb-4cf0-8852-fe6ae21650c2'
+    CalendarBox = 'e3c063d8-ef92-41be-9c89-b70290b5368b'
+    TrackBar = '6c06cd5d-8481-4b6f-a90a-7a97a8bb8bef'
+    TextDocumentField = '14c4a229-bfc3-42fe-9ce1-2da049fd0109'
+    GraphicalSchemaField = '42248403-7748-49da-b782-e4438fd7bff3'
+    GeographicalSchemaField = 'ad37194e-555e-4305-b718-5dca84baf145'
+    Chart = 'a8b97779-1a4b-4059-b09c-807f86d2a461'
+    GanttChart = 'e5fdc112-5c84-4a16-9728-72b85692b6e2'
+    PivotChart = 'a26da99e-184a-4823-b0d6-62816d38dc4e'
+    Dendrogram = '984981b1-622d-4ebc-94f7-885f0cdfb59a'
 
 
 class FormElement:
@@ -43,7 +53,7 @@ class FormElement:
     @classmethod
     def decode(cls, form, elem_raw_data):
         metadata_type_uuid = elem_raw_data[0]
-        name = helper.str_decode(elem_raw_data[4][1])
+        name = helper.str_decode(elem_raw_data[-2][1])
         try:
             metadata_type = FormItemTypes(metadata_type_uuid)
         except ValueError:

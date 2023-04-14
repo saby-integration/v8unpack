@@ -6,6 +6,7 @@ from enum import Enum
 from ..core.Simple import Simple
 from ... import helper
 from ...ext_exception import ExtException
+from ...json_container_decoder import BigBase64
 
 
 class TmplType(Enum):
@@ -71,9 +72,13 @@ class Template8x(Simple):
 
     def decode_scheme_data(self, src_dir, dest_dir, write):
         try:
-            self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0.bin')
-            if write:
-                helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
+            shutil.copy2(
+                os.path.join(src_dir, f'{self.header["uuid"]}.0'),
+                os.path.join(dest_dir, f'{self.header["name"]}.bin')
+            )
+            # self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0')
+            # if write:
+            #     helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
         except FileNotFoundError:
             self.decode_text_data(src_dir, dest_dir, write)
 
@@ -82,7 +87,7 @@ class Template8x(Simple):
 
     def decode_text_data(self, src_dir, dest_dir, write):
         try:
-            self.data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["uuid"]}.0.bin')
+            self.data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["uuid"]}.0')
         except FileNotFoundError:
             return
         if write:
@@ -92,15 +97,19 @@ class Template8x(Simple):
         self.decode_base64_data(src_dir, dest_dir, write)
 
     def decode_base64_data(self, src_dir, dest_dir, write):
+        filename = f'{self.header["uuid"]}.0'
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.0.json')
+            data = helper.brace_file_read(src_dir, filename)
+        except BigBase64:
+            shutil.copy2(os.path.join(src_dir, filename), os.path.join(dest_dir, f'{self.header["name"]}.c1b64'))
+            return
         except FileNotFoundError:
-            file_name = f'{self.header["uuid"]}.0.c1b64'
+            file_name = f'{self.header["uuid"]}.0'
             if os.path.isfile(os.path.join(src_dir, file_name)):
                 # todo сюда можно вставить выдергивание бинарника из файла если кому то хочется
                 shutil.copy2(
                     os.path.join(src_dir, file_name),
-                    os.path.join(dest_dir, f'{self.header["name"]}.c1b64')
+                    os.path.join(dest_dir, f'{self.header["name"]}')
                 )
             return
         if data[0][1] and data[0][1][0]:
@@ -144,15 +153,21 @@ class Template8x(Simple):
 
     def encode_scheme_data(self, src_dir, dest_dir):
         try:
-            raw_data = helper.bin_read(src_dir, f'{self.header["name"]}.bin')
-            helper.bin_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.bin')
+            file_name = f'{self.header["uuid"]}.0'
+            shutil.copy2(
+                os.path.join(src_dir, f'{self.header["name"]}.bin'),
+                os.path.join(dest_dir, file_name)
+            )
+            self.file_list.append(file_name)
         except FileNotFoundError:
             self.encode_text_data(src_dir, dest_dir)
 
     def encode_text_data(self, src_dir, dest_dir):
         try:
             raw_data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["name"]}.txt')
-            helper.txt_write(raw_data, dest_dir, f'{self.header["uuid"]}.0.bin', encoding=encoding)
+            file_name = f'{self.header["uuid"]}.0'
+            helper.txt_write(raw_data, dest_dir, file_name, encoding=encoding)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             pass
 
@@ -167,9 +182,11 @@ class Template8x(Simple):
         except FileNotFoundError:
             file_name = f'{self.header["name"]}.c1b64'
             if os.path.isfile(os.path.join(src_dir, file_name)):
+                dest_file_name = f'{self.header["uuid"]}.0'
+                self.file_list.append(dest_file_name)
                 shutil.copy2(
                     os.path.join(src_dir, file_name),
-                    os.path.join(dest_dir, f'{self.header["uuid"]}.0.c1b64')
+                    os.path.join(dest_dir, dest_file_name)
                 )
 
     def encode_html_data(self, src_dir, dest_dir):
@@ -180,7 +197,10 @@ class Template8x(Simple):
             "1",
             [self._get_b64_string(bin_data)]
         ]]
-        helper.json_write(self.raw_data, dest_dir, f'{self.header["uuid"]}.0.json')
+
+        file_name = f'{self.header["uuid"]}.0'
+        helper.brace_file_write(self.raw_data, dest_dir, file_name)
+        self.file_list.append(file_name)
 
     def encode_header(self):
         raise NotImplemented()

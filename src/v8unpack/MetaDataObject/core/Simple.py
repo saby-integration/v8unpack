@@ -13,7 +13,7 @@ class Simple(MetaDataObject):
     def decode_includes(self, src_dir, dest_dir, dest_path, header):
         return []
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version):
+    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         return []
 
     def encode_object(self, src_dir, file_name, dest_dir, version):
@@ -28,9 +28,8 @@ class SimpleNameFolder(Simple):
         self.set_mode_decode_in_name_folder(dest_dir, dest_path)
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version):
-        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, version)
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
+        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, version, parent_id, include_index)
 
-    @classmethod
-    def get_encode_file_name(cls, file_name):
-        return cls.get_obj_name()
+    def get_encode_file_name(self, file_name):
+        return self.get_obj_name()

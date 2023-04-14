@@ -18,8 +18,8 @@ class Group(FormElement):
             ], raw_data)
         except Exception as err:
             raise ExtException(parent=err)
-        if raw_data[0] == '22' and size != 30:
-            raise FuckingBrackets()
+        if raw_data[0] == '22' and size < 20:
+            raise FuckingBrackets(detail=cls.__name__)
 
         data = super().decode(form, raw_data)
         index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)

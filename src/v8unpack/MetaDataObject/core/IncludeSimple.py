@@ -37,5 +37,8 @@ class IncludeSimple(MetaDataObject):
         self.encode_code(src_dir, self.header["name"])
         return []
 
+    def get_include_obj_uuid(self):
+        return self.header['data']
+
     def write_encode_object(self, dest_dir):
         self.write_encode_code(dest_dir)
