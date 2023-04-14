@@ -12,7 +12,6 @@ from .decoder import decode, encode
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
 from .json_container_decoder import JsonContainerDecoder
-from .json_container_decoder import json_decode, json_encode
 
 
 class HelperTestDecode(unittest.TestCase):
@@ -79,19 +78,22 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
 
     def decode_stage2(self):
-        json_decode(self.decode_dir_stage1, self.decode_dir_stage2, pool=self.pool)
-        if self.result:
-            files = os.listdir(self.decode_dir_stage2)
-            self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
+        pass
+        # json_decode(self.decode_dir_stage1, self.decode_dir_stage2, pool=self.pool)
+        # if self.result:
+        #     files = os.listdir(self.decode_dir_stage2)
+        #     self.assertEqual(len(files), self.result['count_root_files_stage1'], 'count_root_files_stage1')
 
     def decode_stage3(self):
-        decode(self.decode_dir_stage2, self.decode_dir_stage3, pool=self.pool, version=self.version)
+        decode(self.decode_dir_stage1, self.decode_dir_stage3, pool=self.pool, version=self.version)
         if self.result:
             files = os.listdir(self.decode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
     def decode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.decode_dir_stage4))
+        if not self.index:
+            return
         if descent:
             FileOrganizerCE.unpack(self.decode_dir_stage3, self.decode_dir_stage4,
                                    pool=self.pool, index=self.index, descent=descent)
@@ -104,6 +106,8 @@ class HelperTestDecode(unittest.TestCase):
 
     def encode_stage4(self, descent=None):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage3))
+        if not self.index:
+            return
         if descent:
             FileOrganizerCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
                                  pool=self.pool, index=self.index, descent=descent)
@@ -114,19 +118,20 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
     def encode_stage3(self, *, gui=None):
-        encode(self.decode_dir_stage3, self.encode_dir_stage2, version=self.version, pool=self.pool,
+        encode(self.decode_dir_stage3, self.encode_dir_stage1, version=self.version, pool=self.pool,
                file_name=os.path.basename(self.src_file), gui=gui)
-        self.assert_stage(self.decode_dir_stage2, self.encode_dir_stage2)
-        if self.result:
-            files = os.listdir(self.encode_dir_stage2)
-            self.assertEqual(len(files), self.result['count_root_files_stage1'])
-
-    def encode_stage2(self):
-        json_encode(self.encode_dir_stage2, self.encode_dir_stage1, pool=self.pool)
         self.assert_stage(self.decode_dir_stage1, self.encode_dir_stage1)
         if self.result:
             files = os.listdir(self.encode_dir_stage1)
             self.assertEqual(len(files), self.result['count_root_files_stage1'])
+
+    def encode_stage2(self):
+        pass
+        # json_encode(self.encode_dir_stage2, self.encode_dir_stage1, pool=self.pool)
+        # self.assert_stage(self.decode_dir_stage1, self.encode_dir_stage1)
+        # if self.result:
+        #     files = os.listdir(self.encode_dir_stage1)
+        #     self.assertEqual(len(files), self.result['count_root_files_stage1'])
 
     def encode_stage1(self):
         compress_and_build(self.encode_dir_stage1, self.encode_dir_stage0, pool=self.pool)
@@ -175,7 +180,10 @@ class HelperTestDecode(unittest.TestCase):
                 self._assert_stage(path_decode_entry, path_encode_entry, problems)
             else:
                 try:
-                    problem = compare_file(path_decode_entry, path_encode_entry, problems)
+                    if entry == 'versions':
+                        problem = compare_versions(decode_dir, encode_dir, problems)
+                    else:
+                        problem = compare_file(path_decode_entry, path_encode_entry, problems)
                 except NotEqualLine as err:
                     problem = str(err)
                 if problem:
@@ -221,6 +229,8 @@ class NotEqualLine(Exception):
 
 def compare_file(path_decode_entry, path_encode_entry, problems):
     def ignore():
+        len_decode_line = len(decode_line)
+        len_encode_line = len(encode_line)
         if encode_line.endswith(b'\r\n'):
             if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
                 encode_file.readline()
@@ -232,9 +242,11 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
                 return True
             if decode_line.endswith(b'\r\n') \
                     and decode_line[-3] == b','[0] \
-                    and (len(decode_line) - len(encode_line)) == 1:
+                    and (len_decode_line - len_encode_line) == 1:
                 return True
         if encode_line.startswith(b'#base64') and encode_line[8:] == decode_line[9:]:
+            return True
+        if len_decode_line > 36 and len_decode_line == len_encode_line:  # допущение, т.к. в списоке инклюдов порядок теперь разный
             return True
         return False
 
@@ -268,4 +280,34 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
                     raise NotEqualLine(problems)
         except FileNotFoundError:
             problems += f'\n      {title:73}  not encode file'
+    return problems
+
+
+def compare_versions(decode_dir, encode_dir, problems):
+    def create_index(versions: list):
+        index = []
+        count = int((len(versions[0]) - 4) / 2)
+        for i in range(count):
+            j = i * 2 + 4
+            elem = versions[0][j]
+            index.append(elem)
+        return index
+
+    problems = ''
+    decode_data = helper.brace_file_read(decode_dir, 'versions')
+    decode_data = create_index(decode_data)
+    encode_data = helper.brace_file_read(encode_dir, 'versions')
+    encode_data = create_index(encode_data)
+    size = len(decode_data)
+    for i in range(size):
+        j = size - i - 1
+        try:
+            elem = decode_data[j]
+            encode_data.remove(elem)
+            decode_data.pop(j)
+        except ValueError:
+            pass
+    if encode_data or decode_data:
+        problems += f'\n      {"versions":73} {"":5} {json.dumps(encode_data)}'
+        problems += f'\n      {"":79} {json.dumps(decode_data)}'
     return problems

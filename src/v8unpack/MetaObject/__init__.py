@@ -1,4 +1,5 @@
 import os
+from uuid import uuid4
 import re
 from base64 import b64decode, b64encode
 
@@ -10,19 +11,22 @@ from ..metadata_types import MetaDataTypes
 class MetaObject:
     version = '803'
     ext_code = {'obj': 0}
-    encrypted_types = ['text.json', 'image.json']
+    encrypted_types = ['text', 'image']
     _obj_info = None
+    _obj_name = None
 
     re_meta_data_obj = re.compile('^[^.]+\.json$')
     directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
     directive_1c_comment = re.compile('(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
 
-    def __init__(self):
+    def __init__(self, *, obj_name=None):
+        self.title = obj_name if obj_name else \
+            self._obj_name if self._obj_name else self.get_class_name_without_version()
         self.header = {}
         self.code = {}
+        self.file_list = []
 
-    @classmethod
-    def get_decode_header(cls, header_data):
+    def get_decode_header(self, header_data):
         return header_data[0][1][1]
 
     def set_header_data(self, header_data):
@@ -45,13 +49,14 @@ class MetaObject:
                 _metadata = include[i + 3]
                 _count_obj = int(_metadata[1])
                 _metadata_type_uuid = _metadata[0]
-                if not _count_obj:
-                    continue
                 try:
                     metadata_type = MetaDataTypes(_metadata_type_uuid)
                 except ValueError:
                     # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
                     # continue
+
+                    if not _count_obj:
+                        continue
 
                     if not isinstance(_metadata[2], str):  # вложенный объект
                         continue
@@ -59,7 +64,10 @@ class MetaObject:
                     print(msg)
                     continue
                     # raise Exception(msg)
+                if not _count_obj:
+                    continue
                 new_dest_path = os.path.join(dest_path, metadata_type.name)
+                external_obj = False
                 for j in range(_count_obj):
                     obj_uuid = _metadata[j + 2]
                     if isinstance(obj_uuid, str):
@@ -67,6 +75,7 @@ class MetaObject:
                             os.mkdir(os.path.join(dest_dir, new_dest_path))
 
                         tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
+                        external_obj = True
                     elif isinstance(obj_uuid, list):
                         if not metadata_type:
                             continue
@@ -77,14 +86,33 @@ class MetaObject:
                         if j == 0:
                             os.mkdir(os.path.join(dest_dir, new_dest_path))
                         handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
-
+                        external_obj = True
+                if external_obj:
+                    include[i + 3] = metadata_type.name
         return tasks
 
     @classmethod
     def get_decode_includes(cls, header_data: list) -> list:
-        raise Exception(f'Не метаданных {cls.__name__} не указана ссылка на includes')
+        raise NotImplementedError(f'Для метаданных {cls.__name__} не указана ссылка на includes')
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version):
+    def fill_header_includes(self, include_index):
+        try:
+            includes = self.get_decode_includes(self.header['data'])
+        except NotImplementedError:
+            return
+        for include in includes:
+            try:
+                count_include_types = int(include[2])
+            except IndexError:
+                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
+            for i in range(count_include_types):
+                _metadata = include[i + 3]
+                if isinstance(_metadata, str):
+                    metadata_type = MetaDataTypes[_metadata]
+                    include_objects = include_index.get(_metadata, [])
+                    include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
+
+    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         tasks = []
         includes = []
         entries = sorted(os.listdir(src_dir))
@@ -99,23 +127,33 @@ class MetaObject:
                 includes.append(entry)
 
         for include in includes:
-            _handler = helper.get_class_metadata_object(include)
-            _handler.encode_get_include_obj(os.path.join(src_dir, include), dest_dir, _handler.get_obj_name(), tasks,
-                                            self.version)
+            handler = helper.get_class_metadata_object(include)
+            _src_dir = os.path.join(src_dir, include)
+            handler.encode_get_include_obj(_src_dir, dest_dir, handler.get_obj_name(), tasks,
+                                           version, parent_id, {})
         return tasks
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version):
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
         """
         возвращает список задач на парсинг объектов этого типа
         """
         entries = os.listdir(src_dir)
         for entry in entries:
             if cls.re_meta_data_obj.fullmatch(entry):
-                tasks.append([include, [src_dir, entry[:-5], dest_dir, version]])
+                tasks.append([include, [src_dir, entry[:-5], dest_dir, version, parent_id, include_index]])
 
     @classmethod
-    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version):
+    def encode_versions(cls, file_list):
+        versions = ["1", str(len(file_list) + 1), helper.str_encode(""), str(uuid4())]
+        for file_name in file_list:
+            versions.append(helper.str_encode(file_name))
+            versions.append(str(uuid4()))
+        return [versions]
+
+    @classmethod
+    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version, parent_id,
+                                                 include_index):
         """
         возвращает список задач на парсинг объектов этого типа
         """
@@ -123,15 +161,16 @@ class MetaObject:
         for entry in entries:
             if os.path.isdir(os.path.join(src_dir, entry)):
                 new_src_dir = os.path.join(src_dir, entry)
-                tasks.append([include, [new_src_dir, include, dest_dir, version]])
+                tasks.append([include, [new_src_dir, entry, dest_dir, version, parent_id, include_index]])
 
     def encode_version(self):
         return self.header['version']
 
     @classmethod
-    def get_class_name_without_version(cls):
-        if cls.__name__.endswith(cls.version):
-            return cls.__name__[:len(cls.version) * -1]
+    def get_class_name_without_version(cls, version=None):
+        _version = version if version else cls.version
+        if _version and cls.__name__.endswith(_version):
+            return cls.__name__[:len(_version) * -1]
         return cls.__name__
 
     def read_raw_code(self, src_dir, file_name, encoding='utf-8'):
@@ -149,12 +188,14 @@ class MetaObject:
 
     def decode_code(self, src_dir):
         for code_name in self.ext_code:
+            if code_name in self.code:
+                continue  # код был в файле с формой
             _obj_code_dir = f'{os.path.join(src_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
             if os.path.isdir(_obj_code_dir):
-                self.header[f'code_info_{code_name}'] = helper.json_read(_obj_code_dir, 'info.json')
+                self.header[f'code_info_{code_name}'] = helper.brace_file_read(_obj_code_dir, 'info')
                 try:
-                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text.bin')
-                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text.bin'), 'utf-8')
+                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
+                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
@@ -169,7 +210,7 @@ class MetaObject:
                         raise err from err
             else:
                 try:
-                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}.bin'
+                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                     self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
                     encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
                     self.header[f'code_info_{code_name}'] = 'file'
@@ -200,16 +241,19 @@ class MetaObject:
         for code_name in self.code:
             encoding = self.header.get(f'code_encoding_{code_name}', 'utf-8')
             if self.header[f'code_info_{code_name}'] == 'file':
-                _code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}.bin'
+                _code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
+                self.file_list.append(_code_file_name)
                 self.write_raw_code(self.code[code_name], dest_dir, _code_file_name, encoding=encoding)
             else:
-                _code_dir = f'{os.path.join(dest_dir, self.header["uuid"])}.{self.ext_code[code_name]}'
+                dir_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
+                _code_dir = os.path.join(dest_dir, dir_name)
+                self.file_list.append(dir_name)
                 helper.makedirs(_code_dir)
-                helper.json_write(self.header[f'code_info_{code_name}'], _code_dir, 'info.json')
+                helper.brace_file_write(self.header[f'code_info_{code_name}'], _code_dir, 'info')
                 if encoding in self.encrypted_types:
                     helper.bin_write(self.code[code_name], _code_dir, encoding)
                 else:
-                    self.write_raw_code(self.code[code_name], _code_dir, 'text.bin', encoding=encoding)
+                    self.write_raw_code(self.code[code_name], _code_dir, 'text', encoding=encoding)
 
     def set_product_version(self, product_version):
         pass
@@ -232,7 +276,7 @@ class MetaObject:
     def _decode_html_data(self, src_dir, dest_dir, dest_file_name, *, header_field='html', file_number=0,
                           extension='html'):
         try:
-            data = helper.json_read(src_dir, f'{self.header["uuid"]}.{file_number}.json')
+            data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{file_number}')
         except FileNotFoundError:
             return
         try:
@@ -250,6 +294,9 @@ class MetaObject:
         elif raw_data[0].startswith('#base64:'):
             bin_data = b64decode(raw_data[0][8:])
             raw_data[0] = '#base64:'
+        elif raw_data[0].startswith('#data:'):
+            bin_data = b64decode(raw_data[0][6:])
+            raw_data[0] = '#data:'
         else:
             raise NotImplementedError('decode_html_data')
         return bin_data
@@ -263,7 +310,7 @@ class MetaObject:
         if header and len(header[0]) > 2 and bin_data:
             header[0][3][0] += b64encode(bin_data).decode(encoding='utf-8')
         if header:
-            helper.json_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}.json')
+            helper.brace_file_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}')
 
     @staticmethod
     def _get_b64_string(bin_data):
@@ -276,7 +323,7 @@ class MetaObject:
         if self._obj_info:
             for elem in self._obj_info:
                 try:
-                    data = helper.json_read(src_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}.json')
+                    data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}')
                     helper.json_write(data, dest_dir, f'{dest_file_name}.{self._obj_info[elem]}.json')
 
                 except FileNotFoundError:
@@ -287,6 +334,8 @@ class MetaObject:
             for elem in self._obj_info:
                 try:
                     data = helper.json_read(src_dir, f'{file_name}.{self._obj_info[elem]}.json')
-                    helper.json_write(data, dest_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}.json')
+                    file_name = f'{self.header["uuid"]}.{self._obj_info[elem]}'
+                    helper.brace_file_write(data, dest_dir, file_name)
+                    self.file_list.append(file_name)
                 except FileNotFoundError:
                     pass

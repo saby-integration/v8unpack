@@ -127,7 +127,8 @@ class JsonContainerDecoder:
         return self.data
 
     def decode_line(self, line):
-        return getattr(self, f'_decode_line_{self.mode.name.lower()}')(line)
+        handler = getattr(self, f'_decode_line_{self.mode.name.lower()}')
+        return handler(line)
 
     def _decode_line_read_b64(self, line):
         if line == '\n':
@@ -166,6 +167,8 @@ class JsonContainerDecoder:
             return
         else:
             if not self.data and self.current_value is None:
+                if line == '\n':
+                    return
                 self.data = line
                 self.mode = Mode.READ_TEXT_FILE
             elif self.data == [[]] and self.current_value == '':  # текстовый файл с json
@@ -235,9 +238,9 @@ class JsonContainerDecoder:
             return False
 
     def _decode_line_begin_read_multi_string_value(self, line):
-        if line.endswith('",\n'):
-            self._add_to_current_value(line[:-2])
-            self.mode = Mode.END_READ_MULTI_STRING_VALUE
+        if line.count('""') * 2 != line.count('"'):
+            self.mode = Mode.BEGIN_READ_STRING_VALUE
+            self.decode_object(line)
         else:
             self.current_value += line
             return False
