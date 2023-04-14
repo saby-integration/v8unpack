@@ -180,7 +180,10 @@ class HelperTestDecode(unittest.TestCase):
                 self._assert_stage(path_decode_entry, path_encode_entry, problems)
             else:
                 try:
-                    problem = compare_file(path_decode_entry, path_encode_entry, problems)
+                    if entry == 'versions':
+                        problem = compare_versions(decode_dir, encode_dir, problems)
+                    else:
+                        problem = compare_file(path_decode_entry, path_encode_entry, problems)
                 except NotEqualLine as err:
                     problem = str(err)
                 if problem:
@@ -277,4 +280,34 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
                     raise NotEqualLine(problems)
         except FileNotFoundError:
             problems += f'\n      {title:73}  not encode file'
+    return problems
+
+
+def compare_versions(decode_dir, encode_dir, problems):
+    def create_index(versions: list):
+        index = []
+        count = int((len(versions[0]) - 4) / 2)
+        for i in range(count):
+            j = i * 2 + 4
+            elem = versions[0][j]
+            index.append(elem)
+        return index
+
+    problems = ''
+    decode_data = helper.brace_file_read(decode_dir, 'versions')
+    decode_data = create_index(decode_data)
+    encode_data = helper.brace_file_read(encode_dir, 'versions')
+    encode_data = create_index(encode_data)
+    size = len(decode_data)
+    for i in range(size):
+        j = size - i - 1
+        try:
+            elem = decode_data[j]
+            encode_data.remove(elem)
+            decode_data.pop(j)
+        except ValueError:
+            pass
+    if encode_data or decode_data:
+        problems += f'\n      {"versions":73} {"":5} {json.dumps(encode_data)}'
+        problems += f'\n      {"":79} {json.dumps(decode_data)}'
     return problems

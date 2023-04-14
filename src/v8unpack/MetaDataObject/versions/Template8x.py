@@ -176,9 +176,11 @@ class Template8x(Simple):
         except FileNotFoundError:
             file_name = f'{self.header["name"]}.c1b64'
             if os.path.isfile(os.path.join(src_dir, file_name)):
+                dest_file_name = f'{self.header["uuid"]}.0'
+                self.file_list.append(dest_file_name)
                 shutil.copy2(
                     os.path.join(src_dir, file_name),
-                    os.path.join(dest_dir, f'{self.header["uuid"]}.0')
+                    os.path.join(dest_dir, dest_file_name)
                 )
 
     def encode_html_data(self, src_dir, dest_dir):

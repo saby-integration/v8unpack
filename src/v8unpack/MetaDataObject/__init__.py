@@ -126,7 +126,6 @@ class MetaDataObject(MetaObject):
 
     def write_encode_object(self, dest_dir):
         file_name = f'{self.header["uuid"]}'
-        self.file_list.append(file_name)
         helper.brace_file_write(self.header['data'], dest_dir, file_name)
         self.file_list.append(file_name)
         self.write_encode_code(dest_dir)

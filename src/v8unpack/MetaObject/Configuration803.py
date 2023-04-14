@@ -86,9 +86,9 @@ class Configuration803(MetaObject):
             self.fill_header_includes(include_index)
 
         helper.brace_file_write(self.header["root_data"], dest_dir, 'root')
-        self.file_list.append('root')
+        file_list.append('root')
         helper.brace_file_write(self.encode_version(), dest_dir, 'version')
-        self.file_list.append('version')
+        file_list.append('version')
         # shutil.copy2(os.path.join(src_dir, 'versions.json'), os.path.join(dest_dir, 'versions.json'))
 
         self._encode_html_data(src_dir, 'help', dest_dir, header_field='help', file_number=self.help_file_number)
@@ -97,10 +97,11 @@ class Configuration803(MetaObject):
         self._encode_info(src_dir, file_name, dest_dir)
         self.write_encode_code(dest_dir)
         helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
-        self.file_list.append(self.header["file_uuid"])
+        file_list.append(self.header["file_uuid"])
 
         file_list.append('versions')
-        helper.brace_file_write(self.encode_versions(self.file_list), dest_dir, 'versions')
+        file_list.extend(self.file_list)
+        helper.brace_file_write(self.encode_versions(file_list), dest_dir, 'versions')
         return None
 
     def encode_version(self):
