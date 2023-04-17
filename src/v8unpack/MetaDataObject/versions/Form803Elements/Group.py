@@ -36,5 +36,5 @@ class Group(FormElement):
         if not child:
             return raw_data
         index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
-        cls.encode_list(form, child, raw_data, index, f"{path}/{str_decode(data['name'])}")
+        cls.encode_list(form, child, raw_data, index, f"{path}/{data['name']}")
         return raw_data
