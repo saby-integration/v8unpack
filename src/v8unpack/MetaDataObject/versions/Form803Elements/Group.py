@@ -1,5 +1,5 @@
 from .FormElement import FormElement, check_count_element, calc_offset
-from ....helper import FuckingBrackets
+from ....helper import FuckingBrackets, str_decode
 from ....ext_exception import ExtException
 
 
@@ -11,7 +11,7 @@ class Group(FormElement):
         return calc_offset([(3, 1), (1, 1), (2, 0)], raw_data)
 
     @classmethod
-    def decode(cls, form, raw_data):
+    def decode(cls, form, path, raw_data):
         try:
             size = check_count_element([
                 (3, 1), (1, 1), (17, 2)
@@ -21,19 +21,20 @@ class Group(FormElement):
         if raw_data[0] == '22' and size < 20:
             raise FuckingBrackets(detail=cls.__name__)
 
-        data = super().decode(form, raw_data)
+        data = super().decode(form, path, raw_data)
         index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
-        data['child'] = cls.decode_list(form, raw_data, index)
+        data['child'] = cls.decode_list(form, raw_data, index, f"{path}/{data['name']}")
         return data
 
     @classmethod
-    def encode(cls, form, data):
+    def encode(cls, form, path, data):
         try:
             child = data['child']
         except KeyError:
             child = []
+        raw_data = super().encode(form, path, data)
         if not child:
-            return super().encode(form, data)
-        index = calc_offset([(3, 1), (1, 1), (17, 0)], data['raw'])
-        cls.encode_list(form, child, data['raw'], index)
-        return data['raw']
+            return raw_data
+        index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
+        cls.encode_list(form, child, raw_data, index, f"{path}/{str_decode(data['name'])}")
+        return raw_data
