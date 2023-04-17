@@ -1,10 +1,10 @@
 import os
 import shutil
+from datetime import datetime
 
 from . import helper
 from .code_organizer import CodeOrganizer
 from .ext_exception import ExtException
-from datetime import datetime
 
 
 class FileOrganizer:
@@ -38,7 +38,7 @@ class FileOrganizer:
                 raise ExtException(
                     parent=err,
                     action=f'{cls.__name__}._unpack {path}.{entry}'
-                   ) from err
+                ) from err
 
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
@@ -52,9 +52,12 @@ class FileOrganizer:
 
             src_full_path = os.path.join(src_path, src_file_name)
 
-            if dest_full_path.startswith(dest_dir):  # файлы вне папки исходников не версионируются
-                descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name, None,
-                                                                                            dest_full_path, dest_file_name,
+            # файлы вне папки исходников не версионируются
+            if dest_full_path.startswith(dest_dir) or os.path.normcase(dest_entry_path).find('\\src\\') >= 0:
+                descent_full_dest_path, descent_file_name = cls.unpack_get_descent_filename(src_path, src_file_name,
+                                                                                            None,
+                                                                                            dest_full_path,
+                                                                                            dest_file_name,
                                                                                             descent,
                                                                                             cls.equal_binary_file)
             else:
@@ -138,46 +141,54 @@ class FileOrganizer:
     def _pack_index(cls, src_dir: str, dest_dir: str, tasks: list, index: dict, index_code_areas: dict, path: list,
                     descent=None):
         for entry in index:
-            if entry == 'Области include':
-                continue
-            if not index[entry]:
-                continue
-            if isinstance(index[entry], dict):
-                path.append(entry)
-                cls._pack_index(src_dir, dest_dir, tasks, index[entry], index_code_areas, path, descent)
-                path.pop()
-                pass
-            elif isinstance(index[entry], str):
-                if entry[-3:] == '.1c':
-                    _src_path = os.path.join(
-                        '..',
-                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
-                        os.path.dirname(index[entry])
-                    )
-                    _dest_path = os.path.join(*path)
+            try:
+                if entry == 'Области include':
+                    continue
+                if not index[entry]:
+                    continue
+                if isinstance(index[entry], dict):
+                    path.append(entry)
+                    cls._pack_index(src_dir, dest_dir, tasks, index[entry], index_code_areas, path, descent)
+                    path.pop()
+                    pass
+                elif isinstance(index[entry], str):
+                    if entry[-3:] == '.1c':
+                        _src_path = os.path.join(
+                            '..',
+                            '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                            os.path.dirname(index[entry])
+                        )
+                        _dest_path = os.path.join(*path)
 
-                    _src_abs_path = os.path.abspath(_src_path)
-                    if _src_abs_path.startswith(src_dir):
-                        func_descent_filename = cls.pack_get_descent_filename
+                        _src_abs_path = os.path.abspath(_src_path)
+                        if _src_abs_path.startswith(src_dir):
+                            func_descent_filename = cls.pack_get_descent_filename
+                        else:
+                            func_descent_filename = FileOrganizer.pack_get_descent_filename
+                        tasks.append((
+                            src_dir, _src_path, os.path.basename(index[entry]),
+                            dest_dir, _dest_path, entry, index_code_areas,
+                            descent, func_descent_filename))
                     else:
-                        func_descent_filename = FileOrganizer.pack_get_descent_filename
-                    tasks.append((
-                        src_dir, _src_path, os.path.basename(index[entry]),
-                        dest_dir, _dest_path, entry, index_code_areas,
-                        descent, func_descent_filename))
+                        _dest_path = os.path.join(dest_dir, *path)
+                        _src_path = os.path.join(
+                            '..',
+                            '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                            index[entry]
+                        )
+                        _src_full_path = os.path.join(
+                            src_dir,
+                            _src_path
+                        )
+                        _src_path = os.path.dirname(_src_full_path)
+                        _src_file_name = os.path.basename(_src_full_path)
+                        if os.path.normcase(_src_path).find('\\src\\') >= 0:
+                            _src_path, _src_file_name = cls.pack_get_descent_filename(_src_path, _src_file_name, descent)
+                        cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
                 else:
-                    _dest_path = os.path.join(dest_dir, *path)
-                    _src_full_path = os.path.join(
-                        src_dir,
-                        '..',
-                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
-                        index[entry]
-                    )
-                    _src_path = os.path.dirname(_src_full_path)
-                    _src_file_name = os.path.basename(_src_full_path)
-                    cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
-            else:
-                raise Exception('Некорректный формат файла индекса')
+                    raise Exception('Некорректный формат файла индекса')
+            except Exception as err:
+                raise ExtException(parent=err)
 
     @classmethod
     def pack_get_descent_filename(cls, src_path, src_file_name, descent):

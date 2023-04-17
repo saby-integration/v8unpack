@@ -42,7 +42,8 @@ class Form802(Form8x):
                 root_data = self.form[0][0][1]
                 index_root_element_count = index[0]
                 if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-                    self.elements = helper.json_read(src_dir, f'{file_name}.elements{self.ver}.json')
+                    self.elements = helper.json_read(src_dir, f'{file_name}.elements.tree{version}.json')
+                    self.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{version}.json')
                     # root_data[index_root_element_count] = str(len(self.elements))
                     FormElement803.encode_list(self, self.elements, root_data, index_root_element_count)
             else:
