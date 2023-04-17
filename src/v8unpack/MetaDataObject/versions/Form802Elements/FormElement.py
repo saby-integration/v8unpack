@@ -75,7 +75,8 @@ class FormElement:
         result = []
         index_element_count = 0
         if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
+            items = helper.json_read(src_dir, f'{file_name}.elements.tree{version}.json')
+            form.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{version}.json')
             if items:
                 for item in items:
                     result.append(cls.encode(form, path, item))
@@ -99,3 +100,21 @@ class FormProps(FormElement):
             raw=elem_raw_data
         )
         return elem_data
+
+    @classmethod
+    def encode(cls, form, path, data):
+        return data['raw']
+
+    @classmethod
+    def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
+        result = []
+        index_element_count = 0
+        if raw_data[index_element_count] == 'Дочерние элементы отдельно':
+            items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
+            if items:
+                for item in items:
+                    result.append(cls.encode(form, path, item))
+                raw_data[index_element_count] = str(len(items))
+                raw_data[index_element_count + 1:index_element_count + 1] = result
+            else:
+                raw_data[index_element_count] = '0'
