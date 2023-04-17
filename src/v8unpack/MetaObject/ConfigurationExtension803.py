@@ -91,4 +91,7 @@ class ConfigurationExtension803(Configuration803):
         return None
 
     def set_product_version(self, product_version):
-        self.header['data'][0][3][1][1][15] = helper.str_encode(product_version)
+        _version = product_version
+        if self.product:
+            _version = f'{self.product}_{_version}'
+        self.header['data'][0][3][1][1][15] = helper.str_encode(_version)

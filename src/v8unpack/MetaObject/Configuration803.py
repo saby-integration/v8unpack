@@ -2,9 +2,9 @@ import os
 import shutil
 from base64 import b64encode
 
-from ..version import __version__
 from .. import helper
 from ..MetaObject import MetaObject
+from ..version import __version__
 
 
 class Configuration803(MetaObject):
@@ -32,6 +32,7 @@ class Configuration803(MetaObject):
     def __init__(self):
         super(Configuration803, self).__init__()
         self.counter = {}
+        self.product = None
 
     @classmethod
     def decode(cls, src_dir, dest_dir, *, version=None):
