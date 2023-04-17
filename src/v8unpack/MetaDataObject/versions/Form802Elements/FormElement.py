@@ -86,7 +86,7 @@ class FormElement:
 
     @classmethod
     def encode(cls, form, path, data):
-        return form.elements_data[f"{path}/{helper.str_decode(data['name'])}"]
+        return form.elements_data[f"{path}/{data['name']}"]
 
 
 class FormProps(FormElement):
