@@ -67,7 +67,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
         dir_stage0 = os.path.join(temp_dir, 'decode_stage_0')
         dir_stage1 = os.path.join(temp_dir, 'decode_stage_1')
-        dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
+        # dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
         dir_stage3 = os.path.join(temp_dir, 'decode_stage_3')
 
         pool = helper.get_pool()
@@ -75,9 +75,9 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         container_extract(in_filename, dir_stage0, False, False)
         decompress_and_extract(dir_stage0, dir_stage1, pool=pool)
 
-        json_decode(dir_stage1, dir_stage2, pool=pool)
+        # json_decode(dir_stage1, dir_stage2, pool=pool)
 
-        decode(dir_stage2, dir_stage3, pool=pool, version=version)
+        decode(dir_stage1, dir_stage3, pool=pool, version=version)
 
         if descent:
             FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=int(descent))
@@ -116,7 +116,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         dir_stage0 = os.path.join(temp_dir, 'encode_stage_0')
         dir_stage1 = os.path.join(temp_dir, 'encode_stage_1')
-        dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
+        # dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
         dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
 
         pool = helper.get_pool(processes=1)
@@ -126,10 +126,10 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         else:
             FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
 
-        encode(dir_stage3, dir_stage2, version=version, pool=pool, gui=gui,
+        encode(dir_stage3, dir_stage1, version=version, pool=pool, gui=gui,
                file_name=os.path.basename(out_file_name), **kwargs)
 
-        json_encode(dir_stage2, dir_stage1, pool=pool)
+        # json_encode(dir_stage2, dir_stage1, pool=pool)
 
         compress_and_build(dir_stage1, dir_stage0, pool=pool)
         container_build(dir_stage0, out_file_name, True)
