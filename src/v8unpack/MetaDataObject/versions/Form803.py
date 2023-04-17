@@ -74,6 +74,7 @@ class Form803(Form8x):
             form_items_count = int(root_data[index_root_element_count])
             if form_items_count:
                 self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
+                self.elements_data = dict(sorted(self.elements_data.items()))
             pass
         except helper.FuckingBrackets as err:
             self.form = json.loads(backup)
@@ -194,7 +195,8 @@ class Form803(Form8x):
 
         index_root_element_count = index[0]
         if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-            self.elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
+            self.elements = helper.json_read(src_dir, f'{file_name}.elements.tree{version}.json')
+            self.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{version}.json')
             # root_data[index_root_element_count] = str(len(self.elements))
             FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
 

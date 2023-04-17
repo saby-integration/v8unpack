@@ -13,37 +13,10 @@ from .decoder import decode, encode
 from .ext_exception import ExtException
 from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
-from .helper import update_dict
+from .helper import check_index, load_json
 from .index import update_index
 from .json_container_decoder import json_decode, json_encode
 from .version import __version__
-
-
-def _load_json(filename):
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if not isinstance(data, dict):
-            raise Exception(f'Index file not dict ({filename})\n')
-        return data
-    except FileNotFoundError:
-        raise Exception(f'Index file not found ({filename})')
-    except Exception as err:
-        raise Exception(f'Bad index file ({filename}) - {err}\n')
-
-
-def _check_index(index_filename):
-    if index_filename:
-        index = []
-        _index = _load_json(index_filename)
-        sub_index = _index.pop('index.json', None)
-        if sub_index:
-            for elem in sub_index:
-                index.append(_load_json(elem))
-        index.append(_index)
-        data = update_dict(*index)
-        return data
-    return None
 
 
 def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None, descent=None):
@@ -51,7 +24,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         begin0 = datetime.now()
         print(f"v8unpack {__version__}")
 
-        index = _check_index(index)
+        index = check_index(index)
         if not index and index is not None:
             return
 
@@ -79,7 +52,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
         decode(dir_stage1, dir_stage3, pool=pool, version=version)
 
-        if descent:
+        if descent is not None:
             FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=int(descent))
         else:
             FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
@@ -102,7 +75,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         print(f"v8unpack {__version__}")
 
-        index = _check_index(index)
+        index = check_index(index)
         if not index and index is not None:
             return
 
@@ -121,7 +94,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         pool = helper.get_pool(processes=1)
 
-        if descent:
+        if descent is not None:
             FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=int(descent))
         else:
             FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
@@ -148,7 +121,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
 def build_all(product_file_name: str, product_code: str = None):
     try:
-        products = _load_json(os.path.abspath(product_file_name))
+        products = load_json(os.path.abspath(product_file_name))
         if product_code:
             products = {product_code: products[product_code]}
             products[product_code]['disable'] = False
@@ -160,7 +133,8 @@ def build_all(product_file_name: str, product_code: str = None):
                 params['src'], params['bin'],
                 temp_dir=params.get('temp'), index=params.get('index'),
                 version=params.get('version'), descent=params.get('descent'),
-                gui=params.get('gui')
+                gui=params.get('gui'),
+                product=product
             )
         pass
     except Exception as err:
@@ -170,7 +144,7 @@ def build_all(product_file_name: str, product_code: str = None):
 
 def extract_all(product_file_name: str, product_code: str = None):
     try:
-        products = _load_json(os.path.abspath(product_file_name))
+        products = load_json(os.path.abspath(product_file_name))
         if product_code:
             products = {product_code: products[product_code]}
             products[product_code]['disable'] = False
@@ -191,7 +165,7 @@ def extract_all(product_file_name: str, product_code: str = None):
 
 def update_index_all(product_file_name: str, product_code: str = None, dest_dir: str = None):
     try:
-        products = _load_json(os.path.abspath(product_file_name))
+        products = load_json(os.path.abspath(product_file_name))
         if product_code:
             products = {product_code: products[product_code]}
             products[product_code]['disable'] = False
