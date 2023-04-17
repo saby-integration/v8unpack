@@ -171,7 +171,6 @@ def close_pool(local_pool: Pool, pool: Pool = None) -> None:
 def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     _pool = get_pool(pool=pool)
     result = []
-    # msg = f'pool {method}({len(list_args)})'
     try:
         with tqdm(desc=title, total=len(list_args)) as pbar:
             for _res in _pool.imap_unordered(method, list_args, chunksize=1):
@@ -182,8 +181,6 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
         raise ExtException(
             parent=err,
             action=f'run_in_pool {method.__qualname__}') from err
-    # except Exception as err:
-    #     raise ExtException(parent=err, detail=f'{method.__qualname__ {err.message}' action=f'run_in_pool {method.__qualname__}') from err
     finally:
         close_pool(_pool, pool)
     return result
@@ -313,6 +310,7 @@ def get_near_descent_file_name(path, file_name, descent):
     startswith = '.'.join(name[0:-1])
     endswith = name[-1]
     size = len(name)
+    is_without_descent = False
     try:
         entities = os.listdir(path)
     except FileNotFoundError:
@@ -323,6 +321,7 @@ def get_near_descent_file_name(path, file_name, descent):
         if entity.startswith(startswith) and entity.endswith(endswith):
             _entity = entity.split('.')
             if len(_entity) - 1 != size:
+                is_without_descent = True
                 continue
             full_path = os.path.join(path, entity)
             if os.path.isfile(full_path):
@@ -331,9 +330,13 @@ def get_near_descent_file_name(path, file_name, descent):
                 except ValueError:  # если во втором разряде не число, значит не наш вариант
                     pass
     if not descents:
+        if is_without_descent:
+            return path, file_name
         return '', ''
     descents = sorted(descents, reverse=True, key=lambda x: 0 if x > descent else x)
     if descents[0] > descent:
+        if is_without_descent:
+            return path, file_name
         return '', ''
     return path, f'{startswith}.{descents[0]}.{endswith}'
 
@@ -417,3 +420,30 @@ def _update_dict(base, new, _path=''):
                     'message': str(err)
                 })
     return base
+
+
+def load_json(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise Exception(f'Index file not dict ({filename})\n')
+        return data
+    except FileNotFoundError:
+        raise Exception(f'Index file not found ({filename})')
+    except Exception as err:
+        raise Exception(f'Bad index file ({filename}) - {err}\n')
+
+
+def check_index(index_filename):
+    if index_filename:
+        index = []
+        _index = load_json(index_filename)
+        sub_index = _index.pop('index.json', None)
+        if sub_index:
+            for elem in sub_index:
+                index.append(load_json(elem))
+        index.append(_index)
+        data = update_dict(*index)
+        return data
+    return None

@@ -8,11 +8,11 @@ class Decoration(FormElement):
     def get_name_node_offset(cls, raw_data):
         return calc_offset([(3, 1), (1, 1), (2, 0)], raw_data)
 
-    @classmethod
-    def decode(cls, form, raw_data):
-        # _version = raw_data[0]
-        result = super().decode(form, raw_data)
-        return result
+    # @classmethod
+    # def decode(cls, form, path, raw_data):
+    #     # _version = raw_data[0]
+    #     result = super().decode(form, path, raw_data)
+    #     return result
 
     # @classmethod
     # def decode_5(cls, form, raw_data):

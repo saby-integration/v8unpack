@@ -9,7 +9,7 @@ class Table(FormElement):
         return calc_offset([(4, 1), (1, 0)], raw_data)
 
     @classmethod
-    def decode(cls, form, raw_data):
+    def decode(cls, form, path, raw_data):
         try:
             size = check_count_element([
                 (4, 1), (50, 2), (7, 2)
@@ -18,4 +18,4 @@ class Table(FormElement):
             raise ExtException(parent=err)
         if raw_data[0] == '55' and size != 99:
             raise FuckingBrackets()
-        return super().decode(form, raw_data)
+        return super().decode(form, path, raw_data)

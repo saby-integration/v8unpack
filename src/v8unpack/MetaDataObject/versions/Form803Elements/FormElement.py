@@ -44,23 +44,24 @@ class FormElement:
         return calc_offset([(3, 1), (1, 0)], raw_data)
 
     @classmethod
-    def decode(cls, form, raw_data):
+    def decode(cls, form, path, raw_data):
         offset = cls.get_name_node_offset(raw_data)
         name = raw_data[offset]
         if not isinstance(name, str) or not name:
             raise ExtException(message='form elem name not string')
+        form.elements_data[f'{path}/{helper.str_decode(name)}'] = raw_data
         return dict(
             name=helper.str_decode(name),
             type=cls.__name__,
-            raw=raw_data
+            # raw=raw_data
         )
 
     @classmethod
-    def encode(cls, form, data):
-        return data['raw']
+    def encode(cls, form, path, data):
+        return form.elements_data[f"{path}/{helper.str_decode(data['name'])}"]
 
     @classmethod
-    def decode_list(cls, form, raw_data, index_element_count):
+    def decode_list(cls, form, raw_data, index_element_count, path=''):
         try:
             result = []
             element_count = int(raw_data[index_element_count])
@@ -86,7 +87,7 @@ class FormElement:
                         detail=f'{metadata_type.name} - {err}'
                     )
                 try:
-                    elem_data = handler.decode(form, elem_raw_data)
+                    elem_data = handler.decode(form, path, elem_raw_data)
                 except helper.FuckingBrackets as err:
                     raise err from err
                 except Exception as err:
@@ -110,7 +111,7 @@ class FormElement:
         return helper.get_class(f'v8unpack.MetaDataObject.versions.Form803Elements.{name}.{name}')
 
     @classmethod
-    def encode_list(cls, form, items, raw_data, index_element_count):
+    def encode_list(cls, form, items, raw_data, index_element_count, path=''):
         result = []
         for item in items:
             try:
@@ -127,7 +128,7 @@ class FormElement:
                     message='Проблема с парсером элемента формы',
                     detail=f'{metadata_type.name} - {err}'
                 )
-            elem_data = handler.encode(form, item)
+            elem_data = handler.encode(form, path, item)
             result.append(metadata_type.value)
             result.append(elem_data)
         raw_data[index_element_count] = str(len(items))
