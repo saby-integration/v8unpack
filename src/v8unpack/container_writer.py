@@ -5,17 +5,18 @@ import os
 import tempfile
 import zlib
 from base64 import b64encode
+from datetime import datetime, timedelta
 from hashlib import sha1
 from struct import pack, calcsize
 
-from . import helper
-from .json_container_decoder import JsonContainerDecoder
-from datetime import datetime, timedelta
 from tqdm.auto import tqdm
 
+from . import helper
+from .container import Container, Container64
+from .json_container_decoder import JsonContainerDecoder
 
 # INT32_MAX
-END_MARKER = 2147483647
+# END_MARKER = 2147483647
 DEFAULT_BLOCK_SIZE = 512  # 0x200
 # Для формата старше 8.3.15
 DEFAULT_BLOCK_SIZE64 = 65536  # 0x1000
@@ -39,16 +40,18 @@ def epoch2int(epoch_time):
         microseconds=100)
 
 
-def int2hex(value):
+def int2hex(value, *, size=8):
     """
     Получает строковое представление целого числа в шестнадцатиричном формате длиной не менее 4 байт
 
     :param value: конвертируемое число
     :type value: int
+    :param size: размер строкового значения
+    :type value: int
     :return: предоставление числа
     :type: string
     """
-    return '{:02x}'.format(value).rjust(8, '0')
+    return '{:02x}'.format(value).rjust(size, '0')
 
 
 def get_size(file):
@@ -75,8 +78,9 @@ class ContainerWriter(object):
     :type file: BufferedReader
     """
 
-    def __init__(self, file):
+    def __init__(self, file, *, container=Container):
         self.file = file
+        self.container = container
         self.toc = []
 
     def write_header(self):
@@ -84,7 +88,9 @@ class ContainerWriter(object):
         Записывает заголовок контейнера
 
         """
-        self.file.write(pack('4i', END_MARKER, DEFAULT_BLOCK_SIZE, 0, 0))
+        if self.container.offset_const:
+            self.file.seek(self.container.offset_const)
+        self.file.write(pack(self.container.doc_header_fmt, self.container.end_marker, DEFAULT_BLOCK_SIZE, 0, 0))
 
     def write_block(self, data, **kwargs):
         """
@@ -98,16 +104,17 @@ class ContainerWriter(object):
         # размер данных блока
         size = kwargs.pop('size', get_size(data))
         offset = kwargs.pop('offset', get_size(self.file))
-        self.file.seek(offset)
+        self.file.seek(offset + self.container.offset_const)
 
         block_size = kwargs.pop('block_size', max(DEFAULT_BLOCK_SIZE, size))
-        next_block_offset = kwargs.pop('next_block_offset', END_MARKER)
+        next_block_offset = kwargs.pop('next_block_offset', self.container.end_marker)
 
         if len(kwargs) > 0:
             raise ValueError('Unsupported arguments: {}'.format(','.join(kwargs.keys())))
-
-        header_data = ('\r\n', int2hex(size), ' ', int2hex(block_size), ' ', int2hex(next_block_offset), ' \r\n')
-        header = pack('2s8ss8ss8s3s', *[x.encode() for x in header_data])
+        hex_size = self.container.block_header_fmt_size
+        header_data = ('\r\n', int2hex(size, size=hex_size), ' ', int2hex(block_size, size=hex_size), ' ',
+                       int2hex(next_block_offset, size=hex_size), ' ', '\r\n')
+        header = pack(self.container.block_header_fmt, *[x.encode() for x in header_data])
 
         self.file.write(header)
         self.write_block_data(self, data, self.file)
@@ -165,24 +172,24 @@ class ContainerWriter(object):
         return data_doc_offset
 
     def write_toc(self):
-        """
-        Записывает оглавление контейнера
-        """
         if len(self.toc) == 0:
             raise IOError('Container is empty')
+
         with tempfile.TemporaryFile() as f:
             for attr_offset, data_offset in self.toc:
-                f.write(b''.join([pack('3i', attr_offset, data_offset, END_MARKER)]))
+                f.write(b''.join(
+                    [pack(f'3{self.container.index_fmt}', attr_offset, data_offset, self.container.end_marker)]))
 
             size = get_size(f)
             total_blocks = size // DEFAULT_BLOCK_SIZE + 1
 
             if total_blocks == 1:
-                self.write_block(f, size=size, offset=calcsize('4i'))
+                self.write_block(f, size=size, offset=calcsize(self.container.doc_header_fmt))
             else:
                 f.seek(0)
                 next_block_offset = get_size(self.file)
-                self.write_block(io.BytesIO(f.read(DEFAULT_BLOCK_SIZE)), size=size, offset=calcsize('4i'),
+                self.write_block(io.BytesIO(f.read(DEFAULT_BLOCK_SIZE)),
+                                 size=size, offset=calcsize(self.container.doc_header_fmt),
                                  next_block_offset=next_block_offset, block_size=DEFAULT_BLOCK_SIZE)
                 for i in range(1, total_blocks):
                     # 31 - длина заголовка блока
@@ -195,7 +202,13 @@ class ContainerWriter(object):
         """
         Вход в блок. Позволяет применять оператор with.
         """
-        self.write_header()
+        if self.container == Container64:
+            self.container = Container
+            self.write_header()
+            self.container = Container64
+            self.write_header()
+        else:
+            self.write_header()
         self.file.write(b'\x00' * (DEFAULT_BLOCK_SIZE + 31))
         return self
 
@@ -203,7 +216,13 @@ class ContainerWriter(object):
         """
         Выход из блока. Позволяет применять оператор with.
         """
-        self.write_toc()
+        if self.container == Container64:
+            self.container = Container
+            self.write_toc()
+            self.container = Container64
+            self.write_toc()
+        else:
+            self.write_toc()
 
 
 def add_entries(container, folder, nested=False):
@@ -230,7 +249,7 @@ def add_entries(container, folder, nested=False):
                 container.add_file(entry_file, entry, inflate=not nested)
 
 
-def build(folder, filename, nested=False):
+def build(folder, filename, nested=False, *, version='803'):
     """
     Запаковывает каталог в контейнер включая вложенные каталоги.
     Сахар для ContainerWriter.
@@ -239,12 +258,19 @@ def build(folder, filename, nested=False):
     :type folder: string
     :param filename: имя файла контейнера
     :type filename: string
+    :param nested:
+    :type nested: bool
+    :param version: версия под которую собирается продукт
+    :type version: string
     """
     begin = datetime.now()
     print(f'{"Запаковываем бинарник":30}:', end="")
     helper.makedirs(os.path.dirname(filename), exist_ok=True)
-    with open(filename, 'w+b') as f, ContainerWriter(f) as container:
-        add_entries(container, folder, nested)
+    version = int(version.ljust(5, '0'))
+    container = Container64 if version >= 80316 else Container
+
+    with open(filename, 'w+b') as f, ContainerWriter(f, container=container) as container_writer:
+        add_entries(container_writer, folder, nested)
     print(f" - {datetime.now() - begin}")
 
 
