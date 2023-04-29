@@ -51,7 +51,7 @@ def int2hex(value, *, size=8):
     :return: предоставление числа
     :type: string
     """
-    return '{:02x}'.format(value).rjust(size, '0')
+    return f'{value:02x}'.rjust(size, '0')
 
 
 def get_size(file):
@@ -78,19 +78,23 @@ class ContainerWriter(object):
     :type file: BufferedReader
     """
 
-    def __init__(self, file, *, container=Container):
+    def __init__(self, file, *, container=Container, offset=0):
         self.file = file
+        self.offset = offset
         self.container = container
         self.toc = []
 
-    def write_header(self):
+    def write_header(self, count_files=0):
         """
         Записывает заголовок контейнера
 
         """
-        if self.container.offset_const:
-            self.file.seek(self.container.offset_const)
-        self.file.write(pack(self.container.doc_header_fmt, self.container.end_marker, DEFAULT_BLOCK_SIZE, 0, 0))
+        self.file.seek(self.offset)
+        self.file.write(
+            pack(self.container.doc_header_fmt, self.container.end_marker, self.container.default_block_size,
+                 count_files, 0))
+        self.file.write(b'\x00' * (self.container.default_block_size + 31))
+
 
     def write_block(self, data, **kwargs):
         """
@@ -104,7 +108,7 @@ class ContainerWriter(object):
         # размер данных блока
         size = kwargs.pop('size', get_size(data))
         offset = kwargs.pop('offset', get_size(self.file))
-        self.file.seek(offset + self.container.offset_const)
+        self.file.seek(offset + self.offset)
 
         block_size = kwargs.pop('block_size', max(DEFAULT_BLOCK_SIZE, size))
         next_block_offset = kwargs.pop('next_block_offset', self.container.end_marker)
@@ -177,8 +181,7 @@ class ContainerWriter(object):
 
         with tempfile.TemporaryFile() as f:
             for attr_offset, data_offset in self.toc:
-                f.write(b''.join(
-                    [pack(f'3{self.container.index_fmt}', attr_offset, data_offset, self.container.end_marker)]))
+                f.write(pack(f'3{self.container.index_fmt}', attr_offset, data_offset, self.container.end_marker))
 
             size = get_size(f)
             total_blocks = size // DEFAULT_BLOCK_SIZE + 1
@@ -202,60 +205,48 @@ class ContainerWriter(object):
         """
         Вход в блок. Позволяет применять оператор with.
         """
-        if self.container == Container64:
-            self.container = Container
-            self.write_header()
-            self.container = Container64
-            self.write_header()
-        else:
-            self.write_header()
-        self.file.write(b'\x00' * (DEFAULT_BLOCK_SIZE + 31))
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
         Выход из блока. Позволяет применять оператор with.
         """
-        if self.container == Container64:
-            self.container = Container
-            self.write_toc()
-            self.container = Container64
-            self.write_toc()
-        else:
-            self.write_toc()
+        self.write_toc()
 
 
-def add_entries(container, folder, nested=False):
+def add_entries(container, src_dir, entries, nested=False):
     """
     Рекурсивно добавляет файлы из директории в контейнер
 
     :param container: объект файла контейнера
     :type container: BufferedReader
-    :param folder: каталог файлов, которые надо поместить в контейнер
-    :type folder: string
+    :param src_dir: каталог файлов, которые надо поместить в контейнер
+    :type src_dir: string
     :param nested: обрабатывать вложенные каталоги
     :type nested: bool
     """
-    entries = sorted(os.listdir(folder))
     for entry in entries:
-        entry_path = os.path.join(folder, entry)
+        entry_path = os.path.join(src_dir, entry)
         if os.path.isdir(entry_path):
             with tempfile.TemporaryFile() as tmp:
                 with ContainerWriter(tmp) as nested_container:
-                    add_entries(nested_container, entry_path, nested=True)
+                    entries = sorted(os.listdir(entry_path))
+                    nested_container.write_header(len(entries))
+                    add_entries(nested_container, entry_path, entries, nested=True)
                 container.add_file(tmp, entry, inflate=not nested)
         else:
             with open(entry_path, 'rb') as entry_file:
                 container.add_file(entry_file, entry, inflate=not nested)
 
 
-def build(folder, filename, nested=False, *, version='803'):
+def build(src_dir, filename, nested=False):
     """
     Запаковывает каталог в контейнер включая вложенные каталоги.
     Сахар для ContainerWriter.
 
-    :param folder: каталог с данными, запаковываемыми в контейнер
-    :type folder: string
+    :param src_dir: каталог с данными, запаковываемыми в контейнер
+    :type src_dir: string
     :param filename: имя файла контейнера
     :type filename: string
     :param nested:
@@ -266,11 +257,25 @@ def build(folder, filename, nested=False, *, version='803'):
     begin = datetime.now()
     print(f'{"Запаковываем бинарник":30}:', end="")
     helper.makedirs(os.path.dirname(filename), exist_ok=True)
-    version = int(version.ljust(5, '0'))
-    container = Container64 if version >= 80316 else Container
 
-    with open(filename, 'w+b') as f, ContainerWriter(f, container=container) as container_writer:
-        add_entries(container_writer, folder, nested)
+    containers = os.listdir(src_dir)
+    _src_dir = containers[-1]
+    containers_count = len(containers)
+    if containers_count not in [1, 2]:
+        raise NotImplementedError(f'Количество контейнеров {containers_count}')
+
+    with open(filename, 'w+b') as f:
+        with ContainerWriter(f, container=Container) as container_writer:
+            entry_path = os.path.join(src_dir, '0')
+            entries = sorted(os.listdir(entry_path))
+            container_writer.write_header(len(entries))
+            add_entries(container_writer, entry_path, entries, nested)
+        if containers_count == 2:
+            with ContainerWriter(f, container=Container64, offset=f.seek(0, 2)) as container_writer:
+                entry_path = os.path.join(src_dir, '1')
+                entries = sorted(os.listdir(entry_path))
+                container_writer.write_header(len(entries))
+                add_entries(container_writer, entry_path, entries, nested)
     print(f" - {datetime.now() - begin}")
 
 
@@ -312,22 +317,29 @@ def compress_and_build_simple_file(src_path, dest_path):
             ContainerWriter.compress(None, src_fd, dest_fd, ContainerWriter.write_block_data)
 
 
-def compress_and_build(src_folder, dest_folder, *, pool=None, nested=False):
-    helper.clear_dir(dest_folder)
-    entries = sorted(os.listdir(src_folder))
+def compress_and_build(src_dir, dest_dir, *, pool=None, nested=False):
+    containers = os.listdir(src_dir)
+    helper.clear_dir(dest_dir)
+    for dir_name in containers:
+        _src_dir = os.path.join(src_dir, dir_name)
+        _dest_dir = os.path.join(dest_dir, dir_name)
+        helper.clear_dir(_dest_dir)
+        entries = sorted(os.listdir(_src_dir))
 
-    with tqdm(desc=f'{"Архивируем контейнеры":30}', total=len(entries)) as pbar:
-        for filename in entries:
-            src_path = os.path.join(src_folder, filename)
-            dest_path = os.path.join(dest_folder, filename)
-            # add_entry(container, src_folder, filename)
-            if os.path.isdir(src_path):
-                with open(dest_path, 'w+b') as dest_fd:
-                    with tempfile.TemporaryFile() as tmp:
-                        with ContainerWriter(tmp) as nested_container:
-                            add_entries(nested_container, src_path, nested=True)
-                        ContainerWriter.compress(None, tmp, dest_fd, ContainerWriter.write_block_data)
-            else:
-                compress_and_build_simple_file(src_path, dest_path)
-            pbar.update()
-        calc_sha1(src_folder, dest_folder)
+        with tqdm(desc=f'{"Архивируем контейнеры":30}', total=len(entries)) as pbar:
+            for filename in entries:
+                src_path = os.path.join(_src_dir, filename)
+                dest_path = os.path.join(_dest_dir, filename)
+                # add_entry(container, src_dir, filename)
+                if os.path.isdir(src_path):
+                    with open(dest_path, 'w+b') as dest_fd:
+                        with tempfile.TemporaryFile() as tmp:
+                            with ContainerWriter(tmp) as nested_container:
+                                entries = sorted(os.listdir(src_path))
+                                nested_container.write_header(len(entries))
+                                add_entries(nested_container, src_path, entries, nested=True)
+                            ContainerWriter.compress(None, tmp, dest_fd, ContainerWriter.write_block_data)
+                else:
+                    compress_and_build_simple_file(src_path, dest_path)
+                pbar.update()
+            calc_sha1(_src_dir, _dest_dir)

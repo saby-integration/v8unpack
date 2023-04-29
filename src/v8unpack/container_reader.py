@@ -38,10 +38,6 @@ def extract(filename, folder, deflate=True, recursive=True):
             except Exception as err:
                 break
 
-        # if container_reader.container == Container64:
-        #     container_reader = ContainerReader(f, container=Container)
-        #     container_reader.extract(os.path.join(folder, '__old_stub'), deflate, recursive)
-
     print(f"{datetime.now() - begin}")
 
 
