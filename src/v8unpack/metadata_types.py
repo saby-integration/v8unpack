@@ -9,6 +9,7 @@ class MetaDataTypes(Enum):
     AccountingRegisterForm = 'd3b5d6eb-4ea2-4610-a3e2-624d4e815934'  # Регистры бухгалтерии
     AccumulationRegister = 'b64d9a40-1642-11d6-a3c7-0050bae0a776'  # Регистры накопления
     AccumulationRegisterForm = 'b64d9a44-1642-11d6-a3c7-0050bae0a776'  # Регистры накопления форма
+    Bot = '6e6dc072-b7ac-41e7-8f88-278d25b6da2a'  # Бот
     BusinessProcess = 'fcd3404e-1523-48ce-9bc0-ecdb822684a1'  # Бизнес-процессы
     BusinessProcessCommand = '7a3e533c-f232-40d5-a932-6a311d2480bf'
     BusinessProcessForm = '3f7a8120-b71a-4265-98bf-4d9bc09b7719'
