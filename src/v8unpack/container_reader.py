@@ -23,6 +23,7 @@ def extract(filename, folder, deflate=True, recursive=True):
     """
     begin = datetime.now()
     print(f'{"Распаковываем бинарник":30}:', end="")
+    helper.clear_dir(folder)
     with open(filename, 'rb') as f:
         offset = 0
         container_index = 0
@@ -55,6 +56,7 @@ def detect_format(f, offset):
 def decompress_and_extract(src_folder, dest_folder, *, pool=None):
     helper.clear_dir(dest_folder)
     containers = os.listdir(src_folder)
+    helper.clear_dir(dest_folder)
     tasks = []
     for container in containers:
         _src_folder = os.path.join(src_folder, container)
