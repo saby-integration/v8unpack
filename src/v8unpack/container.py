@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import collections
-from datetime import datetime, timedelta
-from struct import pack, unpack, calcsize
+# -*- coding: utf-8 -*-
+import datetime
 import os
 import zlib
-from datetime import datetime
+from datetime import datetime, timedelta
+from struct import pack, calcsize
+from struct import unpack
 
 from . import helper
 
@@ -114,6 +116,7 @@ class Container:
     block_header_fmt = '2s8s1s8s1s8s1s2s'
     block_header_fmt_size = 8
     index_fmt = 'i'
+    default_block_size = 0x200
 
     def __init__(self):
         self.file = None
@@ -122,6 +125,7 @@ class Container:
         self.default_block_size = None
         self.entries = None
         self.size = 0
+        self.toc = []
 
     def read(self, file, offset=0):
         self.offset = offset
@@ -159,7 +163,8 @@ class Container:
         for filename, file_obj in self.entries.items():
             self.extract_file(filename, file_obj, dest_dir, deflate, recursive)
 
-    def extract_file(self, filename, file_obj, path, deflate=False, recursive=False):
+    @staticmethod
+    def extract_file(filename, file_obj, path, deflate=False, recursive=False):
         file_path = os.path.join(path, filename)
         with open(file_path, 'wb') as f:
             if deflate:
@@ -268,3 +273,4 @@ class Container64(Container):
     block_header_fmt_size = 16
     index_fmt = 'Q'
     offset_const = 0x1359
+    default_block_size = 0x1000
