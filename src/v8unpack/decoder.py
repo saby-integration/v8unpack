@@ -1,4 +1,5 @@
 import os
+import shutil
 from datetime import datetime
 
 from . import helper
@@ -160,8 +161,20 @@ class Decoder:
 
 
 def encode(src_dir, dest_dir, *, pool=None, version='803', gui=None, file_name=None, **kwargs):
-    Decoder.encode(src_dir, dest_dir, pool=pool, version=version, gui=gui, file_name=file_name, **kwargs)
+    _dest_dir = os.path.join(dest_dir, '0')
+    if int(version.ljust(5, '0')) >= 80316:
+        helper.clear_dir(_dest_dir)
+        shutil.unpack_archive(os.path.join(src_dir, 'dummy.zip'), _dest_dir)
+        _dest_dir = os.path.join(dest_dir, '1')
+    Decoder.encode(src_dir, _dest_dir, pool=pool, version=version, gui=gui, file_name=file_name, **kwargs)
 
 
 def decode(src_dir, dest_dir, *, pool=None, version=None):
-    Decoder.decode(src_dir, dest_dir, pool=pool, version=version)
+    containers = os.listdir(src_dir)
+    _src_dir = containers[-1]
+    containers_count = len(containers)
+    if containers_count not in [1, 2]:
+        raise NotImplementedError(f'Количество контейнеров {containers_count}')
+    Decoder.decode(os.path.join(src_dir, _src_dir), dest_dir, pool=pool, version=version)
+    if containers_count == 2:
+        shutil.make_archive(os.path.join(dest_dir, 'dummy'), 'zip', os.path.join(src_dir, '0'))
