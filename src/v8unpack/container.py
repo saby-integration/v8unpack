@@ -58,7 +58,6 @@ class Document:
         :type offset: int
         :return: генератор чтения данных документа
         """
-        file.seek(offset)
         header_block = self.read_block(file, offset)
         if header_block is None:
             return
@@ -88,7 +87,7 @@ class Document:
         :return: объект блока данных
         :rtype: Block
         """
-        file.seek(offset)
+        file.seek(offset + self.container.offset)
         header_size = calcsize(self.container.block_header_fmt)
         buff = file.read(header_size)
         if not buff:
@@ -238,7 +237,7 @@ class Container:
         # Первый документ после заголовка содержит оглавление
         doc_header_size = calcsize(self.doc_header_fmt)
         doc = Document(self)
-        doc_data = doc.read(file, doc_header_size + self.offset)
+        doc_data = doc.read(file, doc_header_size)
         table_of_contents = [unpack(f'2{self.index_fmt}', x) for x in
                              doc_data.split(pack(self.index_fmt, self.end_marker))[:-1]]
         self.size += doc_header_size + doc.full_size
@@ -246,7 +245,7 @@ class Container:
         files = collections.OrderedDict()
         for file_description_offset, file_data_offset in table_of_contents:
             doc = Document(self)
-            doc_data = doc.read(file, file_description_offset + self.offset)
+            doc_data = doc.read(file, file_description_offset)
             self.size += doc.full_size
             fmt = ''.join(['QQi', str(doc.data_size - calcsize('QQi')), 's'])
             file_description = unpack(fmt, doc_data)
@@ -256,7 +255,7 @@ class Container:
             name = file_description[3].decode('utf-16').partition('\x00')[0]
 
             doc = Document(self)
-            file_data = doc.read_chunk(file, file_data_offset + self.offset)
+            file_data = doc.read_chunk(file, file_data_offset)
             self.size += doc.full_size
 
             inner_file = File(name, doc.data_size, self.parse_datetime(file_description[0]),
