@@ -17,6 +17,7 @@ class TmplType(Enum):
     geographic = "5"
     scheme = "6"
     design = "7"  # Макет оформления компоновки данных
+    graphic_scheme = "8"
     extension = "9"
     # todo добавить остальные типы макетов и их сериализацию
 
@@ -68,6 +69,9 @@ class Template8x(Simple):
         self.decode_scheme_data(src_dir, dest_dir, write)
 
     def decode_design_data(self, src_dir, dest_dir, write):
+        self.decode_scheme_data(src_dir, dest_dir, write)
+
+    def decode_graphic_scheme_data(self, src_dir, dest_dir, write):
         self.decode_scheme_data(src_dir, dest_dir, write)
 
     def decode_scheme_data(self, src_dir, dest_dir, write):
@@ -149,6 +153,9 @@ class Template8x(Simple):
         self.encode_scheme_data(src_dir, dest_dir)
 
     def encode_design_data(self, src_dir, dest_dir):
+        self.encode_scheme_data(src_dir, dest_dir)
+
+    def encode_graphic_scheme_data(self, src_dir, dest_dir):
         self.encode_scheme_data(src_dir, dest_dir)
 
     def encode_scheme_data(self, src_dir, dest_dir):
