@@ -36,8 +36,10 @@ def extract(filename, folder, deflate=True, recursive=True):
                 offset = container.size
                 if offset == 0:
                     raise NotImplementedError()
+            except EOFError:
+                return
             except Exception as err:
-                break
+                raise err from err
 
     print(f"{datetime.now() - begin}")
 
@@ -50,6 +52,7 @@ def detect_format(f, offset):
     elif first == b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF':
         return Container64()
     else:
+        raise EOFError()
         raise Exception('Файл не является контейнером')
 
 
