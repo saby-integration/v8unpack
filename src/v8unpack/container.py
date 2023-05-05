@@ -1,128 +1,44 @@
 # -*- coding: utf-8 -*-
 import collections
-# -*- coding: utf-8 -*-
 import datetime
+import io
 import os
+import tempfile
 import zlib
 from datetime import datetime, timedelta
 from struct import pack, calcsize
+# -*- coding: utf-8 -*-
 from struct import unpack
 
-from . import helper
+from .container_doc import Document
+from .helper import clear_dir, file_size
 
 Header = collections.namedtuple('Header', 'first_empty_block_offset, default_block_size, count_files')
 Block = collections.namedtuple('Block', 'doc_size, current_block_size, next_block_offset, data')
 File = collections.namedtuple('File', 'name, size, created, modified, data')
 DocumentData = collections.namedtuple('DocumentData', 'size, data')
 
-
-class Document:
-    def __init__(self, container):
-        self.container = container
-        self.full_size = 0  # include all header size
-        self.data_size = 0
-
-    def read(self, file, offset):
-        document_data = self.read_chunk(file, offset)
-        return b''.join([chunk for chunk in document_data])
-
-    def read_chunk(self, file, offset):
-        """
-        Считывает документ из контейнера. В качестве данных документа возвращается генератор.
-
-        :param file: объект файла контейнера
-        :type file: BufferedReader
-        :param offset: смещение документа в контейнере
-        :type offset: int
-        :return: данные документа
-        :rtype:
-        """
-        gen = self._read_gen(file, offset)
-
-        try:
-            self.data_size = next(gen)
-        except StopIteration:
-            self.data_size = 0
-
-        return gen
-
-    def _read_gen(self, file, offset):
-        """
-        Создает генератор чтения данных документа в контейнере.
-        Первое значение генератора - размер документа (байт).
-        Остальные значения - данные блоков, составляющих документ
-
-        :param file: объект файла контейнера
-        :type file: BufferedReader
-        :param offset: смещение документа в контейнере (байт)
-        :type offset: int
-        :return: генератор чтения данных документа
-        """
-        header_block = self.read_block(file, offset)
-        if header_block is None:
-            return
-        else:
-            yield header_block.doc_size
-            yield header_block.data
-
-            left_bytes = header_block.doc_size - len(header_block.data)
-            next_block_offset = header_block.next_block_offset
-
-            while left_bytes > 0 and next_block_offset != self.container.end_marker:
-                block = self.read_block(file, next_block_offset, left_bytes)
-                left_bytes -= len(block.data)
-                yield block.data
-                next_block_offset = block.next_block_offset
-
-    def read_block(self, file, offset, max_data_length=None):
-        """
-        Считывает блок данных из контейнера.
-
-        :param file: объект файла контейнера
-        :type file: BufferedReader
-        :param offset: смещение блока в файле контейнера (байт)
-        :type offset: int
-        :param max_data_length: максимальный размер считываемых данных из блока (байт)
-        :type max_data_length: int
-        :return: объект блока данных
-        :rtype: Block
-        """
-        file.seek(offset + self.container.offset)
-        header_size = calcsize(self.container.block_header_fmt)
-        buff = file.read(header_size)
-        if not buff:
-            return
-        header = unpack(self.container.block_header_fmt, buff)
-
-        doc_size = int(header[1], 16)
-        current_block_size = int(header[3], 16)
-        next_block_offset = int(header[5], 16)
-
-        if max_data_length is None:
-            max_data_length = min(current_block_size, doc_size)
-
-        data_size = min(current_block_size, max_data_length)
-
-        data = file.read(data_size)
-        self.full_size += header_size + current_block_size
-
-        return Block(doc_size, current_block_size, next_block_offset, data)
+# Размер буффера передачи данных из потока в поток
+BUFFER_CHUNK_SIZE = 512
 
 
 class Container:
     end_marker = 0x7fffffff
-    doc_header_fmt = '4i'
+    header_fmt = '4i'
+    header_size = 16
     block_header_fmt = '2s8s1s8s1s8s1s2s'
+    block_header_size = 31
     block_header_fmt_size = 8
     index_fmt = 'i'
     default_block_size = 0x200
+    index_block_size = 0x200
 
     def __init__(self):
         self.file = None
         self.offset = 0
         self.first_empty_block_offset = None
-        self.default_block_size = None
-        self.entries = None
+        self.default_block_size = 0x200
+        self.files = None
         self.size = 0
         self.toc = []
 
@@ -140,7 +56,7 @@ class Container:
         self.first_empty_block_offset = header.first_empty_block_offset
         self.default_block_size = header.default_block_size
         #: Список файлов в контейнере
-        self.entries = self.read_documents(self.file)
+        self.files = self.read_files(self.file)
 
     def extract(self, dest_dir, deflate=False, recursive=False):
         """
@@ -154,12 +70,12 @@ class Container:
         :type recursive: bool
         """
 
-        helper.clear_dir(dest_dir)
-        if not self.entries:
+        clear_dir(dest_dir)
+        if not self.files:
             print('Пустой контейнер = распаковывать нечего')
             return
 
-        for filename, file_obj in self.entries.items():
+        for filename, file_obj in self.files.items():
             self.extract_file(filename, file_obj, dest_dir, deflate, recursive)
 
     @staticmethod
@@ -205,8 +121,8 @@ class Container:
         :rtype: Header
         """
         file.seek(0 + self.offset)
-        buff = file.read(calcsize(self.doc_header_fmt))
-        header = unpack(self.doc_header_fmt, buff)
+        buff = file.read(calcsize(self.header_fmt))
+        header = unpack(self.header_fmt, buff)
         if header[0] != self.end_marker:
             raise Exception('Bad container format')
         return Header(header[0], header[1], header[2])
@@ -224,7 +140,7 @@ class Container:
         # TODO проверить работу на *nix, т.к там начало эпохи - другая дата
         return datetime(1, 1, 1) + timedelta(microseconds=(time * 100))
 
-    def read_documents(self, file):
+    def read_files(self, file):
         """
         Считывает оглавление контейнера
 
@@ -235,12 +151,11 @@ class Container:
         """
         size = 0
         # Первый документ после заголовка содержит оглавление
-        doc_header_size = calcsize(self.doc_header_fmt)
         doc = Document(self)
-        doc_data = doc.read(file, doc_header_size)
+        doc_data = doc.read(file, self.header_size)
         table_of_contents = [unpack(f'2{self.index_fmt}', x) for x in
                              doc_data.split(pack(self.index_fmt, self.end_marker))[:-1]]
-        self.size += doc_header_size + doc.full_size
+        self.size += self.header_size + doc.full_size
 
         files = collections.OrderedDict()
         for file_description_offset, file_data_offset in table_of_contents:
@@ -264,12 +179,127 @@ class Container:
             files[inner_file.name] = inner_file
         return files
 
+    def build(self, file, src_dir, nested=False, *, offset=0):
+        self.offset = offset
+        self.file = file
+        files = sorted(os.listdir(src_dir))
+        self.write_header(len(files))
+        for file_name in files:
+            file_path = os.path.join(src_dir, file_name)
+            if os.path.isdir(file_path):
+                with tempfile.TemporaryFile() as tmp2:
+                    _container = Container()
+                    _container.build(tmp2, file_path, nested=True)
+                self.add_file(tmp2, file_name, inflate=not nested)
+            else:
+                with open(file_path, 'rb') as entry_file:
+                    self.add_file(entry_file, file_name, inflate=not nested)
+        self.write_table_off_content()
+
+    def write_header(self, count_files=0):
+        """
+        Записывает заголовок контейнера
+
+        """
+        self.file.seek(self.offset)
+        self.file.write(
+            pack(self.header_fmt, self.end_marker, self.default_block_size,
+                 count_files, 0))
+        # готовим место для оглавления
+        self.file.write(b'\x00' * (self.index_block_size + self.block_header_size))
+
+    def write_table_off_content(self):
+        if len(self.toc) == 0:
+            raise IOError('Container is empty')
+
+        with tempfile.TemporaryFile() as f:
+            for attr_offset, data_offset in self.toc:
+                f.write(pack(f'3{self.index_fmt}', attr_offset, data_offset, self.end_marker))
+
+            doc_size = file_size(f)
+
+            total_blocks, surplus = divmod(doc_size, self.index_block_size)
+            if surplus:
+                total_blocks += 1
+
+            doc = Document(self)
+
+            if total_blocks == 1:
+                doc.write_block(f, doc_size=doc_size, offset=self.header_size)
+            else:
+                f.seek(0)
+                next_block_offset = file_size(self.file)
+                doc.write_block(io.BytesIO(f.read(self.index_block_size)),
+                                doc_size=doc_size, offset=self.header_size,
+                                min_block_size=self.index_block_size,
+                                next_block_offset=next_block_offset)
+                self.file.seek(0, os.SEEK_END)
+                for i in range(1, total_blocks):
+                    # 31 - длина заголовка блока
+                    next_block_offset += self.index_block_size + self.block_header_size
+                    doc.write_block(io.BytesIO(f.read(self.index_block_size)), doc_size=0,
+                                    next_block_offset=next_block_offset, min_block_size=self.index_block_size)
+                doc.write_block(io.BytesIO(f.read(self.index_block_size)), doc_size=0,
+                                min_block_size=self.index_block_size)
+
+    def add_file(self, fd, name, inflate=False):
+        """
+        Добавляет файл в контейнер
+
+        :param fd: file-like объект файла
+        :type fd: BufferedReader
+        :param name: Имя файла в контейнере
+        :type name: string
+        :param inflate: флаг сжатия
+        :type inflate: bool
+        """
+        doc = Document(self)
+        attribute_doc_offset = doc.write_header(fd, name)
+
+        doc = Document(self)
+        if inflate:
+            data_doc_offset = doc.compress(fd)
+        else:
+            data_doc_offset = doc.write(fd, min_block_size=self.default_block_size)
+
+        self.toc.append((attribute_doc_offset, data_doc_offset))
+
+    @staticmethod
+    def int2hex(value):
+        """
+        Получает строковое представление целого числа в шестнадцатиричном формате длиной не менее 4 байт
+
+        :param value: конвертируемое число
+        :type value: int
+        :param size: размер строкового значения
+        :type value: int
+        :return: предоставление числа
+        :type: string
+        """
+        return f'{value:02x}'.rjust(8, '0')
+
 
 class Container64(Container):
     end_marker = 0xffffffffffffffff  # 18446744073709551615
-    doc_header_fmt = '1Q3i'
+    header_fmt = '1Q3i'
+    header_size = 20
     block_header_fmt = '2s16s1s16s1s16s1s2s'
     block_header_fmt_size = 16
+    block_header_size = 55
     index_fmt = 'Q'
     offset_const = 0x1359
-    default_block_size = 0x1000
+    index_block_size = 0x10000
+
+    @staticmethod
+    def int2hex(value):
+        """
+        Получает строковое представление целого числа в шестнадцатиричном формате длиной не менее 4 байт
+
+        :param value: конвертируемое число
+        :type value: int
+        :param size: размер строкового значения
+        :type value: int
+        :return: предоставление числа
+        :type: string
+        """
+        return f'{value:02x}'.rjust(16, '0').upper()

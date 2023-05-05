@@ -91,7 +91,7 @@ class ContainerWriter(object):
         """
         self.file.seek(self.offset)
         self.file.write(
-            pack(self.container.doc_header_fmt, self.container.end_marker, self.container.default_block_size,
+            pack(self.container.header_fmt, self.container.end_marker, self.container.default_block_size,
                  count_files, 0))
         self.file.write(b'\x00' * (self.container.default_block_size + 31))
 
@@ -187,12 +187,12 @@ class ContainerWriter(object):
             total_blocks = size // DEFAULT_BLOCK_SIZE + 1
 
             if total_blocks == 1:
-                self.write_block(f, size=size, offset=calcsize(self.container.doc_header_fmt))
+                self.write_block(f, size=size, offset=calcsize(self.container.header_fmt))
             else:
                 f.seek(0)
                 next_block_offset = get_size(self.file)
                 self.write_block(io.BytesIO(f.read(DEFAULT_BLOCK_SIZE)),
-                                 size=size, offset=calcsize(self.container.doc_header_fmt),
+                                 size=size, offset=calcsize(self.container.header_fmt),
                                  next_block_offset=next_block_offset, block_size=DEFAULT_BLOCK_SIZE)
                 for i in range(1, total_blocks):
                     # 31 - длина заголовка блока
@@ -265,17 +265,24 @@ def build(src_dir, filename, nested=False):
         raise NotImplementedError(f'Количество контейнеров {containers_count}')
 
     with open(filename, 'w+b') as f:
-        with ContainerWriter(f, container=Container) as container_writer:
-            entry_path = os.path.join(src_dir, '0')
-            entries = sorted(os.listdir(entry_path))
-            container_writer.write_header(len(entries))
-            add_entries(container_writer, entry_path, entries, nested)
+        _src_dir = os.path.join(src_dir, '0')
+        container = Container()
+        container.build(f, _src_dir, nested, offset=0)
         if containers_count == 2:
-            with ContainerWriter(f, container=Container64, offset=f.seek(0, 2)) as container_writer:
-                entry_path = os.path.join(src_dir, '1')
-                entries = sorted(os.listdir(entry_path))
-                container_writer.write_header(len(entries))
-                add_entries(container_writer, entry_path, entries, nested)
+            _src_dir = os.path.join(src_dir, '1')
+            container = Container64()
+            container.build(f, _src_dir, nested, offset=f.seek(0, os.SEEK_END))
+
+        # with ContainerWriter(f, container=Container) as container_writer:
+        #     entries = sorted(os.listdir(_src_dir))
+        #     container_writer.write_header(len(entries))
+        #     add_entries(container_writer, _src_dir, entries, nested)
+        # if containers_count == 2:
+        #     with ContainerWriter(f, container=Container64, offset=f.seek(0, 2)) as container_writer:
+        #         _src_dir = os.path.join(src_dir, '1')
+        #         entries = sorted(os.listdir(_src_dir))
+        #         container_writer.write_header(len(entries))
+        #         add_entries(container_writer, _src_dir, entries, nested)
     print(f" - {datetime.now() - begin}")
 
 
