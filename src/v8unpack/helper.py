@@ -186,6 +186,22 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     return result
 
 
+def file_size(file):
+    """
+    Возвращает размер file-like объекта
+
+    :param file: объекта файла
+    :type file: BufferedReader
+    :return: размер в байтах
+    :rtype: int
+    """
+    pos = file.tell()
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(pos)
+    return size
+
+
 def run_in_pool_encode_include(method, list_args, pool=None, title=None):
     _pool = get_pool(pool=pool)
     file_list = []
