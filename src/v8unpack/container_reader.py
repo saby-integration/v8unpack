@@ -30,8 +30,9 @@ def extract(filename, folder, deflate=True, recursive=True):
         while True:
             try:
                 container = detect_format(f, offset)
-                container.read(f, offset, progress=True)
-                container.extract(os.path.join(folder, str(container_index)), deflate, recursive)
+                container.read(f, offset)
+                container.extract(os.path.join(folder, str(container_index)), deflate, recursive,
+                                  progress=container_index)
                 container_index += 1
                 offset += container.size
                 if offset == 0:
