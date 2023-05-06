@@ -31,9 +31,10 @@ def extract(filename, folder, deflate=True, recursive=True):
             try:
                 container = detect_format(f, offset)
                 container.read(f, offset)
-                container.extract(os.path.join(folder, str(container_index)), deflate, recursive)
+                container.extract(os.path.join(folder, str(container_index)), deflate, recursive,
+                                  progress=container_index)
                 container_index += 1
-                offset = container.size
+                offset += container.size
                 if offset == 0:
                     raise NotImplementedError()
             except EOFError:
@@ -49,11 +50,12 @@ def detect_format(f, offset):
     first = f.read(8)
     if first[0:4] == b'\xFF\xFF\xFF\x7F':
         return Container()
-    elif first == b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF':
-        return Container64()
-    else:
+    elif first == b'':
         raise EOFError()
-        raise Exception('Файл не является контейнером')
+    # elif first == b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF':
+    else:
+        return Container64()
+        # raise Exception('Файл не является контейнером')
 
 
 def decompress_and_extract(src_folder, dest_folder, *, pool=None):

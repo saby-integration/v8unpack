@@ -163,7 +163,7 @@ class Decoder:
 def encode(src_dir, dest_dir, *, pool=None, version='803', gui=None, file_name=None, **kwargs):
     helper.clear_dir(dest_dir)
     _dest_dir = os.path.join(dest_dir, '0')
-    if int(version.ljust(5, '0')) >= 80316:
+    if version and int(version.ljust(5, '0')) >= 80316:
         helper.clear_dir(_dest_dir)
         shutil.unpack_archive(os.path.join(src_dir, 'dummy.zip'), _dest_dir)
         _dest_dir = os.path.join(dest_dir, '1')
