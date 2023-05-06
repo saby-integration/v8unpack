@@ -42,7 +42,7 @@ class Container:
         self.size = 0
         self.toc = []
 
-    def read(self, file, offset=0):
+    def read(self, file, offset=0, *, progress=False):
         self.offset = offset
         try:
             header = self.read_header(file)
@@ -56,7 +56,7 @@ class Container:
         self.first_empty_block_offset = header.first_empty_block_offset
         self.default_block_size = header.default_block_size
         #: Список файлов в контейнере
-        self.files = self.read_files(self.file)
+        self.files = self.read_files(self.file, progress=progress)
 
     def extract(self, dest_dir, deflate=False, recursive=False):
         """
@@ -123,8 +123,8 @@ class Container:
         file.seek(0 + self.offset)
         buff = file.read(calcsize(self.header_fmt))
         header = unpack(self.header_fmt, buff)
-        if header[0] != self.end_marker:
-            raise Exception('Bad container format')
+        # if header[0] != self.end_marker:
+        #     raise Exception('Bad container format')
         return Header(header[0], header[1], header[2])
 
     @classmethod
@@ -140,7 +140,7 @@ class Container:
         # TODO проверить работу на *nix, т.к там начало эпохи - другая дата
         return datetime(1, 1, 1) + timedelta(microseconds=(time * 100))
 
-    def read_files(self, file):
+    def read_files(self, file, *, progress=False):
         """
         Считывает оглавление контейнера
 
@@ -152,7 +152,7 @@ class Container:
         size = 0
         # Первый документ после заголовка содержит оглавление
         doc = Document(self)
-        doc_data = doc.read(file, self.header_size)
+        doc_data = doc.read(file, self.header_size, self.index_block_size)
         table_of_contents = [unpack(f'2{self.index_fmt}', x) for x in
                              doc_data.split(pack(self.index_fmt, self.end_marker))[:-1]]
         self.size += self.header_size + doc.full_size
@@ -170,7 +170,7 @@ class Container:
             name = file_description[3].decode('utf-16').partition('\x00')[0]
 
             doc = Document(self)
-            file_data = doc.read_chunk(file, file_data_offset)
+            file_data = doc.read_chunk(file, file_data_offset, self.default_block_size)
             self.size += doc.full_size
 
             inner_file = File(name, doc.data_size, self.parse_datetime(file_description[0]),

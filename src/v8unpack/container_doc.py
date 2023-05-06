@@ -2,11 +2,12 @@
 import collections
 import datetime
 import io
+import math
 import os
 import tempfile
 import zlib
 from datetime import datetime, timedelta
-from struct import pack, calcsize
+from struct import pack
 # -*- coding: utf-8 -*-
 from struct import unpack
 
@@ -27,11 +28,11 @@ class Document:
         self.full_size = 0  # include all header size
         self.data_size = 0
 
-    def read(self, file, offset):
-        document_data = self.read_chunk(file, offset)
+    def read(self, file, offset, min_block_size=0):
+        document_data = self.read_chunk(file, offset, min_block_size)
         return b''.join([chunk for chunk in document_data])
 
-    def read_chunk(self, file, offset):
+    def read_chunk(self, file, offset, min_block_size=0):
         """
         Считывает документ из контейнера. В качестве данных документа возвращается генератор.
 
@@ -42,7 +43,7 @@ class Document:
         :return: данные документа
         :rtype:
         """
-        gen = self._read_gen(file, offset)
+        gen = self._read_gen(file, offset, min_block_size)
 
         try:
             self.data_size = next(gen)
@@ -51,7 +52,7 @@ class Document:
 
         return gen
 
-    def _read_gen(self, file, offset):
+    def _read_gen(self, file, offset, min_block_size=0):
         """
         Создает генератор чтения данных документа в контейнере.
         Первое значение генератора - размер документа (байт).
@@ -64,6 +65,15 @@ class Document:
         :return: генератор чтения данных документа
         """
         header_block = self.read_block(file, offset)
+        doc_size = max(header_block.doc_size, min_block_size)
+        if doc_size > header_block.current_block_size:
+            self.full_size = doc_size + math.ceil(
+                header_block.doc_size / header_block.current_block_size) * min_block_size
+            if min_block_size == self.container.index_block_size:
+                self.full_size += self.container.index_block_size
+        else:
+            self.full_size = doc_size + self.container.block_header_size
+
         if header_block is None:
             return
         else:
@@ -109,7 +119,6 @@ class Document:
         data_size = min(current_block_size, max_data_length)
 
         data = file.read(data_size)
-        self.full_size += header_size + current_block_size
 
         return Block(doc_size, current_block_size, next_block_offset, data)
 
@@ -191,4 +200,3 @@ def epoch2int(epoch_time):
     # Поэтому явно вычисляем разницу между указанной датой и 0001.01.01
     return (datetime.fromtimestamp(epoch_time) - datetime(1, 1, 1)) // timedelta(
         microseconds=100)
-
