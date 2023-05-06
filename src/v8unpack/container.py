@@ -2,6 +2,7 @@
 import collections
 import datetime
 import io
+import math
 import os
 import tempfile
 import zlib
@@ -9,6 +10,8 @@ from datetime import datetime, timedelta
 from struct import pack, calcsize
 # -*- coding: utf-8 -*-
 from struct import unpack
+
+from tqdm import tqdm
 
 from .container_doc import Document
 from .helper import clear_dir, file_size
@@ -42,7 +45,7 @@ class Container:
         self.size = 0
         self.toc = []
 
-    def read(self, file, offset=0, *, progress=False):
+    def read(self, file, offset=0):
         self.offset = offset
         try:
             header = self.read_header(file)
@@ -56,9 +59,9 @@ class Container:
         self.first_empty_block_offset = header.first_empty_block_offset
         self.default_block_size = header.default_block_size
         #: Список файлов в контейнере
-        self.files = self.read_files(self.file, progress=progress)
+        self.files = self.read_files(self.file)
 
-    def extract(self, dest_dir, deflate=False, recursive=False):
+    def extract(self, dest_dir, deflate=False, recursive=False, *, progress=None):
         """
         Распаковывает содержимое контейнера в каталог
 
@@ -75,8 +78,17 @@ class Container:
             print('Пустой контейнер = распаковывать нечего')
             return
 
+        progress_bar = None
+        if progress is not None:
+            msg = f"Распаковываем контейнер {progress}"
+            progress_bar = tqdm(desc=f'{msg:30}', total=len(self.files))
+
         for filename, file_obj in self.files.items():
             self.extract_file(filename, file_obj, dest_dir, deflate, recursive)
+            if progress_bar:
+                progress_bar.update()
+        if progress_bar:
+            progress_bar.close()
 
     @staticmethod
     def extract_file(filename, file_obj, path, deflate=False, recursive=False):
@@ -140,7 +152,7 @@ class Container:
         # TODO проверить работу на *nix, т.к там начало эпохи - другая дата
         return datetime(1, 1, 1) + timedelta(microseconds=(time * 100))
 
-    def read_files(self, file, *, progress=False):
+    def read_files(self, file):
         """
         Считывает оглавление контейнера
 
@@ -218,9 +230,7 @@ class Container:
 
             doc_size = file_size(f)
 
-            total_blocks, surplus = divmod(doc_size, self.index_block_size)
-            if surplus:
-                total_blocks += 1
+            total_blocks = math.ceil(doc_size / self.index_block_size)
 
             doc = Document(self)
 
