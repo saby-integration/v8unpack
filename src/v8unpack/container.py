@@ -258,7 +258,7 @@ class Container:
 
         doc = Document(self)
         if inflate:
-            data_doc_offset = doc.compress(fd)
+            data_doc_offset = doc.compress(fd, self.file)
         else:
             data_doc_offset = doc.write(fd, min_block_size=self.default_block_size)
 

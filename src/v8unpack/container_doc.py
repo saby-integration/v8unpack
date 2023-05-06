@@ -153,7 +153,8 @@ class Document:
 
         return offset
 
-    def compress(self, src_fd):
+    @classmethod
+    def compress(cls, src_fd, dest_fd):
         with tempfile.TemporaryFile() as f:
             compressor = zlib.compressobj(wbits=-15)
             src_fd.seek(0)
@@ -163,8 +164,8 @@ class Document:
                     f.write(compressor.flush())
                     break
                 f.write(compressor.compress(chunk))
-            data_doc_offset = self.write(f)
-        return data_doc_offset
+            cls.write_block_data(f, dest_fd)
+        # return data_doc_offset
 
     @staticmethod
     def write_block_data(data, dest_file):
