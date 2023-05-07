@@ -20,6 +20,11 @@
 * поддержаны всё элементы обычных форм
 * конфигурации ут 11 упп 1.3 разбираются, но над сборкой надо ещё поработать
 
+# 0.13.5
+* fix Исправлены недочеты в разборе типов метаданных Bot, CalculationRegister,  
+* fix поддерка тип макет Action document = тип 2
+* new разбираются команды ChartOfAccounts, ChartOfCalculationType, ChartOfCharacteristicType, FilterCriterion
+
 # 0.13.4
 * fix 0.13.3 была полностью не рабочая. в этой работает старый и проходит вроде новый 
 
