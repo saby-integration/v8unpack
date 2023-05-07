@@ -1,9 +1,10 @@
 import os
-import shutil
 from base64 import b64encode
 
 from .. import helper
 from ..MetaObject import MetaObject
+from ..ext_exception import ExtException
+from ..metadata_types import MetaDataTypes, MetaDataGroup
 from ..version import __version__
 
 
@@ -67,16 +68,79 @@ class Configuration803(MetaObject):
     def get_decode_header(cls, header):
         return header[0][3][1][1][1][1]
 
-    @classmethod
-    def get_decode_includes(cls, header_data):
-        return [
-            header_data[0][3][1],
-            header_data[0][4][1][1],
-            header_data[0][5][1],
-            header_data[0][6][1],
-            header_data[0][7][1],
-            header_data[0][8][1],
-        ]
+    # @classmethod
+    # def get_decode_includes(cls, header_data):
+    #     return [
+    #         header_data[0][3][1],
+    #         header_data[0][4][1][1],
+    #         header_data[0][5][1],
+    #         header_data[0][6][1],
+    #         header_data[0][7][1],
+    #         header_data[0][8][1],
+    #     ]
+
+    def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
+        tasks = []
+        index_includes_group = 2
+        count_includes_group = int(header_data[0][index_includes_group])
+        for index_group in range(count_includes_group):
+            group = header_data[0][index_includes_group + index_group + 1]
+            group_uuid = group[0]
+            group_version = group[1][0]
+            try:
+                metadata_group = MetaDataGroup(group_uuid)
+            except ValueError:
+                raise ExtException(message='Неизвестная группа метаданных', detail=group_uuid)
+            include = group[1][1] if group_version == '6' else group[1]
+            try:
+                count_include_types = int(include[2])
+            except IndexError:
+                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
+            for i in range(count_include_types):
+                _metadata = include[i + 3]
+                _count_obj = int(_metadata[1])
+                _metadata_type_uuid = _metadata[0]
+                try:
+                    metadata_type = MetaDataTypes(_metadata_type_uuid)
+                except ValueError:
+                    # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
+                    # continue
+
+                    if not _count_obj:
+                        continue
+
+                    if not isinstance(_metadata[2], str):  # вложенный объект
+                        continue
+                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
+                    print(msg)
+                    continue
+                    # raise Exception(msg)
+                if not _count_obj:
+                    continue
+                new_dest_path = os.path.join(dest_path, metadata_type.name)
+                external_obj = False
+                for j in range(_count_obj):
+                    obj_uuid = _metadata[j + 2]
+                    if isinstance(obj_uuid, str):
+                        if j == 0:
+                            os.mkdir(os.path.join(dest_dir, new_dest_path))
+
+                        tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
+                        external_obj = True
+                    elif isinstance(obj_uuid, list):
+                        if not metadata_type:
+                            continue
+                        try:
+                            handler = helper.get_class_metadata_object(metadata_type.name)
+                        except Exception as err:
+                            continue
+                        if j == 0:
+                            os.mkdir(os.path.join(dest_dir, new_dest_path))
+                        handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
+                        external_obj = True
+                if external_obj:
+                    include[i + 3] = metadata_type.name
+        return tasks
 
     def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None, **kwargs):
         file_name = self.get_class_name_without_version()
@@ -137,3 +201,27 @@ class Configuration803(MetaObject):
                     file_name = f'{self.header["uuid"]}.{self._images[elem]}'
                     helper.brace_file_write(header, dest_dir, file_name)
                     self.file_list.append(file_name)
+
+    def fill_header_includes(self, include_index):
+        header_data = self.header['data']
+        index_includes_group = 2
+        count_includes_group = int(header_data[0][index_includes_group])
+        for index_group in range(count_includes_group):
+            group = header_data[0][index_includes_group + index_group + 1]
+            group_uuid = group[0]
+            group_version = group[1][0]
+            try:
+                metadata_group = MetaDataGroup(group_uuid)
+            except ValueError:
+                raise ExtException(message='Неизвестная группа метаданных', detail=group_uuid)
+            include = group[1][1] if group_version == '6' else group[1]
+            try:
+                count_include_types = int(include[2])
+            except IndexError:
+                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
+            for i in range(count_include_types):
+                _metadata = include[i + 3]
+                if isinstance(_metadata, str):
+                    metadata_type = MetaDataTypes[_metadata]
+                    include_objects = include_index.get(_metadata, [])
+                    include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]

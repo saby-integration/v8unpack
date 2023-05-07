@@ -310,7 +310,9 @@ class MetaObject:
         if header and len(header[0]) > 2 and bin_data:
             header[0][3][0] += b64encode(bin_data).decode(encoding='utf-8')
         if header:
-            helper.brace_file_write(header, dest_dir, f'{self.header["uuid"]}.{file_number}')
+            file_name = f'{self.header["uuid"]}.{file_number}'
+            self.file_list.append(file_name)
+            helper.brace_file_write(header, dest_dir, file_name)
 
     @staticmethod
     def _get_b64_string(bin_data):

@@ -1,6 +1,16 @@
 from enum import Enum
 
 
+class MetaDataGroup(Enum):
+    General = '9cd510cd-abfc-11d4-9434-004095e12fc7'
+    Main = '9fcd25a0-4822-11d4-9414-008048da11f9'
+    Accounting = 'e3687481-0a87-462c-a166-9f34594f9bba'
+    Calculation = '9de14907-ec23-4a07-96f0-85521cb6b53b'
+    DocFlow = '51f2d5d8-ea4d-4064-8892-82951750031e'
+    DataSource = 'e68182ea-4237-4383-967f-90c1e3370bc7'
+    Integration = 'fb282519-d103-4dd3-bc12-cb271d631dfc'
+
+
 class MetaDataTypes(Enum):
     # todo в синтаксис помощнике найти все английские названия искать строкой "ОбъектМетаданных: [хxx...]"
     # DocumentAttribute = "45e46cbc-3e24-4165-8b7b-cc98a6f80211"        # Документ.Реквизиты
@@ -61,7 +71,7 @@ class MetaDataTypes(Enum):
     ExternalDataSource = '5274d9fc-9c3a-4a71-8f5e-a0db8ab23de5'  # ВнешнийИсточникДанных
     ExternalDataSourceCube = '2bb208ca-e441-4023-9ab9-32a7807a85d0'  # ВнешнийИсточникДанных Куб
     ExternalDataSourceCubeForm = '3448e506-5add-4fce-a604-7305466b2d8e'  # ВнешнийИсточникДанных Куб
-    ExternalDataSourceCubeFormCommand = '4ee40ec7-3469-439f-adb4-aa26ce2d3ec3'  # ВнешнийИсточникДанных Куб
+    ExternalDataSourceCubeCommand = '4ee40ec7-3469-439f-adb4-aa26ce2d3ec3'  # ВнешнийИсточникДанных Куб
     ExternalDataSourceTable = 'e3403acd-1c95-421b-87e4-4dfa29d38b52'  # ВнешнийИсточникДанных Таблица
     ExternalDataSourceTableForm = '17816ebc-4068-496e-adc4-8879945a832f'  # ВнешнийИсточникДанных Таблица
     ExternalDataSourceTableCommand = '5bb6f09e-5d80-41f6-8070-9faa4d15b69b'  # ВнешнийИсточникДанных Таблица
