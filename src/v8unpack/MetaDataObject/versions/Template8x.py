@@ -5,13 +5,14 @@ from enum import Enum
 
 from ..core.Simple import Simple
 from ... import helper
-from ...ext_exception import ExtException
+from ...ext_exception import ExtException, ExtNotImplemented
 from ...json_container_decoder import BigBase64
 
 
 class TmplType(Enum):
     table = "0"
     base64 = "1"
+    active_doc = "2"
     html = "3"
     text = "4"
     geographic = "5"
@@ -40,7 +41,11 @@ class Template8x(Simple):
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header):
         try:
             super(Template8x, self).decode_object(src_dir, uuid, dest_dir, dest_path, version, header)
-            self.tmpl_type = TmplType(self.get_template_type(header))
+            tmpl_type = self.get_template_type(header)
+            try:
+                self.tmpl_type = TmplType(tmpl_type)
+            except Exception as err:
+                raise ExtNotImplemented(message='Неизвестный тип макета', detail=f'{tmpl_type} у {self.header.name} в файле {uuid}')
             self.header['type'] = self.tmpl_type.name
 
             _dest_dir = os.path.join(dest_dir, dest_path)
@@ -64,6 +69,9 @@ class Template8x(Simple):
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header):
         return []
+
+    def decode_active_doc_data(self, src_dir, dest_dir, write):
+        self.decode_scheme_data(src_dir, dest_dir, write)
 
     def decode_geographic_data(self, src_dir, dest_dir, write):
         self.decode_scheme_data(src_dir, dest_dir, write)
@@ -145,6 +153,9 @@ class Template8x(Simple):
             raise Exception(f'Не реализованный тип макета {self.header["type"]}')
 
         # helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.bin')
+
+    def encode_active_doc_data(self, src_dir, dest_dir):
+        self.encode_scheme_data(src_dir, dest_dir)
 
     def encode_table_data(self, src_dir, dest_dir):
         self.encode_scheme_data(src_dir, dest_dir)

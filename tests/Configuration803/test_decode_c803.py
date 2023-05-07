@@ -7,14 +7,14 @@ from v8unpack.unittest_helper import HelperTestDecode
 
 
 class TestDecode(HelperTestDecode):
-    processes = 1
+    # processes = 1
 
     def setUp(self):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)
 
         self.src_file = '1Cv8.cf'
-        self.version = '80313'
+        self.version = '803'
         # self.result = {
         #     'count_root_files_stage1': 13,
         #     'count_root_files_stage3': 5,

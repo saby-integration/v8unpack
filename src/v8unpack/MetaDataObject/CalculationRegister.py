@@ -4,7 +4,7 @@ from ..MetaDataObject.core.Container import Container
 class CalculationRegister(Container):
     ext_code = {
         'obj': 1,
-        # 'mgr': хз
+        'mgr': 2
     }
     help_file_number = 0
 

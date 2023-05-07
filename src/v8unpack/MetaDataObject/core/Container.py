@@ -28,8 +28,8 @@ class Container(MetaDataObject):
 
     def _decode_predefined(self, src_dir, dest_dir):
         try:
-            data = helper.bin_read(src_dir, f'{self.header["uuid"]}.{self.predefined_file_number}.json')
-            helper.bin_write(data, dest_dir, 'Предустановленные данные.json')
+            data = helper.bin_read(src_dir, f'{self.header["uuid"]}.{self.predefined_file_number}')
+            helper.bin_write(data, dest_dir, 'Предустановленные данные.bin')
         except FileNotFoundError:
             return
 
@@ -46,8 +46,10 @@ class Container(MetaDataObject):
 
     def _encode_predefined(self, src_dir, dest_dir):
         try:
-            package = helper.bin_read(src_dir, 'Предустановленные данные.json')
-            helper.bin_write(package, dest_dir, f'{self.header["uuid"]}.{self.predefined_file_number}.json')
+            package = helper.bin_read(src_dir, 'Предустановленные данные.bin')
+            file_name = f'{self.header["uuid"]}.{self.predefined_file_number}'
+            helper.bin_write(package, dest_dir, file_name)
+            self.file_list.append(file_name)
         except FileNotFoundError:
             return
 
