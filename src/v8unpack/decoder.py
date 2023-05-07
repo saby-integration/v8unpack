@@ -26,7 +26,7 @@ class Decoder:
     def detect_version(src_dir):
         if os.path.isfile(os.path.join(src_dir, 'root')):
             version = helper.brace_file_read(src_dir, 'version')
-            if int(version[0][0][0]) > 216:
+            if int(version[0][0][0]) >= 216:
                 _tmp = len(version[0][0])
                 root = helper.brace_file_read(src_dir, 'root')
                 header = helper.brace_file_read(src_dir, root[0][1])
