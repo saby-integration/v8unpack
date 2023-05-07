@@ -42,3 +42,4 @@ class IncludeSimple(MetaDataObject):
 
     def write_encode_object(self, dest_dir):
         self.write_encode_code(dest_dir)
+
