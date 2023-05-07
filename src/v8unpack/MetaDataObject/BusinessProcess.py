@@ -13,16 +13,16 @@ class BusinessProcess(Container):
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
         try:
-            package = helper.bin_read(src_dir, f'{self.header["uuid"]}.7.json')
-            helper.bin_write(package, self.new_dest_dir, 'Карта маршрута.json')
+            package = helper.bin_read(src_dir, f'{self.header["uuid"]}.7')
+            helper.bin_write(package, self.new_dest_dir, 'Карта маршрута.bin')
         except FileNotFoundError:
             return
 
     def encode_object(self, src_dir, file_name, dest_dir, version):
         res = super().encode_object(src_dir, file_name, dest_dir, version)
         try:
-            package = helper.bin_read(src_dir, 'Карта маршрута.json')
-            file_name = f'{self.header["uuid"]}.7.json'
+            package = helper.bin_read(src_dir, 'Карта маршрута.bin')
+            file_name = f'{self.header["uuid"]}.7'
             helper.bin_write(package, dest_dir, file_name)
             self.file_list.append(file_name)
         except FileNotFoundError:
