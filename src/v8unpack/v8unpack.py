@@ -105,7 +105,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         # json_encode(dir_stage2, dir_stage1, pool=pool)
 
         compress_and_build(dir_stage1, dir_stage0, pool=pool)
-        container_build(dir_stage0, out_file_name, True, version=version)
+        container_build(dir_stage0, out_file_name, True)
 
         helper.close_pool(pool)
         if clear_temp_dir:
