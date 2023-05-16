@@ -73,7 +73,7 @@ def txt_read(path, file_name, encoding='utf-8-sig'):
         raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({file_name})')
 
 
-def txt_read_detect_encoding(path, file_name, encoding='utf-8'):
+def txt_read_detect_encoding(path, file_name, encoding=None):
     _path = os.path.join(path, file_name)
     if encoding is None:
         encoding = detect_by_bom(_path, 'utf-8')

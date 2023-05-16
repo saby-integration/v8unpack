@@ -11,15 +11,15 @@ class CommonForm803(Form803):
         self.header['Пояснение'] = _header_obj[3]
         self.header['Использовать стандартные команды'] = _header_obj[4]
 
-    def encode_header(self):
-        return [[
-            "1",
-            [
-                "4",
-                self.encode_header_title(),
-                self.header['Расширенное представление'],
-                self.header['Пояснение'],
-                self.header['Использовать стандартные команды']
-            ],
-            "0"
-        ]]
+    # def encode_header(self):
+    #     return [[
+    #         "1",
+    #         [
+    #             "4",
+    #             self.encode_header_title(),
+    #             self.header['Расширенное представление'],
+    #             self.header['Пояснение'],
+    #             self.header['Использовать стандартные команды']
+    #         ],
+    #         "0"
+    #     ]]

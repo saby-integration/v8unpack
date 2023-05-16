@@ -116,19 +116,19 @@ class Form803(Form8x):
             super().decode_code(src_dir)
         self.decode_form1(src_dir, self.header['uuid'])
 
-    def encode_header(self):
-        return [[
-            "1",
-            [
-                "1",
-                [
-                    "0",
-                    self.encode_header_title(),
-                    self.header.get('Расширенное представление', ['0'])
-                ]
-            ],
-            "0"
-        ]]
+    # def encode_header(self):
+    #     return [[
+    #         "1",
+    #         [
+    #             "1",
+    #             [
+    #                 "0",
+    #                 self.encode_header_title(),
+    #                 self.header.get('Расширенное представление', ['0'])
+    #             ]
+    #         ],
+    #         "0"
+    #     ]]
 
     def encode_header_title(self):
         version = self.header.get('Версия803', '13')
