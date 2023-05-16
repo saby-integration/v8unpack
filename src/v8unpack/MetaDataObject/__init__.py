@@ -41,7 +41,7 @@ class MetaDataObject(MetaObject):
         return cls.get_version(version)()
 
     @classmethod
-    def decode(cls, src_dir, file_name, dest_dir, dest_path, version, *, parent_type=None):
+    def decode(cls, src_dir: str, file_name: str, dest_dir: str, dest_path: str, version, *, parent_type=None):
         try:
             self = cls.decode_get_handler(src_dir, file_name, version)
             header_data = cls.brace_file_read(src_dir, file_name)
@@ -102,7 +102,7 @@ class MetaDataObject(MetaObject):
                 self.header = helper.json_read(src_dir, f'{src_file_name}.json')
             except FileNotFoundError:
                 return
-            self.fill_header_includes(include_index)
+            self.fill_header_includes(include_index)  # todo dynamic index
             self.encode_object(src_dir, src_file_name, dest_dir, version)
             self.write_encode_object(dest_dir)
             return dict(
@@ -114,7 +114,7 @@ class MetaDataObject(MetaObject):
         except Exception as err:
             raise ExtException(
                 parent=err,
-                dump=dict(src_dir=src_dir, file_name=file_name),
+                dump=dict(uuid=self.header['uuid'], src_dir=src_dir, file_name=file_name),
                 action=f'{self.__class__.__name__}.encode') from err
 
     def get_encode_file_name(self, file_name):

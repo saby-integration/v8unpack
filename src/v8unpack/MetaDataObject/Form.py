@@ -16,15 +16,15 @@ class Form(SimpleNameFolder):
         '803': Form803,
         '5-5': OldForm801,
         '7-7': OldForm801,
-        '9-9': OldForm802,
-        '12-12': OldForm802,
+        '9-9': OldForm803,
+        '12-12': OldForm803,
         '13-13': OldForm803,
         '0-5': Form801,
         '0-7': Form801,
-        '0-9': Form802,
+        '0-9': Form803,
         '0-12': Form803,
         '0-13': Form803,
-        '1-9': Form802,
+        '1-9': Form803,
         '1-12': Form803,
         '1-13': Form803
     }
@@ -58,6 +58,3 @@ class Form(SimpleNameFolder):
         except Exception as err:
             raise ExtException(message="Неудалось опеределить версию формы", detail=f'{cls.__name__} {file_name}')
 
-    @classmethod
-    def get_form_version_index_0(cls, path, file_name):
-        return 3

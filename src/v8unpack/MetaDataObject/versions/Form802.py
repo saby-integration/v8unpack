@@ -64,37 +64,37 @@ class Form802(Form8x):
                 message='случай требующий анализа, предоставьте образец формы разработчикам',
                 detail=f'{self.header["name"]} {file_name}, {err}')
 
-    def encode_header(self):
-        return [[
-            "1",
-            [
-                "1",
-                [
-                    "0",
-                    [
-                        "9",
-                        [
-                            self.header['h0'],
-                            [
-                                self.header['h1_0'],
-                                "0",
-                                self.header['uuid']
-                            ],
-                            helper.str_encode(self.header['name']),
-                            helper.encode_name2(self.header),
-                            helper.str_encode(self.header['comment']),
-                            *self.header['h5'],
-                        ],
-                        "0",
-                        "0",
-                    ],
-                    [
-                        "0"
-                    ]
-                ]
-            ],
-            "0"
-        ]]
+    # def encode_header(self):
+    #     return [[
+    #         "1",
+    #         [
+    #             "1",
+    #             [
+    #                 "0",
+    #                 [
+    #                     "9",
+    #                     [
+    #                         self.header['h0'],
+    #                         [
+    #                             self.header['h1_0'],
+    #                             "0",
+    #                             self.header['uuid']
+    #                         ],
+    #                         helper.str_encode(self.header['name']),
+    #                         helper.encode_name2(self.header),
+    #                         helper.str_encode(self.header['comment']),
+    #                         *self.header['h5'],
+    #                     ],
+    #                     "0",
+    #                     "0",
+    #                 ],
+    #                 [
+    #                     "0"
+    #                 ]
+    #             ]
+    #         ],
+    #         "0"
+    #     ]]
 
     def encode_empty_form(self):
         return [[

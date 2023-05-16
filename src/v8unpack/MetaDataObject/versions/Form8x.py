@@ -128,7 +128,7 @@ class Form8x(SimpleNameFolder):
         self.encode_nested_includes(src_dir, file_name, dest_dir, version, None)
 
     def encode_header(self):
-        raise NotImplemented()
+        return self.header['data']
 
     def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
         raise NotImplemented()

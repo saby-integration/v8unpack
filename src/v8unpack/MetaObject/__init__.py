@@ -87,7 +87,7 @@ class MetaObject:
                             os.mkdir(os.path.join(dest_dir, new_dest_path))
                         handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
                         external_obj = True
-                if external_obj:
+                if external_obj:  # todo dynamic index
                     include[i + 3] = metadata_type.name
         return tasks
 
@@ -173,7 +173,7 @@ class MetaObject:
             return cls.__name__[:len(_version) * -1]
         return cls.__name__
 
-    def read_raw_code(self, src_dir, file_name, encoding='utf-8'):
+    def read_raw_code(self, src_dir, file_name, encoding=None):
         code = helper.txt_read(src_dir, file_name, encoding=encoding)
         if code:
             # if self.version in ['801', '802']:  # убираем комментрии у директив
