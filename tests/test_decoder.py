@@ -3,15 +3,19 @@ import sys
 import unittest
 
 sys.path.append("../../src/")
-from v8unpack.MetaDataObject.CommonForm import CommonForm
-from v8unpack.MetaDataObject.versions.Template803 import Template803 as Meta
+from v8unpack.MetaDataObject.Role import Role as Meta
+from v8unpack import helper
+
 
 class TestFileOrganizerCE(unittest.TestCase):
     def setUp(self) -> None:
         self.current_dir = os.path.dirname(__file__)
-        self.data_dir = os.path.join(self.current_dir, 'data')
+        self.data_dir = os.path.join(self.current_dir, 'data', 'json_decode_src')
         self.temp_dir = os.path.join(self.data_dir, 'temp')
 
     def test_near(self):
         form = Meta()
-        form.decode(self.data_dir, "cb225ac1-0acf-4807-aae2-0e135699ea05", self.temp_dir, "cb225ac1-0acf-4807-aae2-0e135699ea05", 803)
+        file_name = "8a310493-c06f-46db-b2b5-14d6ed203312"
+        # os.remove(os.path.join(self.temp_dir, file_name))
+        helper.clear_dir(os.path.join(self.temp_dir, file_name))
+        form.decode(self.data_dir, file_name, self.temp_dir, file_name, 803)
