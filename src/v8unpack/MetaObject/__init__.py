@@ -336,8 +336,8 @@ class MetaObject:
             for elem in self._obj_info:
                 try:
                     data = helper.json_read(src_dir, f'{file_name}.{self._obj_info[elem]}.json')
-                    file_name = f'{self.header["uuid"]}.{self._obj_info[elem]}'
-                    helper.brace_file_write(data, dest_dir, file_name)
-                    self.file_list.append(file_name)
+                    dest_file_name = f'{self.header["uuid"]}.{self._obj_info[elem]}'
+                    helper.brace_file_write(data, dest_dir, dest_file_name)
+                    self.file_list.append(dest_file_name)
                 except FileNotFoundError:
                     pass
