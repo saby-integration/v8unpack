@@ -38,9 +38,9 @@ class Form(SimpleNameFolder):
         "13": 2,
     }
     @classmethod
-    def decode_get_handler(cls, src_dir, file_name, version):
+    def decode_get_handler(cls, src_dir, file_name, options):
         obj_version, form_version = cls.get_form_version(src_dir, file_name)
-        handler = cls.get_version(f'{obj_version}-{form_version}')()
+        handler = cls.get_version(f'{obj_version}-{form_version}')(options=options)
         handler.obj_version = obj_version
         return handler
 

@@ -13,8 +13,8 @@ UPR_FORM = '1'
 class Form803(Form8x):
     ver = '803'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.command_panels = []
         self.params = []
         self.commands = []
@@ -38,6 +38,9 @@ class Form803(Form8x):
             self.decode_form0(src_dir, uuid)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
+        if self.header['Тип формы'] == OLD_FORM:
+            self.decode_old_elements()
+            return
         if not self.form or not self.form[0]:
             return
         try:
@@ -93,8 +96,8 @@ class Form803(Form8x):
                 message='случай требующий анализа, предоставьте образец формы разработчикам',
                 detail=f'{self.header["name"]}, {err}')
 
-    def write_decode_object(self, dest_dir, dest_path, file_name, version):
-        super().write_decode_object(dest_dir, dest_path, file_name, version)
+    def write_decode_object(self, dest_dir, dest_path, file_name):
+        super().write_decode_object(dest_dir, dest_path, file_name)
         if self.commands:
             helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.ver}.json')
         if self.params:
@@ -168,6 +171,10 @@ class Form803(Form8x):
         return self.form
 
     def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
+        if self.header['Тип формы'] == OLD_FORM:
+            self.encode_old_elements(src_dir, file_name, dest_dir, version, parent_id)
+            return
+
         if not self.form or not self.form[0]:
             return
         try:

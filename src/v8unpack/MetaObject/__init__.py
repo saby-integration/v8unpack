@@ -1,7 +1,7 @@
 import os
-from uuid import uuid4
 import re
 from base64 import b64decode, b64encode
+from uuid import uuid4
 
 from .. import helper
 from ..ext_exception import ExtException
@@ -19,12 +19,20 @@ class MetaObject:
     directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
     directive_1c_comment = re.compile('(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
 
-    def __init__(self, *, obj_name=None):
+    def __init__(self, *, obj_name=None, options=None):
         self.title = obj_name if obj_name else \
             self._obj_name if self._obj_name else self.get_class_name_without_version()
         self.header = {}
         self.code = {}
         self.file_list = []
+        self.options = options
+        self.version = self.get_options('version')
+
+    def get_options(self, name, default=None):
+        try:
+            return self.options[name]
+        except (TypeError, KeyError):
+            return default
 
     def get_decode_header(self, header_data):
         return header_data[0][1][1]
@@ -41,55 +49,58 @@ class MetaObject:
         tasks = []
         includes = self.get_decode_includes(header_data)
         for include in includes:
+            self.decode_include(src_dir, dest_dir, dest_path, tasks, include)
+        return tasks
+
+    def decode_include(self, src_dir, dest_dir, dest_path, tasks, include):
+        try:
+            count_include_types = int(include[2])
+        except IndexError:
+            raise ExtException(message='Include types not found', detail=self.__class__.__name__)
+        for i in range(count_include_types):
+            _metadata = include[i + 3]
+            _count_obj = int(_metadata[1])
+            _metadata_type_uuid = _metadata[0]
             try:
-                count_include_types = int(include[2])
-            except IndexError:
-                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
-            for i in range(count_include_types):
-                _metadata = include[i + 3]
-                _count_obj = int(_metadata[1])
-                _metadata_type_uuid = _metadata[0]
-                try:
-                    metadata_type = MetaDataTypes(_metadata_type_uuid)
-                except ValueError:
-                    # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
-                    # continue
+                metadata_type = MetaDataTypes(_metadata_type_uuid)
+            except ValueError:
+                # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
+                # continue
 
-                    if not _count_obj:
-                        continue
-
-                    if not isinstance(_metadata[2], str):  # вложенный объект
-                        continue
-                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
-                    print(msg)
-                    continue
-                    # raise Exception(msg)
                 if not _count_obj:
                     continue
-                new_dest_path = os.path.join(dest_path, metadata_type.name)
-                external_obj = False
-                for j in range(_count_obj):
-                    obj_uuid = _metadata[j + 2]
-                    if isinstance(obj_uuid, str):
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
 
-                        tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
-                        external_obj = True
-                    elif isinstance(obj_uuid, list):
-                        if not metadata_type:
-                            continue
-                        try:
-                            handler = helper.get_class_metadata_object(metadata_type.name)
-                        except Exception as err:
-                            continue
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
-                        handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
-                        external_obj = True
-                if external_obj:  # todo dynamic index
-                    include[i + 3] = metadata_type.name
-        return tasks
+                if not isinstance(_metadata[2], str):  # вложенный объект
+                    continue
+                msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
+                print(msg)
+                continue
+                # raise Exception(msg)
+            if not _count_obj:
+                continue
+            new_dest_path = os.path.join(dest_path, metadata_type.name)
+            external_obj = False
+            for j in range(_count_obj):
+                obj_uuid = _metadata[j + 2]
+                if isinstance(obj_uuid, str):
+                    if j == 0:
+                        os.mkdir(os.path.join(dest_dir, new_dest_path))
+
+                    tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.options]])
+                    external_obj = True
+                elif isinstance(obj_uuid, list):
+                    if not metadata_type:
+                        continue
+                    try:
+                        handler = helper.get_class_metadata_object(metadata_type.name)
+                    except Exception as err:
+                        continue
+                    if j == 0:
+                        os.mkdir(os.path.join(dest_dir, new_dest_path))
+                    handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.options)
+                    external_obj = True
+            if external_obj and self.options.get('auto_include'):  # todo dynamic index
+                include[i + 3] = metadata_type.name
 
     @classmethod
     def get_decode_includes(cls, header_data: list) -> list:
@@ -224,7 +235,7 @@ class MetaObject:
                 if self.header.get(f'code_encoding_{code_name}') in self.encrypted_types:
                     helper.bin_write(self.code[code_name], dest_dir, self.header[f'code_encoding_{code_name}'])
                 else:
-                    helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
+                    helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.bsl')
 
     def encode_code(self, src_dir, file_name):
         for code_name in self.ext_code:
@@ -233,7 +244,7 @@ class MetaObject:
                     if self.header.get(f'code_encoding_{code_name}') in self.encrypted_types:
                         self.code[code_name] = helper.bin_read(src_dir, self.header.get(f'code_encoding_{code_name}'))
                     else:
-                        self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
+                        self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.bsl')
                 except FileNotFoundError:
                     self.code[code_name] = ''
 

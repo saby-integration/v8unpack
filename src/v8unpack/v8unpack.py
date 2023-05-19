@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import shutil
 import sys
@@ -15,11 +14,10 @@ from .file_organizer import FileOrganizer
 from .file_organizer_ce import FileOrganizerCE
 from .helper import check_index, load_json
 from .index import update_index
-from .json_container_decoder import json_decode, json_encode
 from .version import __version__
 
 
-def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, version=None, descent=None):
+def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, processes=None, options=None):
     try:
         begin0 = datetime.now()
         print(f"v8unpack {__version__}")
@@ -29,6 +27,8 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
             return
 
         print(f"Начали")
+
+        descent = options.get('descent') if options else None
 
         if descent is None:
             helper.clear_dir(os.path.normpath(out_dir_name))
@@ -43,17 +43,17 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
         # dir_stage2 = os.path.join(temp_dir, 'decode_stage_2')
         dir_stage3 = os.path.join(temp_dir, 'decode_stage_3')
 
-        pool = helper.get_pool()
+        pool = helper.get_pool(processes=processes)
 
         container_extract(in_filename, dir_stage0, False, False)
         decompress_and_extract(dir_stage0, dir_stage1, pool=pool)
 
         # json_decode(dir_stage1, dir_stage2, pool=pool)
 
-        decode(dir_stage1, dir_stage3, pool=pool, version=version)
+        decode(dir_stage1, dir_stage3, pool=pool, options=options)
 
         if descent is not None:
-            FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=int(descent))
+            FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
         else:
             FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
 
@@ -69,7 +69,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, v
 
 
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
-          version='803', descent=None, gui=None, **kwargs):
+          options=None, processes: int = None):
     try:
         begin0 = datetime.now()
 
@@ -92,15 +92,15 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         # dir_stage2 = os.path.join(temp_dir, 'encode_stage_2')
         dir_stage3 = os.path.join(temp_dir, 'encode_stage_3')
 
-        pool = helper.get_pool(processes=1)
+        pool = helper.get_pool(processes=processes)
 
-        if descent is not None:
-            FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=int(descent))
-        else:
+        descent = options.get('descent') if options else None
+        if descent is None:
             FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
+        else:
+            FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
 
-        encode(dir_stage3, dir_stage1, version=version, pool=pool, gui=gui,
-               file_name=os.path.basename(out_file_name), **kwargs)
+        encode(dir_stage3, dir_stage1, pool=pool, file_name=os.path.basename(out_file_name), options=options)
 
         # json_encode(dir_stage2, dir_stage1, pool=pool)
 
@@ -119,7 +119,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         print(f'\n\n{error}')
 
 
-def build_all(product_file_name: str, product_code: str = None):
+def build_all(product_file_name: str, product_code: str = None, processes=None):
     try:
         products = load_json(os.path.abspath(product_file_name))
         if product_code:
@@ -132,9 +132,7 @@ def build_all(product_file_name: str, product_code: str = None):
             build(
                 params['src'], params['bin'],
                 temp_dir=params.get('temp'), index=params.get('index'),
-                version=params.get('version'), descent=params.get('descent'),
-                gui=params.get('gui'),
-                product=product
+                options=params.get('options'), processes=processes
             )
         pass
     except Exception as err:
@@ -142,7 +140,7 @@ def build_all(product_file_name: str, product_code: str = None):
         print(f'\n\n{error}')
 
 
-def extract_all(product_file_name: str, product_code: str = None):
+def extract_all(product_file_name: str, product_code: str = None, processes=None):
     try:
         products = load_json(os.path.abspath(product_file_name))
         if product_code:
@@ -155,7 +153,7 @@ def extract_all(product_file_name: str, product_code: str = None):
             extract(
                 params['bin'], params['src'],
                 temp_dir=params.get('temp'), index=params.get('index'),
-                version=params.get('version'), descent=params.get('descent')
+                options=params.get('options'), processes=processes
             )
         pass
     except Exception as err:
@@ -203,14 +201,18 @@ def main():
                             'src - путь до папки с исходниками'
                        )
     parser.add_argument('--temp', help='путь до временной папки')
-    parser.add_argument('--core', help='название общей папки добавляемой в индекс по умолчанию')
+    parser.add_argument('--core', help='название общей папки добавляемой в индекс по умолчанию, только для режима -I')
     parser.add_argument('--index', help='путь до json файла с словарем копирования,'
                                         'структура файла: {путь исходника: путь общей папки}')
     parser.add_argument('--version', default='803',
                         help="версия сборки, для сборки обработок указывается версия платформы 801/802/803, "
                              " для сборки расширений указывается версия режима совместимости, "
                              "например для 8.3.6 это 80306, подробности в документации на github")
-    parser.add_argument('--descent',
+    parser.add_argument('--processes', type=int,
+                        help="количество процессов которые будут использоваться для работы, "
+                             " если не указано, то количество процессов = количеству ядер компьютера. "
+                             " Нет смысла указывать значения превышающее количество ядер")
+    parser.add_argument('--descent', type=int,
                         help="включает режим наследования при сборке и разборке,"
                              "четырех значный формат 3.0.75.100 (не более 3 знаков на каждый разряд)"
                              "подробности в инструкции - раздел разработка расширений")
@@ -219,8 +221,14 @@ def main():
                              "для расширений, если указан устанавливается в соответствующий реквизит. "
                              "Допустимые значения: "
                              " 0 - Версия 8.2, 1 - Версия 8.2. Разрешить Такси,"
-                             " 2- Такси. Разрешить Версия 8.2, 3 - Такси"
-                             "для расширений устанавливается в соответствующий реквизит")
+                             " 2- Такси. Разрешить Версия 8.2, 3 - Такси")
+    parser.add_argument("--auto_include", default=False, action="store_true",
+                        help="Если True содержимое метаданных собирается динамически в зависимости "
+                             "от наличия файлов в каталоге, а при разборке оглавление не сохраняется, "
+                             "например вы можете подкинуть файлы метаданных в каталог из другого проекта "
+                             "минусом является, что вложенные ресурсы всегда сортируются по алфавиту, "
+                             "если False то сборщик не трогает оглавление, вы добавляете и убираете"
+                             "всегда через конфигуратор")
 
     group.add_argument('-EA', nargs=1, metavar='file',
                        help='разобрать один или несколько файлов 1С, где '
@@ -238,16 +246,28 @@ def main():
         return 1
 
     args = parser.parse_args()
-    gui = args.gui if args.gui else None
+
+    options = {}
+    if args.gui:
+        options['gui'] = args.gui
+
+    if args.version:
+        options['version'] = args.gui
+
+    if args.auto_include:
+        options['auto_include'] = args.auto_include
+
+    if args.descent:
+        options['descent'] = args.descent
 
     if args.E is not None:
         extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
-                index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent)
+                index=args.index, temp_dir=args.temp, options=options)
         return
 
     if args.B is not None:
         build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
-              index=args.index, temp_dir=args.temp, version=args.version, descent=args.descent, gui=gui)
+              index=args.index, temp_dir=args.temp, options=options)
         return
 
     if args.BA is not None:

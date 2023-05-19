@@ -15,54 +15,13 @@ class Form802(Form8x):
         pass
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
-        try:
-            if not self.form[0]:
-                return
-            _ver = self.form[0][0][0]
-            if _ver == '2':
-                self.elements = FormElement803.decode_list(self, self.form[0][0][1], 23)
-                # self.props = FormPros802.decode_list(self, self.form[0][0][2][2])
-            else:
-                self.elements = FormElement802.decode_list(self, self.form[0][0][1][2][2])
-                self.props = FormProps802.decode_list(self, self.form[0][0][2][2])
-        except Exception as err:
-            pass  # todo если какие то елементы формы не разбираются, не прерываем
-            # raise ExtException(parent=err)
+        self.decode_old_elements()
 
     def write_encode_object(self, dest_dir):
         self.write_old_encode_object(dest_dir)
 
     def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
-        try:
-            if not self.form[0]:
-                return
-            _ver = self.form[0][0][0]
-            if _ver == '2':
-                index = self.get_form2_elem_index(file_name)
-                root_data = self.form[0][0][1]
-                index_root_element_count = index[0]
-                if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-                    self.elements = helper.json_read(src_dir, f'{file_name}.elements.tree{version}.json')
-                    self.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{version}.json')
-                    # root_data[index_root_element_count] = str(len(self.elements))
-                    FormElement803.encode_list(self, self.elements, root_data, index_root_element_count)
-            else:
-                FormElement802.encode_list(self, src_dir, file_name, version, self.form[0][0][1][2][2])
-                FormProps802.encode_list(self, src_dir, file_name, version, self.form[0][0][2][2])
-        except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{file_name}')
-
-    def get_form2_elem_index(self, file_name):
-        try:
-            root_data = self.form[0][0][1]
-            index_command_panel_count = calc_offset([(21, 0)], root_data)
-            command_panel_count = int(root_data[index_command_panel_count])
-            index_root_elem_count = index_command_panel_count + command_panel_count + 1
-            return index_root_elem_count, index_command_panel_count
-        except Exception as err:
-            raise ExtException(
-                message='случай требующий анализа, предоставьте образец формы разработчикам',
-                detail=f'{self.header["name"]} {file_name}, {err}')
+        self.encode_old_elements(src_dir, file_name, dest_dir, version, parent_id)
 
     # def encode_header(self):
     #     return [[

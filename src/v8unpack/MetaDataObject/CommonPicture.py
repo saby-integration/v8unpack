@@ -7,8 +7,8 @@ from ..ext_exception import ExtException
 
 
 class CommonPicture(Simple):
-    def __init__(self):
-        super(Simple, self).__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.ext_code = {}
         self.data = None
         self.raw_data = None

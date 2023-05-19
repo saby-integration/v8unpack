@@ -9,8 +9,8 @@ class DataProcessor(Container):
     }
     help_file_number = 1
 
-    def __init__(self):
-        super(DataProcessor, self).__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
 
     @classmethod
     def get_decode_header(cls, header_data):

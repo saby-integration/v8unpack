@@ -29,7 +29,7 @@ class FileOrganizer:
                     new_path = os.path.join(path, entry)
                     cls._unpack(src_dir, dest_dir, new_path, tasks, index, descent)
                     continue
-                if entry[-3:] == '.1c':
+                if entry[-4:] == '.bsl':
                     tasks.append((src_dir, path, entry, dest_dir, index, descent))
                 else:
                     src_path = os.path.join(src_dir, path)
@@ -152,7 +152,7 @@ class FileOrganizer:
                     path.pop()
                     pass
                 elif isinstance(index[entry], str):
-                    if entry[-3:] == '.1c':
+                    if entry[-4:] == '.bsl':
                         _src_path = os.path.join(
                             '..',
                             '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
@@ -214,7 +214,7 @@ class FileOrganizer:
                 descent_full_src_path, descent_file_name = cls.pack_get_descent_filename(
                     _src_path, entry, descent)
 
-                if entry[-3:] == '.1c':
+                if entry[-4:] == '.bsl':
                     tasks.append((
                         src_dir, path, descent_file_name, dest_dir, path, entry, index_code_areas, descent,
                         cls.pack_get_descent_filename))

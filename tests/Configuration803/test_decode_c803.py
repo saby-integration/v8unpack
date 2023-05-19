@@ -12,17 +12,10 @@ class TestDecode(HelperTestDecode):
     def setUp(self):
         super(TestDecode, self).setUp()
         self.src_dir = os.path.dirname(__file__)
-
         self.src_file = '1Cv8.cf'
-        self.version = '803'
-        # self.result = {
-        #     'count_root_files_stage1': 13,
-        #     'count_root_files_stage3': 5,
-        #     'count_root_files_stage4': 5,
-        #     'count_forms_files': 6,
-        #     'count_templates_files': 2
-        # }
-        self.init()
+        self.init(
+            version='803'
+        )
         pass
 
     def test_01_decode_stage0(self):
