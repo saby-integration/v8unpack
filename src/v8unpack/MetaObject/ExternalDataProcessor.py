@@ -66,7 +66,7 @@ class ExternalDataProcessor(MetaObject):
 
             self.set_product_info(src_dir, file_name)
 
-            if include_index:
+            if include_index and self.get_options('auto_include'):
                 self.fill_header_includes(include_index)
 
             helper.brace_file_write(self.encode_root(), dest_dir, 'root')

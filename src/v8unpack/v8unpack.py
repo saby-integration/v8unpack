@@ -252,7 +252,7 @@ def main():
         options['gui'] = args.gui
 
     if args.version:
-        options['version'] = args.gui
+        options['version'] = args.version
 
     if args.auto_include:
         options['auto_include'] = args.auto_include
