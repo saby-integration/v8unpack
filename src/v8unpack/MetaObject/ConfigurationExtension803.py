@@ -50,7 +50,7 @@ class ConfigurationExtension803(Configuration803):
 
         return tasks
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None):
+    def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None):
         self.header = helper.json_read(src_dir, f'{self.get_class_name_without_version()}.json')
 
         self.set_product_info(src_dir, file_name)

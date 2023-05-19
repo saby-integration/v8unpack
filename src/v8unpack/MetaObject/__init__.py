@@ -26,7 +26,6 @@ class MetaObject:
         self.code = {}
         self.file_list = []
         self.options = options
-        self.version = self.get_options('version')
 
     def get_options(self, name, default=None):
         try:
@@ -123,7 +122,7 @@ class MetaObject:
                     include_objects = include_index.get(_metadata, [])
                     include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
+    def encode_includes(self, src_dir, file_name, dest_dir, parent_id):
         tasks = []
         includes = []
         entries = sorted(os.listdir(src_dir))
@@ -141,18 +140,18 @@ class MetaObject:
             handler = helper.get_class_metadata_object(include)
             _src_dir = os.path.join(src_dir, include)
             handler.encode_get_include_obj(_src_dir, dest_dir, handler.get_obj_name(), tasks,
-                                           version, parent_id, {})
+                                           self.options, parent_id, {})
         return tasks
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, include_index):
         """
         возвращает список задач на парсинг объектов этого типа
         """
         entries = os.listdir(src_dir)
         for entry in entries:
             if cls.re_meta_data_obj.fullmatch(entry):
-                tasks.append([include, [src_dir, entry[:-5], dest_dir, version, parent_id, include_index]])
+                tasks.append([include, [src_dir, entry[:-5], dest_dir, options, parent_id, include_index]])
 
     @classmethod
     def encode_versions(cls, file_list):
@@ -163,7 +162,7 @@ class MetaObject:
         return [versions]
 
     @classmethod
-    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version, parent_id,
+    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, options, parent_id,
                                                  include_index):
         """
         возвращает список задач на парсинг объектов этого типа
@@ -172,7 +171,7 @@ class MetaObject:
         for entry in entries:
             if os.path.isdir(os.path.join(src_dir, entry)):
                 new_src_dir = os.path.join(src_dir, entry)
-                tasks.append([include, [new_src_dir, entry, dest_dir, version, parent_id, include_index]])
+                tasks.append([include, [new_src_dir, entry, dest_dir, options, parent_id, include_index]])
 
     def encode_version(self):
         return self.header['version']

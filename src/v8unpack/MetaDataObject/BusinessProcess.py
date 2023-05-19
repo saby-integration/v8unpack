@@ -18,8 +18,8 @@ class BusinessProcess(Container):
         except FileNotFoundError:
             return
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
-        res = super().encode_object(src_dir, file_name, dest_dir, version)
+    def encode_object(self, src_dir, file_name, dest_dir):
+        res = super().encode_object(src_dir, file_name, dest_dir)
         try:
             package = helper.bin_read(src_dir, 'Карта маршрута.bin')
             file_name = f'{self.header["uuid"]}.7'

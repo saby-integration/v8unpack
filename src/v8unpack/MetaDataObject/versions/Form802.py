@@ -6,7 +6,7 @@ from ...ext_exception import ExtException
 
 
 class Form802(Form8x):
-    ver = '802'
+    version = '802'
 
     def decode_code(self, src_dir):
         self.decode_old_form(src_dir)
@@ -20,8 +20,8 @@ class Form802(Form8x):
     def write_encode_object(self, dest_dir):
         self.write_old_encode_object(dest_dir)
 
-    def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
-        self.encode_old_elements(src_dir, file_name, dest_dir, version, parent_id)
+    def encode_nested_includes(self, src_dir, file_name, dest_dir, parent_id):
+        self.encode_old_elements(src_dir, file_name, dest_dir, parent_id)
 
     # def encode_header(self):
     #     return [[

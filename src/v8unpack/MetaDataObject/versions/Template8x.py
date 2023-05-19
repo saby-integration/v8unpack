@@ -144,7 +144,7 @@ class Template8x(Simple):
         _header = header[0][1][2]
         helper.decode_header(self.header, _header)
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
+    def encode_object(self, src_dir, file_name, dest_dir):
         self.tmpl_type = TmplType[self.header['type']]
 
         self.raw_header = self.encode_header()

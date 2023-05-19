@@ -28,7 +28,6 @@ class MetaDataObject(MetaObject):
             return cls
         try:
             return cls.versions[version]
-            # return cls.versions.get(version, cls.versions['803'])
         except KeyError:
             raise Exception(f'Нет реализации {cls.__name__} для версии "{version}"')
 
@@ -39,7 +38,8 @@ class MetaDataObject(MetaObject):
     @classmethod
     def decode_get_handler(cls, src_dir, file_name, options):
         try:
-            return cls.get_version(options.get('version', '803'))(options=options)
+            version = helper.get_options_param(options, 'version', '803')
+            return cls.get_version(version)(options=options)
         except Exception as err:
             raise ExtException(message='Не смогли получить класс объекта', detail=f'{cls.__name__} {err}')
 
@@ -90,15 +90,14 @@ class MetaDataObject(MetaObject):
     def get_include_obj_uuid(self):
         return self.header['uuid']
 
-    def encode(self, src_dir, file_name, dest_dir, version, parent_id, include_index):
-        self.version = version
+    def encode(self, src_dir, file_name, dest_dir, parent_id, include_index):
         src_file_name = self.get_encode_file_name(file_name)
         try:
             if not include_index:
                 current_obj_id = f"{parent_id}/{self.title}/{file_name}"
-                child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, version, current_obj_id)
+                child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, current_obj_id)
                 if child_tasks:
-                    object_task = [self.__class__.__name__, [src_dir, file_name, dest_dir, version, parent_id, {}]]
+                    object_task = [self.__class__.__name__, [src_dir, file_name, dest_dir, self.options, parent_id, {}]]
                     return object_task, child_tasks
             try:
                 self.header = helper.json_read(src_dir, f'{src_file_name}.json')
@@ -106,7 +105,7 @@ class MetaDataObject(MetaObject):
                 return
             if include_index and self.get_options('auto_include'):
                 self.fill_header_includes(include_index)  # todo dynamic index
-            self.encode_object(src_dir, src_file_name, dest_dir, version)
+            self.encode_object(src_dir, src_file_name, dest_dir)
             self.write_encode_object(dest_dir)
             return dict(
                 parent_id=parent_id,
@@ -123,7 +122,7 @@ class MetaDataObject(MetaObject):
     def get_encode_file_name(self, file_name):
         return file_name
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
+    def encode_object(self, src_dir, file_name, dest_dir):
         msg = f'Нет реализации для "{self.__class__.__name__}"'
         raise Exception(msg)
 

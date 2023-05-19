@@ -25,12 +25,7 @@ class Decoder:
     @staticmethod
     def detect_version(src_dir, options=None):
         def init_handler(handler):
-            handler_version = handler.version
-            if options:
-                _version = options.get('version')
-                if _version and _version.startswith(handler_version):
-                    handler_version = _version
-            options['version'] = handler_version
+            options['version'] = handler.version
             return handler(options=options)
 
         if os.path.isfile(os.path.join(src_dir, 'root')):
@@ -106,7 +101,7 @@ class Decoder:
         helper.clear_dir(dest_dir)
 
         parent_id = encoder.get_class_name_without_version()
-        child_tasks = encoder.encode_includes(src_dir, file_name, dest_dir, encoder.version, parent_id)
+        child_tasks = encoder.encode_includes(src_dir, file_name, dest_dir, parent_id)
         include_index = {}
         file_list = []
         object_task = []
@@ -137,8 +132,7 @@ class Decoder:
 
     @classmethod
     def get_encoder(cls, src_dir, options=None):
-        version = '803'
-        version = options.get('version', version) if options else version
+        version = helper.get_options_param(options, 'version', '803')[:3]
         if os.path.isfile(os.path.join(src_dir, 'ExternalDataProcessor.json')):
             versions = {
                 '801': ExternalDataProcessor801,
@@ -158,13 +152,12 @@ class Decoder:
 
     @classmethod
     def encode_include(cls, params):
-        include_type, encode_params = params
+        include_type, (new_src_dir, entry, dest_dir, options, parent_id, include_index) = params
         try:
-
             handler = helper.get_class_metadata_object(include_type)
-            handler = handler.get_version(encode_params[3])()
+            handler = handler.get_version(options.get('version'))(options=options)
             handler.title = include_type
-            object_task, child_tasks = handler.encode(*encode_params)
+            object_task, child_tasks = handler.encode(new_src_dir, entry, dest_dir, parent_id, include_index)
             return object_task, child_tasks
         except Exception as err:
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
@@ -172,7 +165,6 @@ class Decoder:
 
 def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
     def unpack_dummy():
-        version = options.get('version')
         helper.clear_dir(dest_dir)
         dummy_path = os.path.join(src_dir, 'dummy.zip')
         if version and int(version.ljust(5, '0')) >= 80316 and os.path.isfile(dummy_path):
@@ -181,13 +173,11 @@ def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
             return os.path.join(dest_dir, '1')
         return container_dest_dir
 
-    if not options:
-        options = {}
-    if not options.get('version'):
-        options['version'] = '803'
+    version = helper.get_options_param(options, 'version', '803')
 
     container_dest_dir = os.path.join(dest_dir, '0')
     container_dest_dir = unpack_dummy()
+    options = helper.set_options_param(options, 'version', version[:3])
     Decoder.encode(src_dir, container_dest_dir, pool=pool, options=options, file_name=file_name)
 
 
