@@ -98,7 +98,7 @@ class MetaObject:
                         os.mkdir(os.path.join(dest_dir, new_dest_path))
                     handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.options)
                     external_obj = True
-            if external_obj and self.options.get('auto_include'):  # todo dynamic index
+            if external_obj and self.get_options('auto_include'):  # todo dynamic index
                 include[i + 3] = metadata_type.name
 
     @classmethod
