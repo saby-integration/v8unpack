@@ -230,10 +230,14 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
         len_decode_line = len(decode_line)
         len_encode_line = len(encode_line)
         if decode_line.endswith(b'\r\n'):
-            if decode_line[:-2] == encode_line: # Лишние фигурные скобки
+            if decode_line[:-2] == encode_line:  # Лишние фигурные скобки
                 return True
         if not encode_line:
             if decode_line == b'}\r\n' or decode_line == b'}':  # Лишние фигурные скобки
+                return True
+        if encode_line.endswith(b'\r\r\n'):
+            if decode_line.endswith(b'\r\n') and decode_line[:-2] == encode_line[:-3]:
+                decode_file.readline()
                 return True
         if encode_line.endswith(b'\r\n'):
             if decode_line.endswith(b'\r\r\n') and decode_line[:-3] == encode_line[:-2]:
@@ -245,6 +249,7 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
             if encode_line[:-2] == decode_line:
                 return True
             if decode_line.endswith(b'\r\n') \
+                    and len_decode_line > 2 \
                     and decode_line[-3] == b','[0] \
                     and (len_decode_line - len_encode_line) == 1:
                 return True

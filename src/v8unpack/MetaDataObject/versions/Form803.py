@@ -38,7 +38,7 @@ class Form803(Form8x):
             self.decode_form0(src_dir, uuid)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header.get('Тип формы') == OLD_FORM:
             self.decode_old_elements()
             return
         if not self.form or not self.form[0]:
@@ -51,38 +51,34 @@ class Form803(Form8x):
         except:
             return
 
+        backup = json.dumps(self.form)
         try:
             self.decode_elements(src_dir, dest_dir, dest_path, header_data)
             self.params = FormParams.decode_list(self, self.form[0][0])
             self.commands = FormCommands.decode_list(self, self.form[0][0])
             self.props = FormProps.decode_list(self, self.form[0][0])
         except Exception as err:
+            self.form = json.loads(backup)
             pass  # todo если какие то елементы формы не разбираются, не прерываем
             # raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def decode_elements(self, src_dir, dest_dir, dest_path, header_data):
-        backup = json.dumps(self.form)
-        try:
-            index = self.get_form_elem_index()
-            root_data = self.form[0][0][1]
+        index = self.get_form_elem_index()
+        root_data = self.form[0][0][1]
 
-            # index_panel_count = index[1]
-            # form_panels_count = int(root_data[index_panel_count])
-            # if form_panels_count:
-            #     self.command_panels = [root_data[index_panel_count + 1]]
-            #     root_data[index_panel_count] = 'В отдельном файле'
-            #     del root_data[index_panel_count + 1]
+        # index_panel_count = index[1]
+        # form_panels_count = int(root_data[index_panel_count])
+        # if form_panels_count:
+        #     self.command_panels = [root_data[index_panel_count + 1]]
+        #     root_data[index_panel_count] = 'В отдельном файле'
+        #     del root_data[index_panel_count + 1]
 
-            index_root_element_count = index[0]
-            form_items_count = int(root_data[index_root_element_count])
-            if form_items_count:
-                self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
-                self.elements_data = dict(sorted(self.elements_data.items()))
-            pass
-        except helper.FuckingBrackets as err:
-            self.form = json.loads(backup)
-        except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{dest_path}')
+        index_root_element_count = index[0]
+        form_items_count = int(root_data[index_root_element_count])
+        if form_items_count:
+            self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
+            self.elements_data = dict(sorted(self.elements_data.items()))
+        pass
 
     def get_form_elem_index(self):
         try:
@@ -171,7 +167,7 @@ class Form803(Form8x):
         return self.form
 
     def encode_nested_includes(self, src_dir, file_name, dest_dir, parent_id):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header.get('Тип формы') == OLD_FORM:
             self.encode_old_elements(src_dir, file_name, dest_dir, parent_id)
             return
 
