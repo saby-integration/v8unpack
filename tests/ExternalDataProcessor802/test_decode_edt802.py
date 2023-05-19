@@ -15,8 +15,6 @@ class TestDecode(HelperTestDecode):
         self.src_dir = os.path.dirname(__file__)
         self.dest_dir = os.path.join(self.src_dir, 'src')
         self.src_file = 'ВнешняяОбработка802.epf'
-
-        self.version = '802'
         self.result = {
             # 'count_root_files_stage1': 14,
             # 'count_root_files_stage3': 5,
@@ -25,7 +23,8 @@ class TestDecode(HelperTestDecode):
             # 'count_templates_files': 2
         }
         self.init(
-            # index='index.json'
+            # index='index.json',
+            version='802'
         )
         pass
 

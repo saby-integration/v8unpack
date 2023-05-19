@@ -6,13 +6,11 @@ from ..ext_exception import ExtException
 
 class ExternalDataProcessor(MetaObject):
 
-    def __init__(self):
-        super(ExternalDataProcessor, self).__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.data = None
 
-    @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
-        self = cls()
+    def decode(self, src_dir, dest_dir):
         self.header = {}
         self.data = {}
         root = helper.brace_file_read(src_dir, 'root')

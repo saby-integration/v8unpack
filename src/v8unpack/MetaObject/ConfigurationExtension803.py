@@ -13,12 +13,7 @@ class ConfigurationExtension803(Configuration803):
         'ssn': '7'
     }
 
-    def __init__(self):
-        super(ConfigurationExtension803, self).__init__()
-
-    @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
-        self = cls()
+    def decode(self, src_dir, dest_dir, *, version=None, **kwargs):
         self.header = {}
         root = helper.brace_file_read(src_dir, 'configinfo')
         self.header['v8unpack'] = __version__
@@ -50,19 +45,20 @@ class ConfigurationExtension803(Configuration803):
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
 
         helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.bin', encoding='utf-8')
-        helper.json_write(self.header, dest_dir, f'{cls.get_class_name_without_version()}.json')
-        self.write_decode_code(dest_dir, cls.__name__)
+        helper.json_write(self.header, dest_dir, f'{self.get_class_name_without_version()}.json')
+        self.write_decode_code(dest_dir, self.__class__.__name__)
 
         return tasks
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, gui=None, include_index=None, file_list=None,
-               **kwargs):
+    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None):
         self.header = helper.json_read(src_dir, f'{self.get_class_name_without_version()}.json')
 
         self.set_product_info(src_dir, file_name)
 
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
+
+        gui = self.get_options('gui')
         if gui is not None:
             self.header['data'][0][3][1][1][38] = gui
 

@@ -4,6 +4,10 @@ import re
 from ..core.Simple import SimpleNameFolder
 from ... import helper
 from ...ext_exception import ExtException
+from .Form802Elements.FormElement import FormElement as FormElement802, FormProps as FormProps802
+from .Form803Elements.FormElement import FormElement as FormElement803, FormProps as FormProps803, calc_offset
+from ... import helper
+from ...ext_exception import ExtException
 
 
 class Form8x(SimpleNameFolder):
@@ -12,8 +16,8 @@ class Form8x(SimpleNameFolder):
     double_quotes = re.compile(r'("")')
     quotes = re.compile(r'(")')
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.form = []
         self.elements = []
         self.elements_data = {}
@@ -99,14 +103,29 @@ class Form8x(SimpleNameFolder):
                 self.decode_form0(src_dir, self.header["uuid"])
                 pass
 
-    def write_decode_object(self, dest_dir, dest_path, file_name, version):
-        super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name, version)
-        helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{version}.json')
+    def decode_old_elements(self):
+        try:
+            if not self.form[0]:
+                return
+            _ver = self.form[0][0][0]
+            if _ver == '2':
+                self.elements = FormElement803.decode_list(self, self.form[0][0][1], 23)
+                # self.props = FormPros802.decode_list(self, self.form[0][0][2][2])
+            else:
+                self.elements = FormElement802.decode_list(self, self.form[0][0][1][2][2])
+                self.props = FormProps802.decode_list(self, self.form[0][0][2][2])
+        except Exception as err:
+            pass  # todo если какие то елементы формы не разбираются, не прерываем
+            # raise ExtException(parent=err)
+
+    def write_decode_object(self, dest_dir, dest_path, file_name):
+        super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name)
+        helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.version}.json')
         if self.elements:
-            helper.json_write(self.elements, self.new_dest_dir, f'{file_name}.elements.tree{version}.json')
-            helper.json_write(self.elements_data, self.new_dest_dir, f'{file_name}.elements.data{version}.json')
+            helper.json_write(self.elements, self.new_dest_dir, f'{file_name}.elements.tree{self.version}.json')
+            helper.json_write(self.elements_data, self.new_dest_dir, f'{file_name}.elements.data{self.version}.json')
         if self.props:
-            helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{version}.json')
+            helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
         return []
 
     def decode_data(self, src_dir, uuid):
@@ -126,6 +145,37 @@ class Form8x(SimpleNameFolder):
             self.form = self.encode_empty_form()
         self.encode_data()
         self.encode_nested_includes(src_dir, file_name, dest_dir, version, None)
+
+    def encode_old_elements(self, src_dir, file_name, dest_dir, version, parent_id):
+        def get_form2_elem_index(_root_data, _file_name):
+            try:
+                index_command_panel_count = calc_offset([(21, 0)], _root_data)
+                command_panel_count = int(_root_data[index_command_panel_count])
+                index_root_elem_count = index_command_panel_count + command_panel_count + 1
+                return index_root_elem_count, index_command_panel_count
+            except Exception as err:
+                raise ExtException(
+                    message='случай требующий анализа, предоставьте образец формы разработчикам',
+                    detail=f'{self.header["name"]} {_file_name}, {err}')
+        try:
+            if not self.form[0]:
+                return
+            _ver = self.form[0][0][0]
+            if _ver == '2':
+                root_data = self.form[0][0][1]
+                index = get_form2_elem_index(root_data, file_name)
+                index_root_element_count = index[0]
+                if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
+                    self.elements = helper.json_read(src_dir, f'{file_name}.elements.tree{version}.json')
+                    self.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{version}.json')
+                    # root_data[index_root_element_count] = str(len(self.elements))
+                    FormElement803.encode_list(self, self.elements, root_data, index_root_element_count)
+            else:
+                FormElement802.encode_list(self, src_dir, file_name, version, self.form[0][0][1][2][2])
+                FormProps802.encode_list(self, src_dir, file_name, version, self.form[0][0][2][2])
+        except Exception as err:
+            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{file_name}')
+
 
     def encode_header(self):
         return self.header['data']

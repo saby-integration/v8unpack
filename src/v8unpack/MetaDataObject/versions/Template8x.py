@@ -25,8 +25,8 @@ class TmplType(Enum):
 
 class Template8x(Simple):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.data = None
         self.tmpl_type = None
         self.raw_data = None
@@ -82,20 +82,22 @@ class Template8x(Simple):
     def decode_graphic_scheme_data(self, src_dir, dest_dir, write):
         self.decode_scheme_data(src_dir, dest_dir, write)
 
-    def decode_scheme_data(self, src_dir, dest_dir, write):
+    def decode_scheme_data(self, src_dir, dest_dir, write, *, extension='bin'):
         try:
             shutil.copy2(
                 os.path.join(src_dir, f'{self.header["uuid"]}.0'),
-                os.path.join(dest_dir, f'{self.header["name"]}.bin')
+                os.path.join(dest_dir, f'{self.header["name"]}.{extension}')
             )
             # self.data = helper.bin_read(src_dir, f'{self.header["uuid"]}.0')
             # if write:
             #     helper.bin_write(self.data, dest_dir, f'{self.header["name"]}.bin')
         except FileNotFoundError:
-            self.decode_text_data(src_dir, dest_dir, write)
+            return
+            # self.decode_text_data(src_dir, dest_dir, write) ??? что это
 
     def decode_table_data(self, src_dir, dest_dir, write):
-        self.decode_scheme_data(src_dir, dest_dir, write)
+        self.decode_scheme_data(src_dir, dest_dir, write, extension='mxl')
+
 
     def decode_text_data(self, src_dir, dest_dir, write):
         try:
@@ -158,7 +160,7 @@ class Template8x(Simple):
         self.encode_scheme_data(src_dir, dest_dir)
 
     def encode_table_data(self, src_dir, dest_dir):
-        self.encode_scheme_data(src_dir, dest_dir)
+        self.encode_scheme_data(src_dir, dest_dir, extension='mxl')
 
     def encode_geographic_data(self, src_dir, dest_dir):
         self.encode_scheme_data(src_dir, dest_dir)
@@ -169,11 +171,11 @@ class Template8x(Simple):
     def encode_graphic_scheme_data(self, src_dir, dest_dir):
         self.encode_scheme_data(src_dir, dest_dir)
 
-    def encode_scheme_data(self, src_dir, dest_dir):
+    def encode_scheme_data(self, src_dir, dest_dir, *, extension='bin'):
         try:
             file_name = f'{self.header["uuid"]}.0'
             shutil.copy2(
-                os.path.join(src_dir, f'{self.header["name"]}.bin'),
+                os.path.join(src_dir, f'{self.header["name"]}.{extension}'),
                 os.path.join(dest_dir, file_name)
             )
             self.file_list.append(file_name)

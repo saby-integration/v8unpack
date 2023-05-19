@@ -23,7 +23,16 @@ available_types = {
 
 class Decoder:
     @staticmethod
-    def detect_version(src_dir):
+    def detect_version(src_dir, options=None):
+        def init_handler(handler):
+            handler_version = handler.version
+            if options:
+                _version = options.get('version')
+                if _version and _version.startswith(handler_version):
+                    handler_version = _version
+            options['version'] = handler_version
+            return handler(options=options)
+
         if os.path.isfile(os.path.join(src_dir, 'root')):
             version = helper.brace_file_read(src_dir, 'version')
             if int(version[0][0][0]) >= 216:
@@ -44,28 +53,27 @@ class Decoder:
                 else:
                     raise Exception(f'Not supported version {_tmp}')
                 try:
-                    return available_types[f'{obj_type.name}{obj_version}']
+                    return init_handler(available_types[f'{obj_type.name}{obj_version}'])
                 except KeyError:
                     raise Exception(f'Not supported version {obj_type.name}{obj_version}')
             elif version[0][0][0] == "106":
-                return ExternalDataProcessor801()
+                return init_handler(ExternalDataProcessor801)
         if os.path.isfile(os.path.join(src_dir, 'configinfo')):
             version = helper.brace_file_read(src_dir, 'configinfo')
             if version[0][1][0] == "216":
                 if len(version[0][1]) == 3:
                     obj_version = version[0][1][2][0]
                     if obj_version[:3] == '803':
-                        return ConfigurationExtension803()
+                        return init_handler(ConfigurationExtension803)
         raise Exception('Не удалось определить парсер')
 
     @classmethod
-    def decode(cls, src_dir, dest_dir, *, pool=None, version=None):
+    def decode(cls, src_dir, dest_dir, *, pool=None, options=None):
         begin = datetime.now()
         print(f'{"Разбираем объект":30}')
-        decoder = cls.detect_version(src_dir)
+        decoder = cls.detect_version(src_dir, options=options)
         helper.clear_dir(dest_dir)
-        tasks = decoder.decode(src_dir, dest_dir,
-                               version=version)  # возвращает список вложенных объектов MetaDataObject
+        tasks = decoder.decode(src_dir, dest_dir)  # возвращает список вложенных объектов MetaDataObject
         while tasks:  # многопоточно рекурсивно декодируем вложенные объекты MetaDataObject
             tasks = helper.run_in_pool(cls.decode_include, tasks, pool, title=f'{"Разбираем вложенные объекты":30}',
                                        need_result=True)
@@ -74,11 +82,11 @@ class Decoder:
 
     @classmethod
     def decode_include(cls, params):
-        include_type, decode_params = params
+        include_type, (obj_uuid, src_dir, dest_dir, new_dest_path, options) = params
         try:
             handler = helper.get_class_metadata_object(include_type)
             # handler = handler.get_version(decode_params[4])
-            tasks = handler.decode(*decode_params, parent_type=include_type)
+            tasks = handler.decode(obj_uuid, src_dir, dest_dir, new_dest_path, options, parent_type=include_type)
             return tasks
         except ExtException as err:
             raise ExtException(
@@ -89,11 +97,11 @@ class Decoder:
             raise ExtException(parent=err, action=f'{cls.__name__}.decode_include')
 
     @classmethod
-    def encode(cls, src_dir, dest_dir, *, pool=None, version=None, file_name=None, gui=None, **kwargs):
+    def encode(cls, src_dir, dest_dir, *, pool=None, file_name=None, options=None):
         begin = datetime.now()
         print(f'{"Собираем объект":30}')
         helper.clear_dir(dest_dir)
-        encoder = cls.get_encoder(src_dir, '803' if version is None else version[:3])()
+        encoder = cls.get_encoder(src_dir, options)
         # возвращает список вложенных объектов MetaDataObject
         helper.clear_dir(dest_dir)
 
@@ -122,28 +130,30 @@ class Decoder:
                 title = f'{"Собираем составные объекты":30}'
             a = 1
 
-        encoder.encode(src_dir, dest_dir, version=version, file_name=file_name, gui=gui,
-                       include_index=include_index.pop(parent_id, None), file_list=file_list)
+        encoder.encode(src_dir, dest_dir, file_name=file_name, include_index=include_index.pop(parent_id, None),
+                       file_list=file_list)
 
         print(f'{"Сборка объекта закончена":30}: {datetime.now() - begin}')
 
     @classmethod
-    def get_encoder(cls, src_dir, version='803'):
+    def get_encoder(cls, src_dir, options=None):
+        version = '803'
+        version = options.get('version', version) if options else version
         if os.path.isfile(os.path.join(src_dir, 'ExternalDataProcessor.json')):
             versions = {
                 '801': ExternalDataProcessor801,
                 '802': ExternalDataProcessor802,
                 '803': ExternalDataProcessor803,
             }
-            return versions[version]
+            return versions[version](options=options)
         if version == '803':
             if os.path.isfile(os.path.join(src_dir, 'ConfigurationExtension.json')):
-                return ConfigurationExtension803
+                return ConfigurationExtension803(options=options)
             if os.path.isfile(os.path.join(src_dir, 'Configuration.json')):
-                return Configuration803
+                return Configuration803(options=options)
         elif version == '802':
             if os.path.isfile(os.path.join(src_dir, 'Configuration802.json')):
-                return Configuration802
+                return Configuration802(options=options)
         raise FileNotFoundError(f'Не найдены файлы для сборки версии {version} ({src_dir})')
 
     @classmethod
@@ -160,23 +170,34 @@ class Decoder:
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
 
 
-def encode(src_dir, dest_dir, *, pool=None, version='803', gui=None, file_name=None, **kwargs):
-    helper.clear_dir(dest_dir)
-    _dest_dir = os.path.join(dest_dir, '0')
-    dummy_path = os.path.join(src_dir, 'dummy.zip')
-    if version and int(version.ljust(5, '0')) >= 80316 and os.path.isfile(dummy_path):
-        helper.clear_dir(_dest_dir)
-        shutil.unpack_archive(dummy_path, _dest_dir)
-        _dest_dir = os.path.join(dest_dir, '1')
-    Decoder.encode(src_dir, _dest_dir, pool=pool, version=version, gui=gui, file_name=file_name, **kwargs)
+def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
+    def unpack_dummy():
+        version = options.get('version')
+        helper.clear_dir(dest_dir)
+        dummy_path = os.path.join(src_dir, 'dummy.zip')
+        if version and int(version.ljust(5, '0')) >= 80316 and os.path.isfile(dummy_path):
+            helper.clear_dir(container_dest_dir)
+            shutil.unpack_archive(dummy_path, container_dest_dir)
+            return os.path.join(dest_dir, '1')
+        return container_dest_dir
+
+    if not options:
+        options = {}
+    if not options.get('version'):
+        options['version'] = '803'
+
+    container_dest_dir = os.path.join(dest_dir, '0')
+    container_dest_dir = unpack_dummy()
+    Decoder.encode(src_dir, container_dest_dir, pool=pool, options=options, file_name=file_name)
 
 
-def decode(src_dir, dest_dir, *, pool=None, version=None):
+def decode(src_dir, dest_dir, *, pool=None, options=None):
     containers = os.listdir(src_dir)
-    _src_dir = containers[-1]
     containers_count = len(containers)
     if containers_count not in [1, 2]:
         raise NotImplementedError(f'Количество контейнеров {containers_count}')
-    Decoder.decode(os.path.join(src_dir, _src_dir), dest_dir, pool=pool, version=version)
+
+    _src_dir = os.path.join(src_dir, containers[-1])
+    Decoder.decode(_src_dir, dest_dir, pool=pool, options=options)
     if containers_count == 2:
         shutil.make_archive(os.path.join(dest_dir, 'dummy'), 'zip', os.path.join(src_dir, '0'))
