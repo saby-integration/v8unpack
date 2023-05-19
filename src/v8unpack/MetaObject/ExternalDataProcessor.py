@@ -54,7 +54,7 @@ class ExternalDataProcessor(MetaObject):
     def get_decode_header(cls, header_data):
         return header_data[0][3][1][1][3][1]
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None, **kwargs):
+    def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None, **kwargs):
         try:
             _file_name = self.get_class_name_without_version()
             self.header = helper.json_read(src_dir, f'{_file_name}.json')

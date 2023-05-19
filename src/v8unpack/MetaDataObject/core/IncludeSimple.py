@@ -32,7 +32,7 @@ class IncludeSimple(MetaDataObject):
     def get_decode_header(cls, header_data):
         return header_data[0][1][3][2][9]
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
+    def encode_object(self, src_dir, file_name, dest_dir):
         self.encode_code(src_dir, self.header["name"])
         return []
 

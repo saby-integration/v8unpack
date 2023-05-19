@@ -30,8 +30,8 @@ class CommonPicture(Simple):
         except Exception as err:
             raise ExtException(parent=err)
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
-        super(CommonPicture, self).encode_object(src_dir, file_name, dest_dir, version)
+    def encode_object(self, src_dir, file_name, dest_dir):
+        super().encode_object(src_dir, file_name, dest_dir)
 
         extension = helper.get_extension_from_comment(self.header['comment'])
         try:

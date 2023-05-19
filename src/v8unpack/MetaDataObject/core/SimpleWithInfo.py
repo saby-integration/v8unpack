@@ -23,8 +23,8 @@ class SimpleWithInfo(Simple):
         #     helper.brace_file_write(info, dest_dir, file_name)
         #     self.file_list.append(file_name)
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
-        super().encode_object(src_dir, file_name, dest_dir, version)
+    def encode_object(self, src_dir, file_name, dest_dir):
+        super().encode_object(src_dir, file_name, dest_dir)
         try:
             _src = os.path.join(src_dir, f'{file_name}.0.c1brace')
             _dest_file_name = f'{self.header["uuid"]}.0'

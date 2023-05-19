@@ -468,3 +468,17 @@ def check_index(index_filename):
         data = update_dict(*index)
         return data
     return None
+
+
+def get_options_param(options, param_name, default=None):
+    try:
+        return options[param_name]
+    except (KeyError, TypeError):
+        return default
+
+
+def set_options_param(options, param_name, param_value):
+    if options is None:
+        options = {}
+    options[param_name] = param_value
+    return options
