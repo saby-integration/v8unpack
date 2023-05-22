@@ -122,7 +122,7 @@ class Decoder:
                 for elem in _object_task:
                     elem[1][5] = include_index.pop(f"{elem[1][4]}/{elem[0]}/{elem[1][1]}")
                 child_tasks = _object_task
-                title = f'{"Собираем составные объекты":30}'
+                title = f'{"Собираем вложенные объекты":30}'
             a = 1
 
         encoder.encode(src_dir, dest_dir, file_name=file_name, include_index=include_index.pop(parent_id, None),
