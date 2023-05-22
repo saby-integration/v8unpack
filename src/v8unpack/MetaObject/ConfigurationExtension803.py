@@ -70,7 +70,7 @@ class ConfigurationExtension803(Configuration803):
 
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
-        if include_index:
+        if include_index and self.get_options('auto_include'):
             self.fill_header_includes(include_index)
 
         # self.header['copyinfo'][2] = b64encode(bytes.fromhex(self.header['copyinfo'][2]+md5().digest().hex())).decode()
