@@ -12,6 +12,9 @@ class ConfigurationExtension803(Configuration803):
         'app': '6',
         'ssn': '7'
     }
+    _obj_info = {
+        'a': 'a',
+    }
 
     def decode(self, src_dir, dest_dir, *, version=None, **kwargs):
         self.header = {}
@@ -42,6 +45,8 @@ class ConfigurationExtension803(Configuration803):
                 self.header[f'info{i}'] = helper.brace_file_read(src_dir, file_name)
             except FileNotFoundError:
                 pass
+        file_name = self.get_class_name_without_version()
+        self._decode_info(src_dir, dest_dir, file_name)
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
 
         helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.bin', encoding='utf-8')
@@ -77,6 +82,8 @@ class ConfigurationExtension803(Configuration803):
         ]
         self.encode_code(src_dir, self.__class__.__name__)
         self.write_encode_code(dest_dir)
+        _file_name = self.get_class_name_without_version()
+        self._encode_info(src_dir, _file_name, dest_dir)
         helper.brace_file_write(root, dest_dir, 'configinfo')
         helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
         for i in self.info:  # хз что это

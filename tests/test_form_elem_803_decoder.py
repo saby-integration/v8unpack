@@ -27,20 +27,20 @@ class TestFormElem803(unittest.TestCase):
         self.assertEqual('', result)
 
     def test_decode_form_elem(self):
-        uuid = '5f2980ca-3f1c-4680-a6e9-477825442782'
+        uuid = '66f22eef-9167-4661-acc1-769de41ab428'
         result = self.decode_form_elem(uuid)
         self.assertEqual('', result)
 
     def decode_form_elem(self, uuid):
         file_name = f'{uuid}.0'
+        json_file_name = f'{file_name}.json'
         helper.clear_dir(self.temp_dir)
-        if os.path.isfile(os.path.join(self.data_dir, file_name)):
-            brace = True
+        if not os.path.isfile(os.path.join(self.data_dir, json_file_name)):
             raw_data = helper.brace_file_read(self.data_dir, file_name)
+            helper.json_write(raw_data, self.data_dir, json_file_name)
+            os.remove(os.path.join(self.data_dir, file_name))
         else:
-            brace = False
-            file_name = f'{file_name}.json'
-            raw_data = helper.json_read(self.data_dir, file_name)
+            raw_data = helper.json_read(self.data_dir, json_file_name)
         form = Form802() if raw_data[0][0] == '2' else Form803()
         form.new_dest_dir = self.temp_dir
         form.form = [raw_data]
@@ -48,16 +48,12 @@ class TestFormElem803(unittest.TestCase):
 
         form.write_decode_object(self.temp_dir, '', uuid)
         form.encode_nested_includes(self.temp_dir, uuid, self.temp_dir, '')
-        if brace:
-            helper.brace_file_write(form.form[0], self.temp_dir, file_name)
-
-        else:
-            helper.json_write(form.form[0], self.temp_dir, file_name)
+        helper.json_write(form.form[0], self.temp_dir, json_file_name)
         problems = ''
         try:
             result = compare_file(
-                os.path.join(self.data_dir, file_name),
-                os.path.join(self.temp_dir, file_name),
+                os.path.join(self.data_dir, json_file_name),
+                os.path.join(self.temp_dir, json_file_name),
                 problems
             )
         except NotEqualLine as err:

@@ -259,6 +259,7 @@ class JsonContainerDecoder:
             self.current_value += value
         except TypeError:
             self.current_value = value
+        self.previous_char = value
 
     def _end_current_object(self):
         self._end_value()
@@ -266,12 +267,14 @@ class JsonContainerDecoder:
             self.path.pop()
         self.current_object = self.path[-1] if self.path else None
         self.current_value = None
+        self.previous_char = '}'
 
     def _end_value(self):
         self.mode = Mode.READ_PARAM
-        if self.current_value is not None:
+        if self.previous_char != '}':
             self.current_object.append(self.current_value)
             self.current_value = ''
+        self.previous_char = ','
 
     @classmethod
     def encode_mp(cls, params):
@@ -351,6 +354,10 @@ class JsonContainerDecoder:
                                 break
                     else:
                         raw_data += elem
+            elif elem is None:
+                pass
+            else:
+                raise NotImplementedError(elem)
 
             if i != data_len - 1:
                 raw_data += ','
