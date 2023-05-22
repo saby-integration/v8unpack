@@ -83,8 +83,8 @@ class Configuration803(MetaObject):
         return tasks
 
     def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None):
-        file_name = self.get_class_name_without_version()
-        self.header = helper.json_read(src_dir, f'{file_name}.json')
+        _file_name = self.get_class_name_without_version()
+        self.header = helper.json_read(src_dir, f'{_file_name}.json')
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
         if include_index and self.get_options('auto_include'):
@@ -98,8 +98,8 @@ class Configuration803(MetaObject):
 
         self._encode_html_data(src_dir, 'help', dest_dir, header_field='help', file_number=self.help_file_number)
         self._encode_images(src_dir, dest_dir)
-        self.encode_code(src_dir, file_name)
-        self._encode_info(src_dir, file_name, dest_dir)
+        self.encode_code(src_dir, _file_name)
+        self._encode_info(src_dir, _file_name, dest_dir)
         self.write_encode_code(dest_dir)
         helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
         file_list.append(self.header["file_uuid"])

@@ -248,11 +248,11 @@ def compare_file(path_decode_entry, path_encode_entry, problems):
                 return True
             if encode_line[:-2] == decode_line:
                 return True
-            if decode_line.endswith(b'\r\n') \
-                    and len_decode_line > 2 \
-                    and decode_line[-3] == b','[0] \
-                    and (len_decode_line - len_encode_line) == 1:
-                return True
+            # if decode_line.endswith(b'\r\n') \
+            #         and len_decode_line > 2 \
+            #         and decode_line[-3] == b','[0] \
+            #         and (len_decode_line - len_encode_line) == 1:
+            #     return True
         if encode_line.startswith(b'#base64') and encode_line[8:] == decode_line[9:]:
             return True
         if len_decode_line > 36 and len_decode_line == len_encode_line:  # допущение, т.к. в списоке инклюдов порядок теперь разный
