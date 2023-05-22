@@ -55,6 +55,7 @@ class ConfigurationExtension803(Configuration803):
 
         self.set_product_info(src_dir, file_name)
 
+        version = self.get_options('version')
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
 
