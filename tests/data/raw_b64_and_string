@@ -1,0 +1,31 @@
+{
+{"Ь
+		ЛЕВОЕ СОЕДИНЕНИЕ РегистрСведений.КонтурEDI_ДополнительныеРеквизиты КАК ТаблицаРеквизитПоставщик
+			И (ТаблицаРеквизитПоставщик.Свойство = ""ПартнерКакПоставщик"")
+	Наименование"},"MainTable",
+{#base64:AgFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdaFTS2/0iI3BT9l0HEdayG8=},
+{#base64:iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAA
+5pmwVl8WWoJxcb6oi3X2G1fYrADgBnxJWpPZtAFxAAAAAElFTkSuQmCC},
+{1,"ru","Основной список объектов к выгрузке (только ссылочные объекты).
+Доступен для интерактивного и проограмного использования."},
+{1,
+{"ru","из них
+не сформировано"},
+{"en","из них
+не сформировано"}
+},4,
+{
+{#base64:AgFTS2/0iI3BTqDV67a9oKcNdU7LDcIwDIVrpS6RcyLFSdrGWyAhBijQKwfUW5XJ
+
+OLAFa7ACtU0KbdXYsvP8e++13/F7P54D6rIY1KHt++5+UwyOKpVFoq84WA2EvA6U
+
+bO4uca29HkfTGLjrKRnntubXWDaaZcHBr8JKDERiGY2roOWGAy5KzPaPgkhTJ5Wm
+
+rNRsiEms6KKeAXL4Mm21pt25qHw1y2fx2DZ18FdnADs0oeqciRG9cdGeLwhYtdjQ
+
+XFhJtSKWz30vMgcItzCmDw==},0}
+}
+}
+}
+}
+}

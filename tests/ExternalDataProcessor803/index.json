@@ -1,0 +1,6 @@
+{
+  "ExternalDataProcessor.obj.1c": "core/test.1c",
+  "Области include": {
+      "core_Область1": "core_Область2"
+  }
+}
