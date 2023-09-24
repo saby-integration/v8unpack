@@ -1,0 +1,19 @@
+[{
+  "Major": 4,
+  "Minor": 41,
+  "Patch": 1,
+  "MajorMinorPatch": "4.41.1",
+  "PreReleaseTag": "",
+  "PreReleaseLabel": "",
+  "PreReleaseNumber": "",
+  "SemVer": "4.41.1",
+  "FullSemVer": "4.41.1",
+  "AssemblySemVer": "4.41.1.0",
+  "AssemblySemFileVer": "4.41.1.Sha.d4b5d62",
+  "ShortSha": "d4b5d62",
+  "Sha": "d4b5d6279298b1ed10f1fd71f3156c339c205dc6",
+  "VersionSourceSha": "d4b5d6279298b1ed10f1fd71f3156c339c205dc6",
+  "BuildMetaData": "",
+  "CommitsSinceVersionSource": 44,
+  "CommitDate": "2021-10-27"
+}]
