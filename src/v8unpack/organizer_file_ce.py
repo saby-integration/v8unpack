@@ -1,10 +1,10 @@
 import os
 
 from . import helper
-from .file_organizer import FileOrganizer
+from .organizer_file import OrganizerFile
 
 
-class FileOrganizerCE(FileOrganizer):
+class OrganizerFileCE(OrganizerFile):
 
     @classmethod
     def unpack_get_descent_filename(cls, src_path, src_file_name, src_data, dest_path, dest_file_name, descent,

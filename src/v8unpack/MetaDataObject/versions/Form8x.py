@@ -122,8 +122,9 @@ class Form8x(SimpleNameFolder):
         super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name)
         helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.version}.json')
         if self.elements:
-            helper.json_write(self.elements, self.new_dest_dir, f'{file_name}.elements.tree{self.version}.json')
-            helper.json_write(self.elements_data, self.new_dest_dir, f'{file_name}.elements.data{self.version}.json')
+            helper.json_write(
+                dict(tree=self.elements, data=self.elements_data),
+                self.new_dest_dir, f'{file_name}.elements{self.version}.json')
         if self.props:
             helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
         return []
@@ -167,8 +168,9 @@ class Form8x(SimpleNameFolder):
                 index = get_form2_elem_index(root_data, file_name)
                 index_root_element_count = index[0]
                 if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-                    self.elements = helper.json_read(src_dir, f'{file_name}.elements.tree{self.version}.json')
-                    self.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{self.version}.json')
+                    elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
+                    self.elements = elements['tree']
+                    self.elements_data = elements['data']
                     # root_data[index_root_element_count] = str(len(self.elements))
                     FormElement803.encode_list(self, self.elements, root_data, index_root_element_count)
             else:

@@ -5,10 +5,18 @@ from .ext_exception import ExtException
 from .index import get as get_from_index
 
 
-class CodeOrganizer:
+class OrganizerCode:
     def __init__(self):
         self.code_areas = None
         self.data = None
+
+    @staticmethod
+    def is_area(name):
+        area_type = name[:17]
+        is_area = area_type in ('#Область include_', '#Область includr_')
+        if is_area:
+            return area_type[9:-1]
+        return None
 
     @classmethod
     def unpack(cls, params):
@@ -24,13 +32,14 @@ class CodeOrganizer:
                     _line = line.strip()
                     if _line and _line[0] == '#':
                         if _line.startswith('#Область'):
-                            if _line.startswith('#Область include'):
+                            area_type = cls.is_area(_line)
+                            if area_type:
                                 key = _line[17:].strip()
                                 # if key in self.code_areas:
                                 #     raise Exception(
                                 #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
                                 self.code_areas[_include_path[-1]]['data'] += line
-                                self.code_areas[key] = dict(data='')
+                                self.code_areas[key] = dict(data='', area_type=area_type)
                                 _include_path.append(key)
                                 _path.append(key)
                             else:
@@ -68,7 +77,7 @@ class CodeOrganizer:
                     data += line
                     _line = line.strip()
                     if _line and _line[0] == '#':
-                        if _line.startswith('#Область include'):
+                        if cls.is_area(_line):
                             include_path = _line[17:].strip()
                             _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
                                                                        descent)
@@ -90,24 +99,26 @@ class CodeOrganizer:
                 message='Ошибка упаковки файла', detail=f'{os.path.join(path, file_name)}: {err}') from err
 
     @staticmethod
-    def parse_include_path(include_path, path, file_name, index_code_areas, descent):
+    def parse_include_path(include_path, path, file_name, index_code_areas, descent=None, *, file_extension='bsl'):
         if index_code_areas and include_path in index_code_areas:
             include_path = index_code_areas[include_path]
         tmp = include_path.split('_')
         size_tmp = len(tmp)
         if size_tmp == 0:
             raise Exception(f'{path} {file_name} в include не указан путь')
-        _file_name = f'{tmp[-1]}.bsl'
+        _file_name = f'{tmp[-1]}.{file_extension}'
         _path = '..'  # include не должен лежать внутри папки с исходниками
         if descent is not None:
             _path = os.path.join(_path, '..')
         if size_tmp > 1:
             tmp = ['..' if elem == '' else elem for elem in tmp[:-1]]
             _path = os.path.join(_path, *tmp)
+        if _path == '..':
+            _path = path
         return _path, _file_name
 
     @staticmethod
-    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict, descent: int):
+    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict, descent: int = None):
         try:
             if index:
                 try:
