@@ -3,8 +3,8 @@ from ..MetaDataObject.core.Container import Container
 
 class InformationRegister(Container):
     ext_code = {
-        'mgr': '2',  # модуль менеджера
-        'obj': '1',  # Модуль набора записей
+        'mgr': 2,  # модуль менеджера
+        'obj': 1,  # Модуль набора записей
     }
     help_file_number = 0
 

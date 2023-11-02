@@ -4,6 +4,7 @@ from ..MetaDataObject.core.Container import Container
 
 class Subsystem(Container):
     help_file_number = 0
+    ext_code = {}
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         super(Subsystem, self).decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
