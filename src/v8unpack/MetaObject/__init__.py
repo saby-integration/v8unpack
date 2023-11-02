@@ -299,7 +299,15 @@ class MetaObject:
     def _decode_html_data(self, src_dir, dest_dir, dest_file_name, *, header_field='html', file_number=0,
                           extension='html'):
         try:
-            data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{file_number}')
+            file_name = f'{self.header["uuid"]}.{file_number}'
+            file_size = os.path.getsize(os.path.join(src_dir, file_name))
+            if file_size > 1000000:  # если файл больше мегабайте не разбираем
+                shutil.copy2(
+                    os.path.join(src_dir, file_name),
+                    os.path.join(dest_dir, f'{dest_file_name}.bin')
+                )
+                return
+            data = helper.brace_file_read(src_dir, file_name)
         except FileNotFoundError:
             return
         try:
@@ -325,17 +333,25 @@ class MetaObject:
         return bin_data
 
     def _encode_html_data(self, src_dir, file_name, dest_dir, *, header_field='html', file_number=0, extension='html'):
+        dest_file_name = f'{self.header["uuid"]}.{file_number}'
         try:
             bin_data = helper.bin_read(src_dir, f'{file_name}.{extension}')
         except FileNotFoundError:
-            bin_data = None
+            try:
+                shutil.copy2(
+                    os.path.join(src_dir, f'{file_name}.bin'),
+                    os.path.join(dest_dir, dest_file_name)
+                )
+                self.file_list.append(dest_file_name)
+                return
+            except FileNotFoundError:
+                bin_data = None
         header = self.header.get(header_field)
         if header and len(header[0]) > 2 and bin_data:
             header[0][3][0] += b64encode(bin_data).decode(encoding='utf-8')
         if header:
-            file_name = f'{self.header["uuid"]}.{file_number}'
-            self.file_list.append(file_name)
-            helper.brace_file_write(header, dest_dir, file_name)
+            self.file_list.append(dest_file_name)
+            helper.brace_file_write(header, dest_dir, dest_file_name)
 
     @staticmethod
     def _get_b64_string(bin_data):

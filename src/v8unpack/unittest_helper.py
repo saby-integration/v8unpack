@@ -9,8 +9,8 @@ from . import helper
 from .container_reader import extract, decompress_and_extract
 from .container_writer import build, compress_and_build
 from .decoder import decode, encode
-from .file_organizer import FileOrganizer
-from .file_organizer_ce import FileOrganizerCE
+from .organizer_file import OrganizerFile
+from .organizer_file_ce import OrganizerFileCE
 from .json_container_decoder import JsonContainerDecoder
 
 
@@ -93,10 +93,10 @@ class HelperTestDecode(unittest.TestCase):
         if not self.index:
             return
         if descent:
-            FileOrganizerCE.unpack(self.decode_dir_stage3, self.decode_dir_stage4,
+            OrganizerFileCE.unpack(self.decode_dir_stage3, self.decode_dir_stage4,
                                    pool=self.pool, index=self.index, descent=descent)
         else:
-            FileOrganizer.unpack(self.decode_dir_stage3, self.decode_dir_stage4, pool=self.pool, index=self.index)
+            OrganizerFile.unpack(self.decode_dir_stage3, self.decode_dir_stage4, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.decode_dir_stage4)
             self.assertEqual(len(files), self.result['count_root_files_stage4'], 'count_root_files_stage4')
@@ -107,10 +107,10 @@ class HelperTestDecode(unittest.TestCase):
         if not self.index:
             return
         if descent:
-            FileOrganizerCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
+            OrganizerFileCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
                                  pool=self.pool, index=self.index, descent=descent)
         else:
-            FileOrganizer.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
+            OrganizerFile.pack(self.decode_dir_stage4, self.encode_dir_stage3, pool=self.pool, index=self.index)
         if self.result:
             files = os.listdir(self.encode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
