@@ -20,6 +20,8 @@ from .version import __version__
 def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, processes=None, options=None):
     try:
         begin0 = datetime.now()
+        if options is None:
+            options = dict()
         print(f"v8unpack {__version__}")
 
         index = check_index(index)
@@ -72,6 +74,8 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
           options=None, processes: int = None):
     try:
         begin0 = datetime.now()
+        if options is None:
+            options = {}
 
         print(f"v8unpack {__version__}")
 
