@@ -20,8 +20,8 @@ class WSReference(Simple):
             return
         shutil.copytree(src, dest)
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
-        super().encode_object(src_dir, file_name, dest_dir, version)
+    def encode_object(self, src_dir, file_name, dest_dir):
+        super().encode_object(src_dir, file_name, dest_dir)
 
         src = os.path.join(src_dir, self.header["name"])
         if not os.path.isdir(src):

@@ -97,7 +97,7 @@ class CodeOrganizer:
         size_tmp = len(tmp)
         if size_tmp == 0:
             raise Exception(f'{path} {file_name} в include не указан путь')
-        _file_name = f'{tmp[-1]}.1c'
+        _file_name = f'{tmp[-1]}.bsl'
         _path = '..'  # include не должен лежать внутри папки с исходниками
         if descent is not None:
             _path = os.path.join(_path, '..')

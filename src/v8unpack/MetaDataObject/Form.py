@@ -4,8 +4,7 @@ from ..MetaDataObject.core.Simple import SimpleNameFolder
 from ..MetaDataObject.versions.Form801 import Form801
 from ..MetaDataObject.versions.Form802 import Form802
 from ..MetaDataObject.versions.Form803 import Form803
-from ..MetaDataObject.versions.OldForm803 import OldForm801, OldForm802, OldForm803
-from ..MetaDataObject.versions.Form802 import Form802
+from ..MetaDataObject.versions.OldForm803 import OldForm801, OldForm803
 from ..ext_exception import ExtException
 
 
@@ -16,15 +15,15 @@ class Form(SimpleNameFolder):
         '803': Form803,
         '5-5': OldForm801,
         '7-7': OldForm801,
-        '9-9': OldForm802,
-        '12-12': OldForm802,
+        '9-9': OldForm803,
+        '12-12': OldForm803,
         '13-13': OldForm803,
         '0-5': Form801,
         '0-7': Form801,
-        '0-9': Form802,
+        '0-9': Form803,
         '0-12': Form803,
         '0-13': Form803,
-        '1-9': Form802,
+        '1-9': Form803,
         '1-12': Form803,
         '1-13': Form803
     }
@@ -37,10 +36,11 @@ class Form(SimpleNameFolder):
         "12": 2,
         "13": 2,
     }
+
     @classmethod
-    def decode_get_handler(cls, src_dir, file_name, version):
+    def decode_get_handler(cls, src_dir, file_name, options):
         obj_version, form_version = cls.get_form_version(src_dir, file_name)
-        handler = cls.get_version(f'{obj_version}-{form_version}')()
+        handler = cls.get_version(f'{obj_version}-{form_version}')(options=options)
         handler.obj_version = obj_version
         return handler
 
@@ -57,7 +57,3 @@ class Form(SimpleNameFolder):
                 return obj_type_version, form_version
         except Exception as err:
             raise ExtException(message="Неудалось опеределить версию формы", detail=f'{cls.__name__} {file_name}')
-
-    @classmethod
-    def get_form_version_index_0(cls, path, file_name):
-        return 3

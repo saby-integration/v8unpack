@@ -12,13 +12,11 @@ class ConfigurationExtension803(Configuration803):
         'app': '6',
         'ssn': '7'
     }
+    _obj_info = {
+        'a': 'a',
+    }
 
-    def __init__(self):
-        super(ConfigurationExtension803, self).__init__()
-
-    @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
-        self = cls()
+    def decode(self, src_dir, dest_dir, *, version=None, **kwargs):
         self.header = {}
         root = helper.brace_file_read(src_dir, 'configinfo')
         self.header['v8unpack'] = __version__
@@ -47,28 +45,32 @@ class ConfigurationExtension803(Configuration803):
                 self.header[f'info{i}'] = helper.brace_file_read(src_dir, file_name)
             except FileNotFoundError:
                 pass
+        file_name = self.get_class_name_without_version()
+        self._decode_info(src_dir, dest_dir, file_name)
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
 
         helper.txt_write(helper.str_decode(product_version), dest_dir, 'version.bin', encoding='utf-8')
-        helper.json_write(self.header, dest_dir, f'{cls.get_class_name_without_version()}.json')
-        self.write_decode_code(dest_dir, cls.__name__)
+        helper.json_write(self.header, dest_dir, f'{self.get_class_name_without_version()}.json')
+        self.write_decode_code(dest_dir, self.__class__.__name__)
 
         return tasks
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, gui=None, include_index=None, file_list=None,
-               **kwargs):
+    def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None):
         self.header = helper.json_read(src_dir, f'{self.get_class_name_without_version()}.json')
 
         self.set_product_info(src_dir, file_name)
 
+        version = self.get_options('version')
         if version is not None:
             self.header['data'][0][3][1][1][43] = version
+
+        gui = self.get_options('gui')
         if gui is not None:
             self.header['data'][0][3][1][1][38] = gui
 
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
-        if include_index:
+        if include_index and self.get_options('auto_include'):
             self.fill_header_includes(include_index)
 
         # self.header['copyinfo'][2] = b64encode(bytes.fromhex(self.header['copyinfo'][2]+md5().digest().hex())).decode()
@@ -80,6 +82,8 @@ class ConfigurationExtension803(Configuration803):
         ]
         self.encode_code(src_dir, self.__class__.__name__)
         self.write_encode_code(dest_dir)
+        _file_name = self.get_class_name_without_version()
+        self._encode_info(src_dir, _file_name, dest_dir)
         helper.brace_file_write(root, dest_dir, 'configinfo')
         helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
         for i in self.info:  # хз что это

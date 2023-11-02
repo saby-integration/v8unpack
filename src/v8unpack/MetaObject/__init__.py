@@ -1,7 +1,8 @@
 import os
-from uuid import uuid4
 import re
+import shutil
 from base64 import b64decode, b64encode
+from uuid import uuid4
 
 from .. import helper
 from ..ext_exception import ExtException
@@ -12,6 +13,7 @@ class MetaObject:
     version = '803'
     ext_code = {'obj': 0}
     encrypted_types = ['text', 'image']
+    _unknown_binary = None
     _obj_info = None
     _obj_name = None
 
@@ -19,12 +21,19 @@ class MetaObject:
     directive_1c_uncomment = re.compile('(?P<n>\\n)(?P<d>[#|&])')
     directive_1c_comment = re.compile('(?P<n>\\n)(?P<c>// v8unpack )(?P<d>[#|&])')
 
-    def __init__(self, *, obj_name=None):
+    def __init__(self, *, obj_name=None, options=None):
         self.title = obj_name if obj_name else \
             self._obj_name if self._obj_name else self.get_class_name_without_version()
         self.header = {}
         self.code = {}
         self.file_list = []
+        self.options = options
+
+    def get_options(self, name, default=None):
+        try:
+            return self.options[name]
+        except (TypeError, KeyError):
+            return default
 
     def get_decode_header(self, header_data):
         return header_data[0][1][1]
@@ -41,55 +50,58 @@ class MetaObject:
         tasks = []
         includes = self.get_decode_includes(header_data)
         for include in includes:
+            self.decode_include(src_dir, dest_dir, dest_path, tasks, include)
+        return tasks
+
+    def decode_include(self, src_dir, dest_dir, dest_path, tasks, include):
+        try:
+            count_include_types = int(include[2])
+        except IndexError:
+            raise ExtException(message='Include types not found', detail=self.__class__.__name__)
+        for i in range(count_include_types):
+            _metadata = include[i + 3]
+            _count_obj = int(_metadata[1])
+            _metadata_type_uuid = _metadata[0]
             try:
-                count_include_types = int(include[2])
-            except IndexError:
-                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
-            for i in range(count_include_types):
-                _metadata = include[i + 3]
-                _count_obj = int(_metadata[1])
-                _metadata_type_uuid = _metadata[0]
-                try:
-                    metadata_type = MetaDataTypes(_metadata_type_uuid)
-                except ValueError:
-                    # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
-                    # continue
+                metadata_type = MetaDataTypes(_metadata_type_uuid)
+            except ValueError:
+                # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
+                # continue
 
-                    if not _count_obj:
-                        continue
-
-                    if not isinstance(_metadata[2], str):  # вложенный объект
-                        continue
-                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
-                    print(msg)
-                    continue
-                    # raise Exception(msg)
                 if not _count_obj:
                     continue
-                new_dest_path = os.path.join(dest_path, metadata_type.name)
-                external_obj = False
-                for j in range(_count_obj):
-                    obj_uuid = _metadata[j + 2]
-                    if isinstance(obj_uuid, str):
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
 
-                        tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
-                        external_obj = True
-                    elif isinstance(obj_uuid, list):
-                        if not metadata_type:
-                            continue
-                        try:
-                            handler = helper.get_class_metadata_object(metadata_type.name)
-                        except Exception as err:
-                            continue
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
-                        handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
-                        external_obj = True
-                if external_obj:
-                    include[i + 3] = metadata_type.name
-        return tasks
+                if not isinstance(_metadata[2], str):  # вложенный объект
+                    continue
+                msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
+                print(msg)
+                continue
+                # raise Exception(msg)
+            if not _count_obj:
+                continue
+            new_dest_path = os.path.join(dest_path, metadata_type.name)
+            external_obj = False
+            for j in range(_count_obj):
+                obj_uuid = _metadata[j + 2]
+                if isinstance(obj_uuid, str):
+                    if j == 0:
+                        os.mkdir(os.path.join(dest_dir, new_dest_path))
+
+                    tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.options]])
+                    external_obj = True
+                elif isinstance(obj_uuid, list):
+                    if not metadata_type:
+                        continue
+                    try:
+                        handler = helper.get_class_metadata_object(metadata_type.name)
+                    except Exception as err:
+                        continue
+                    if j == 0:
+                        os.mkdir(os.path.join(dest_dir, new_dest_path))
+                    handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.options)
+                    external_obj = True
+            if external_obj and self.get_options('auto_include'):  # todo dynamic index
+                include[i + 3] = metadata_type.name
 
     @classmethod
     def get_decode_includes(cls, header_data: list) -> list:
@@ -112,7 +124,7 @@ class MetaObject:
                     include_objects = include_index.get(_metadata, [])
                     include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
+    def encode_includes(self, src_dir, file_name, dest_dir, parent_id):
         tasks = []
         includes = []
         entries = sorted(os.listdir(src_dir))
@@ -130,18 +142,18 @@ class MetaObject:
             handler = helper.get_class_metadata_object(include)
             _src_dir = os.path.join(src_dir, include)
             handler.encode_get_include_obj(_src_dir, dest_dir, handler.get_obj_name(), tasks,
-                                           version, parent_id, {})
+                                           self.options, parent_id, {})
         return tasks
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, include_index):
         """
         возвращает список задач на парсинг объектов этого типа
         """
         entries = os.listdir(src_dir)
         for entry in entries:
             if cls.re_meta_data_obj.fullmatch(entry):
-                tasks.append([include, [src_dir, entry[:-5], dest_dir, version, parent_id, include_index]])
+                tasks.append([include, [src_dir, entry[:-5], dest_dir, options, parent_id, include_index]])
 
     @classmethod
     def encode_versions(cls, file_list):
@@ -152,7 +164,7 @@ class MetaObject:
         return [versions]
 
     @classmethod
-    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, version, parent_id,
+    def encode_get_include_obj_from_named_folder(cls, src_dir, dest_dir, include, tasks, options, parent_id,
                                                  include_index):
         """
         возвращает список задач на парсинг объектов этого типа
@@ -161,7 +173,7 @@ class MetaObject:
         for entry in entries:
             if os.path.isdir(os.path.join(src_dir, entry)):
                 new_src_dir = os.path.join(src_dir, entry)
-                tasks.append([include, [new_src_dir, entry, dest_dir, version, parent_id, include_index]])
+                tasks.append([include, [new_src_dir, entry, dest_dir, options, parent_id, include_index]])
 
     def encode_version(self):
         return self.header['version']
@@ -173,8 +185,9 @@ class MetaObject:
             return cls.__name__[:len(_version) * -1]
         return cls.__name__
 
-    def read_raw_code(self, src_dir, file_name, encoding='utf-8'):
+    def read_raw_code(self, src_dir, file_name, encoding=None):
         code = helper.txt_read(src_dir, file_name, encoding=encoding)
+
         if code:
             # if self.version in ['801', '802']:  # убираем комментрии у директив
             code = self.directive_1c_comment.sub(r'\g<n>\g<d>', code)
@@ -194,8 +207,12 @@ class MetaObject:
             if os.path.isdir(_obj_code_dir):
                 self.header[f'code_info_{code_name}'] = helper.brace_file_read(_obj_code_dir, 'info')
                 try:
-                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
-                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
+                    try:
+                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
+                        encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
+                    except UnicodeDecodeError:
+                        encoding = 'windows-1251'
+                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text', encoding=encoding)
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
@@ -209,14 +226,20 @@ class MetaObject:
                     if not_encrypted:
                         raise err from err
             else:
+                code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                 try:
-                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                     self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
                     encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
-                    self.header[f'code_info_{code_name}'] = 'file'
-                    self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
+                except UnicodeDecodeError:
+                    encoding = 'windows-1251'
+                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name, encoding=encoding)
                 except FileNotFoundError as err:
-                    pass
+                    continue
+                except Exception as err:
+                    raise err from err
+
+                self.header[f'code_info_{code_name}'] = 'file'
+                self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
 
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
@@ -224,7 +247,7 @@ class MetaObject:
                 if self.header.get(f'code_encoding_{code_name}') in self.encrypted_types:
                     helper.bin_write(self.code[code_name], dest_dir, self.header[f'code_encoding_{code_name}'])
                 else:
-                    helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.1c')
+                    helper.txt_write(self.code[code_name], dest_dir, f'{file_name}.{code_name}.bsl')
 
     def encode_code(self, src_dir, file_name):
         for code_name in self.ext_code:
@@ -233,7 +256,7 @@ class MetaObject:
                     if self.header.get(f'code_encoding_{code_name}') in self.encrypted_types:
                         self.code[code_name] = helper.bin_read(src_dir, self.header.get(f'code_encoding_{code_name}'))
                     else:
-                        self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.1c')
+                        self.code[code_name] = helper.txt_read(src_dir, f'{file_name}.{code_name}.bsl')
                 except FileNotFoundError:
                     self.code[code_name] = ''
 
@@ -331,13 +354,24 @@ class MetaObject:
                 except FileNotFoundError:
                     pass
 
+    def _decode_unknown(self, src_dir, dest_dir, dest_file_name):
+        if self._unknown_binary:
+            for elem in self._unknown_binary:
+                try:
+                    shutil.copy2(
+                        os.path.join(src_dir, f'{self.header["uuid"]}.{self._unknown_binary[elem]}'),
+                        os.path.join(dest_dir, f'{dest_file_name}.{elem}.bin')
+                    )
+                except FileNotFoundError:
+                    pass
+
     def _encode_info(self, src_dir, file_name, dest_dir):
         if self._obj_info:
             for elem in self._obj_info:
                 try:
                     data = helper.json_read(src_dir, f'{file_name}.{self._obj_info[elem]}.json')
-                    file_name = f'{self.header["uuid"]}.{self._obj_info[elem]}'
-                    helper.brace_file_write(data, dest_dir, file_name)
-                    self.file_list.append(file_name)
+                    dest_file_name = f'{self.header["uuid"]}.{self._obj_info[elem]}'
+                    helper.brace_file_write(data, dest_dir, dest_file_name)
+                    self.file_list.append(dest_file_name)
                 except FileNotFoundError:
                     pass
