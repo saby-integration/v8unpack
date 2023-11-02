@@ -43,4 +43,4 @@ class TestDecodeBraceFile(unittest.TestCase):
             )
         except NotEqualLine as err:
             result = err
-        print(result)
+        return result

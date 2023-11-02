@@ -8,7 +8,7 @@ from v8unpack.unittest_helper import HelperTestDecode
 
 
 class TestDecode(HelperTestDecode):
-    processes = 1
+    # processes = 1  # uncomment for debug
 
     def setUp(self):
         super(TestDecode, self).setUp()
@@ -16,15 +16,10 @@ class TestDecode(HelperTestDecode):
         self.dest_dir = os.path.join(self.src_dir, 'src')
         self.src_file = 'ВнешняяОбработка803.epf'
 
-        self.version = '803'
-        self.result = {
-            'count_root_files_stage1': 14,
-            'count_root_files_stage3': 5,
-            'count_root_files_stage4': 4,
-            'count_forms_files': 3,
-            'count_templates_files': 2
-        }
-        self.init(index='index.json')
+        self.init(
+            index_file_name='index.json',
+            version='803'
+        )
         pass
 
     def test_01_decode_stage0(self):

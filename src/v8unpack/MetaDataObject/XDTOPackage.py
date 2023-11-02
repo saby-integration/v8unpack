@@ -16,10 +16,10 @@ class XDTOPackage(MetaDataObject):
     def decode_includes(self, src_dir, dest_dir, dest_path, header):
         return []
 
-    def encode_includes(self, src_dir, file_name, dest_dir, version, parent_id):
+    def encode_includes(self, src_dir, file_name, dest_dir, parent_id):
         return []
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
+    def encode_object(self, src_dir, file_name, dest_dir):
         try:
             package = helper.bin_read(src_dir, f'{file_name}.bin')
             file_name = f'{self.header["uuid"]}.0'

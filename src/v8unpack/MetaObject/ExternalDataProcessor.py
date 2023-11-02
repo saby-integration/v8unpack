@@ -6,13 +6,11 @@ from ..ext_exception import ExtException
 
 class ExternalDataProcessor(MetaObject):
 
-    def __init__(self):
-        super(ExternalDataProcessor, self).__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.data = None
 
-    @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
-        self = cls()
+    def decode(self, src_dir, dest_dir):
         self.header = {}
         self.data = {}
         root = helper.brace_file_read(src_dir, 'root')
@@ -56,7 +54,7 @@ class ExternalDataProcessor(MetaObject):
     def get_decode_header(cls, header_data):
         return header_data[0][3][1][1][3][1]
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None, **kwargs):
+    def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None, **kwargs):
         try:
             _file_name = self.get_class_name_without_version()
             self.header = helper.json_read(src_dir, f'{_file_name}.json')
@@ -68,7 +66,7 @@ class ExternalDataProcessor(MetaObject):
 
             self.set_product_info(src_dir, file_name)
 
-            if include_index:
+            if include_index and self.get_options('auto_include'):
                 self.fill_header_includes(include_index)
 
             helper.brace_file_write(self.encode_root(), dest_dir, 'root')

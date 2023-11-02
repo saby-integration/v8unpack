@@ -1,20 +1,16 @@
-
 import json
 
 from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
-from .Form8x import Form8x
+from .Form8x import Form8x, OF
 from ... import helper
 from ...ext_exception import ExtException
 
-OLD_FORM = '0'
-UPR_FORM = '1'
-
 
 class Form803(Form8x):
-    ver = '803'
+    version = '803'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.command_panels = []
         self.params = []
         self.commands = []
@@ -34,10 +30,13 @@ class Form803(Form8x):
         except IndexError:
             pass
 
-        if self.header['Тип формы'] != OLD_FORM:
+        if self.header['Тип формы'] != OF:
             self.decode_form0(src_dir, uuid)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
+        if self.header.get('Тип формы') == OF:
+            self.decode_old_elements()
+            return
         if not self.form or not self.form[0]:
             return
         try:
@@ -48,38 +47,34 @@ class Form803(Form8x):
         except:
             return
 
+        backup = json.dumps(self.form)
         try:
             self.decode_elements(src_dir, dest_dir, dest_path, header_data)
             self.params = FormParams.decode_list(self, self.form[0][0])
             self.commands = FormCommands.decode_list(self, self.form[0][0])
             self.props = FormProps.decode_list(self, self.form[0][0])
         except Exception as err:
+            self.form = json.loads(backup)
             pass  # todo если какие то елементы формы не разбираются, не прерываем
             # raise ExtException(parent=err, message='Ошибка при разборе формы')
 
     def decode_elements(self, src_dir, dest_dir, dest_path, header_data):
-        backup = json.dumps(self.form)
-        try:
-            index = self.get_form_elem_index()
-            root_data = self.form[0][0][1]
+        index = self.get_form_elem_index()
+        root_data = self.form[0][0][1]
 
-            # index_panel_count = index[1]
-            # form_panels_count = int(root_data[index_panel_count])
-            # if form_panels_count:
-            #     self.command_panels = [root_data[index_panel_count + 1]]
-            #     root_data[index_panel_count] = 'В отдельном файле'
-            #     del root_data[index_panel_count + 1]
+        # index_panel_count = index[1]
+        # form_panels_count = int(root_data[index_panel_count])
+        # if form_panels_count:
+        #     self.command_panels = [root_data[index_panel_count + 1]]
+        #     root_data[index_panel_count] = 'В отдельном файле'
+        #     del root_data[index_panel_count + 1]
 
-            index_root_element_count = index[0]
-            form_items_count = int(root_data[index_root_element_count])
-            if form_items_count:
-                self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
-                self.elements_data = dict(sorted(self.elements_data.items()))
-            pass
-        except helper.FuckingBrackets as err:
-            self.form = json.loads(backup)
-        except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{dest_path}')
+        index_root_element_count = index[0]
+        form_items_count = int(root_data[index_root_element_count])
+        if form_items_count:
+            self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
+            self.elements_data = dict(sorted(self.elements_data.items()))
+        pass
 
     def get_form_elem_index(self):
         try:
@@ -93,14 +88,16 @@ class Form803(Form8x):
                 message='случай требующий анализа, предоставьте образец формы разработчикам',
                 detail=f'{self.header["name"]}, {err}')
 
-    def write_decode_object(self, dest_dir, dest_path, file_name, version):
-        super().write_decode_object(dest_dir, dest_path, file_name, version)
+    def write_decode_object(self, dest_dir, dest_path, file_name):
+        if self.header['Тип формы'] == OF:
+            self.version = 802
+        super().write_decode_object(dest_dir, dest_path, file_name)
         if self.commands:
-            helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.ver}.json')
+            helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.version}.json')
         if self.params:
-            helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.ver}.json')
+            helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.version}.json')
         if self.command_panels:
-            helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.ver}.json')
+            helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.version}.json')
 
     def decode_form1(self, src_dir, uuid):
         try:
@@ -110,25 +107,25 @@ class Form803(Form8x):
         self.form.append(form)
 
     def decode_code(self, src_dir):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header['Тип формы'] == OF:
             self.decode_old_form(src_dir)
         else:
             super().decode_code(src_dir)
         self.decode_form1(src_dir, self.header['uuid'])
 
-    def encode_header(self):
-        return [[
-            "1",
-            [
-                "1",
-                [
-                    "0",
-                    self.encode_header_title(),
-                    self.header.get('Расширенное представление', ['0'])
-                ]
-            ],
-            "0"
-        ]]
+    # def encode_header(self):
+    #     return [[
+    #         "1",
+    #         [
+    #             "1",
+    #             [
+    #                 "0",
+    #                 self.encode_header_title(),
+    #                 self.header.get('Расширенное представление', ['0'])
+    #             ]
+    #         ],
+    #         "0"
+    #     ]]
 
     def encode_header_title(self):
         version = self.header.get('Версия803', '13')
@@ -156,7 +153,7 @@ class Form803(Form8x):
         return header_title
 
     def encode_data(self):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header['Тип формы'] == OF:
             return
         try:
             _code = self.code.pop('obj', "")
@@ -167,7 +164,11 @@ class Form803(Form8x):
             pass
         return self.form
 
-    def encode_nested_includes(self, src_dir, file_name, dest_dir, version, parent_id):
+    def encode_nested_includes(self, src_dir, file_name, dest_dir, parent_id):
+        if self.header.get('Тип формы') == OF:
+            self.encode_old_elements(src_dir, file_name, dest_dir, parent_id)
+            return
+
         if not self.form or not self.form[0]:
             return
         try:
@@ -177,10 +178,10 @@ class Form803(Form8x):
         except:
             return
         try:
-            self.encode_elements(src_dir, file_name, dest_dir, version)
-            FormParams.encode_list(self, src_dir, file_name, version)
-            FormCommands.encode_list(self, src_dir, file_name, version)
-            FormProps.encode_list(self, src_dir, file_name, version)
+            self.encode_elements(src_dir, file_name, dest_dir, self.version)
+            FormParams.encode_list(self, src_dir, file_name, self.version)
+            FormCommands.encode_list(self, src_dir, file_name, self.version)
+            FormProps.encode_list(self, src_dir, file_name, self.version)
         except Exception as err:
             raise ExtException(parent=err, message='Ошибка при разборе формы')
 
@@ -201,7 +202,7 @@ class Form803(Form8x):
             FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
 
     def write_encode_object(self, dest_dir):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header['Тип формы'] == OF:
             self.write_old_encode_object(dest_dir)
         else:
             helper.brace_file_write(self.encode_header(), dest_dir, self.header["uuid"])

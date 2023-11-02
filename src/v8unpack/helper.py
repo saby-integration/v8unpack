@@ -73,7 +73,7 @@ def txt_read(path, file_name, encoding='utf-8-sig'):
         raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({file_name})')
 
 
-def txt_read_detect_encoding(path, file_name, encoding='utf-8'):
+def txt_read_detect_encoding(path, file_name, encoding=None):
     _path = os.path.join(path, file_name)
     if encoding is None:
         encoding = detect_by_bom(_path, 'utf-8')
@@ -468,3 +468,17 @@ def check_index(index_filename):
         data = update_dict(*index)
         return data
     return None
+
+
+def get_options_param(options, param_name, default=None):
+    try:
+        return options[param_name]
+    except (KeyError, TypeError):
+        return default
+
+
+def set_options_param(options, param_name, param_value):
+    if options is None:
+        options = {}
+    options[param_name] = param_value
+    return options

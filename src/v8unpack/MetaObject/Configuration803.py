@@ -20,6 +20,7 @@ class Configuration803(MetaObject):
     _images = {
         'Заставка': 2
     }
+
     _obj_info = {
         '4': '4',
         '9': '9',
@@ -30,14 +31,12 @@ class Configuration803(MetaObject):
         'd': 'd',
     }
 
-    def __init__(self):
-        super(Configuration803, self).__init__()
+    def __init__(self, *, obj_name=None, options=None):
+        super().__init__(obj_name=obj_name, options=options)
         self.counter = {}
         self.product = None
 
-    @classmethod
-    def decode(cls, src_dir, dest_dir, *, version=None):
-        self = cls()
+    def decode(self, src_dir, dest_dir, *, version=None, **kwargs):
         self.header = {}
         root = helper.brace_file_read(src_dir, 'root')
         self.header['v8unpack'] = __version__
@@ -47,7 +46,7 @@ class Configuration803(MetaObject):
         _header_data = helper.brace_file_read(src_dir, f'{self.header["file_uuid"]}')
         self.set_header_data(_header_data)
 
-        file_name = cls.get_class_name_without_version()
+        file_name = self.get_class_name_without_version()
 
         self.header['version'] = helper.brace_file_read(src_dir, 'version')
         self.header['versions'] = helper.brace_file_read(src_dir, 'versions')
@@ -57,6 +56,7 @@ class Configuration803(MetaObject):
         self._decode_html_data(src_dir, dest_dir, 'help', header_field='help', file_number=self.help_file_number)
         self._decode_images(src_dir, dest_dir)
         self._decode_info(src_dir, dest_dir, file_name)
+        # self._decode_unknown(src_dir, dest_dir, file_name)
 
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
 
@@ -67,17 +67,6 @@ class Configuration803(MetaObject):
     @classmethod
     def get_decode_header(cls, header):
         return header[0][3][1][1][1][1]
-
-    # @classmethod
-    # def get_decode_includes(cls, header_data):
-    #     return [
-    #         header_data[0][3][1],
-    #         header_data[0][4][1][1],
-    #         header_data[0][5][1],
-    #         header_data[0][6][1],
-    #         header_data[0][7][1],
-    #         header_data[0][8][1],
-    #     ]
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
         tasks = []
@@ -92,63 +81,16 @@ class Configuration803(MetaObject):
             except ValueError:
                 raise ExtException(message='Неизвестная группа метаданных', detail=group_uuid)
             include = group[1][1] if group_version == '6' else group[1]
-            try:
-                count_include_types = int(include[2])
-            except IndexError:
-                raise ExtException(message='Include types not found', detail=self.__class__.__name__)
-            for i in range(count_include_types):
-                _metadata = include[i + 3]
-                _count_obj = int(_metadata[1])
-                _metadata_type_uuid = _metadata[0]
-                try:
-                    metadata_type = MetaDataTypes(_metadata_type_uuid)
-                except ValueError:
-                    # data = helper.json_read(src_dir, f'{_metadata[2]}.json')  # чтобы посмотреть что это
-                    # continue
-
-                    if not _count_obj:
-                        continue
-
-                    if not isinstance(_metadata[2], str):  # вложенный объект
-                        continue
-                    msg = f'У {self.__class__.__name__} {self.header["name"]} неизвестный тип вложенных метаданных: {_metadata_type_uuid} лежит в файле {_metadata[2]}'
-                    print(msg)
-                    continue
-                    # raise Exception(msg)
-                if not _count_obj:
-                    continue
-                new_dest_path = os.path.join(dest_path, metadata_type.name)
-                external_obj = False
-                for j in range(_count_obj):
-                    obj_uuid = _metadata[j + 2]
-                    if isinstance(obj_uuid, str):
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
-
-                        tasks.append([metadata_type.name, [src_dir, obj_uuid, dest_dir, new_dest_path, self.version]])
-                        external_obj = True
-                    elif isinstance(obj_uuid, list):
-                        if not metadata_type:
-                            continue
-                        try:
-                            handler = helper.get_class_metadata_object(metadata_type.name)
-                        except Exception as err:
-                            continue
-                        if j == 0:
-                            os.mkdir(os.path.join(dest_dir, new_dest_path))
-                        handler.decode_local_include(self, obj_uuid, src_dir, dest_dir, new_dest_path, self.version)
-                        external_obj = True
-                if external_obj:
-                    include[i + 3] = metadata_type.name
+            self.decode_include(src_dir, dest_dir, dest_path, tasks, include)
         return tasks
 
-    def encode(self, src_dir, dest_dir, *, version=None, file_name=None, include_index=None, file_list=None, **kwargs):
-        file_name = self.get_class_name_without_version()
-        self.header = helper.json_read(src_dir, f'{file_name}.json')
+    def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None):
+        _file_name = self.get_class_name_without_version()
+        self.header = helper.json_read(src_dir, f'{_file_name}.json')
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
-        if include_index:
-            self.fill_header_includes(include_index)
+        if include_index and self.get_options('auto_include'):
+            self.fill_header_includes(include_index)  # todo dynamic index
 
         helper.brace_file_write(self.header["root_data"], dest_dir, 'root')
         file_list.append('root')
@@ -158,8 +100,8 @@ class Configuration803(MetaObject):
 
         self._encode_html_data(src_dir, 'help', dest_dir, header_field='help', file_number=self.help_file_number)
         self._encode_images(src_dir, dest_dir)
-        self.encode_code(src_dir, file_name)
-        self._encode_info(src_dir, file_name, dest_dir)
+        self.encode_code(src_dir, _file_name)
+        self._encode_info(src_dir, _file_name, dest_dir)
         self.write_encode_code(dest_dir)
         helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
         file_list.append(self.header["file_uuid"])

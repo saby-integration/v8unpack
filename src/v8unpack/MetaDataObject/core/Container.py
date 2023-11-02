@@ -36,7 +36,7 @@ class Container(MetaDataObject):
     def set_write_decode_mode(self, dest_dir, dest_path):
         self.set_mode_decode_in_name_folder(dest_dir, dest_path)
 
-    def encode_object(self, src_dir, file_name, dest_dir, version):
+    def encode_object(self, src_dir, file_name, dest_dir):
         if self.help_file_number is not None:
             self._encode_html_data(src_dir, file_name, dest_dir, header_field='help', file_number=self.help_file_number)
         if self.predefined_file_number is not None:
@@ -54,8 +54,8 @@ class Container(MetaDataObject):
             return
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, version, parent_id, include_index):
-        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, version, parent_id, include_index)
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, include_index):
+        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, options, parent_id, include_index)
 
     def get_encode_file_name(self, file_name):
         return self.get_obj_name()

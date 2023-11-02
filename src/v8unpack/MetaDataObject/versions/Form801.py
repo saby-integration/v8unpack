@@ -3,7 +3,7 @@ from ... import helper
 
 
 class Form801(Form802):
-    ver = '801'
+    version = '801'
 
     @classmethod
     def get_decode_header(cls, header_data):
