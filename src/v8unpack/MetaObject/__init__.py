@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 from base64 import b64decode, b64encode
 from uuid import uuid4
 
@@ -12,6 +13,7 @@ class MetaObject:
     version = '803'
     ext_code = {'obj': 0}
     encrypted_types = ['text', 'image']
+    _unknown_binary = None
     _obj_info = None
     _obj_name = None
 
@@ -185,6 +187,7 @@ class MetaObject:
 
     def read_raw_code(self, src_dir, file_name, encoding=None):
         code = helper.txt_read(src_dir, file_name, encoding=encoding)
+
         if code:
             # if self.version in ['801', '802']:  # убираем комментрии у директив
             code = self.directive_1c_comment.sub(r'\g<n>\g<d>', code)
@@ -204,8 +207,12 @@ class MetaObject:
             if os.path.isdir(_obj_code_dir):
                 self.header[f'code_info_{code_name}'] = helper.brace_file_read(_obj_code_dir, 'info')
                 try:
-                    self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
-                    encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
+                    try:
+                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
+                        encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
+                    except UnicodeDecodeError:
+                        encoding = 'windows-1251'
+                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text', encoding=encoding)
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
@@ -219,14 +226,20 @@ class MetaObject:
                     if not_encrypted:
                         raise err from err
             else:
+                code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                 try:
-                    code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
                     self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
                     encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
-                    self.header[f'code_info_{code_name}'] = 'file'
-                    self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
+                except UnicodeDecodeError:
+                    encoding = 'windows-1251'
+                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name, encoding=encoding)
                 except FileNotFoundError as err:
-                    pass
+                    continue
+                except Exception as err:
+                    raise err from err
+
+                self.header[f'code_info_{code_name}'] = 'file'
+                self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
 
     def write_decode_code(self, dest_dir, file_name):
         for code_name in self.code:
@@ -338,6 +351,17 @@ class MetaObject:
                     data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{self._obj_info[elem]}')
                     helper.json_write(data, dest_dir, f'{dest_file_name}.{self._obj_info[elem]}.json')
 
+                except FileNotFoundError:
+                    pass
+
+    def _decode_unknown(self, src_dir, dest_dir, dest_file_name):
+        if self._unknown_binary:
+            for elem in self._unknown_binary:
+                try:
+                    shutil.copy2(
+                        os.path.join(src_dir, f'{self.header["uuid"]}.{self._unknown_binary[elem]}'),
+                        os.path.join(dest_dir, f'{dest_file_name}.{elem}.bin')
+                    )
                 except FileNotFoundError:
                     pass
 

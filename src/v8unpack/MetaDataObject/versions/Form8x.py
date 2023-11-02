@@ -1,13 +1,14 @@
 import os
 import re
 
+from .Form802Elements.FormElement import FormElement as FormElement802, FormProps as FormProps802
+from .Form803Elements.FormElement import FormElement as FormElement803, calc_offset
 from ..core.Simple import SimpleNameFolder
 from ... import helper
 from ...ext_exception import ExtException
-from .Form802Elements.FormElement import FormElement as FormElement802, FormProps as FormProps802
-from .Form803Elements.FormElement import FormElement as FormElement803, FormProps as FormProps803, calc_offset
-from ... import helper
-from ...ext_exception import ExtException
+
+OF = '0'  # обычные формы
+UF = '1'  # управляемые формы
 
 
 class Form8x(SimpleNameFolder):
@@ -156,6 +157,7 @@ class Form8x(SimpleNameFolder):
                 raise ExtException(
                     message='случай требующий анализа, предоставьте образец формы разработчикам',
                     detail=f'{self.header["name"]} {_file_name}, {err}')
+
         try:
             if not self.form[0]:
                 return

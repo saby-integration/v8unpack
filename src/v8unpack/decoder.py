@@ -167,7 +167,7 @@ def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
     def unpack_dummy():
         helper.clear_dir(dest_dir)
         dummy_path = os.path.join(src_dir, 'dummy.zip')
-        if version and int(version.ljust(5, '0')) >= 80316 and os.path.isfile(dummy_path):
+        if version and int(str(version).ljust(5, '0')) >= 80316 and os.path.isfile(dummy_path):
             helper.clear_dir(container_dest_dir)
             shutil.unpack_archive(dummy_path, container_dest_dir)
             return os.path.join(dest_dir, '1')
@@ -177,7 +177,7 @@ def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
 
     container_dest_dir = os.path.join(dest_dir, '0')
     container_dest_dir = unpack_dummy()
-    options = helper.set_options_param(options, 'version', version[:3])
+    # options = helper.set_options_param(options, 'version', version[:3])
     Decoder.encode(src_dir, container_dest_dir, pool=pool, options=options, file_name=file_name)
 
 

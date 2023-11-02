@@ -1,13 +1,9 @@
-
 import json
 
 from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
-from .Form8x import Form8x
+from .Form8x import Form8x, OF
 from ... import helper
 from ...ext_exception import ExtException
-
-OLD_FORM = '0'
-UPR_FORM = '1'
 
 
 class Form803(Form8x):
@@ -34,11 +30,11 @@ class Form803(Form8x):
         except IndexError:
             pass
 
-        if self.header['Тип формы'] != OLD_FORM:
+        if self.header['Тип формы'] != OF:
             self.decode_form0(src_dir, uuid)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
-        if self.header.get('Тип формы') == OLD_FORM:
+        if self.header.get('Тип формы') == OF:
             self.decode_old_elements()
             return
         if not self.form or not self.form[0]:
@@ -93,6 +89,8 @@ class Form803(Form8x):
                 detail=f'{self.header["name"]}, {err}')
 
     def write_decode_object(self, dest_dir, dest_path, file_name):
+        if self.header['Тип формы'] == OF:
+            self.version = 802
         super().write_decode_object(dest_dir, dest_path, file_name)
         if self.commands:
             helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.version}.json')
@@ -109,7 +107,7 @@ class Form803(Form8x):
         self.form.append(form)
 
     def decode_code(self, src_dir):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header['Тип формы'] == OF:
             self.decode_old_form(src_dir)
         else:
             super().decode_code(src_dir)
@@ -155,7 +153,7 @@ class Form803(Form8x):
         return header_title
 
     def encode_data(self):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header['Тип формы'] == OF:
             return
         try:
             _code = self.code.pop('obj', "")
@@ -167,7 +165,7 @@ class Form803(Form8x):
         return self.form
 
     def encode_nested_includes(self, src_dir, file_name, dest_dir, parent_id):
-        if self.header.get('Тип формы') == OLD_FORM:
+        if self.header.get('Тип формы') == OF:
             self.encode_old_elements(src_dir, file_name, dest_dir, parent_id)
             return
 
@@ -204,7 +202,7 @@ class Form803(Form8x):
             FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
 
     def write_encode_object(self, dest_dir):
-        if self.header['Тип формы'] == OLD_FORM:
+        if self.header['Тип формы'] == OF:
             self.write_old_encode_object(dest_dir)
         else:
             helper.brace_file_write(self.encode_header(), dest_dir, self.header["uuid"])

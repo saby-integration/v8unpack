@@ -20,6 +20,7 @@ class Configuration803(MetaObject):
     _images = {
         'Заставка': 2
     }
+
     _obj_info = {
         '4': '4',
         '9': '9',
@@ -55,6 +56,7 @@ class Configuration803(MetaObject):
         self._decode_html_data(src_dir, dest_dir, 'help', header_field='help', file_number=self.help_file_number)
         self._decode_images(src_dir, dest_dir)
         self._decode_info(src_dir, dest_dir, file_name)
+        # self._decode_unknown(src_dir, dest_dir, file_name)
 
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
 

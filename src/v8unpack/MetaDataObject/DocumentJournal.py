@@ -4,7 +4,6 @@ from ..MetaDataObject.core.Container import Container
 class DocumentJournal(Container):
     help_file_number = 0
     ext_code = {
-        'obj': 0,
         'mgr': 1
     }
 

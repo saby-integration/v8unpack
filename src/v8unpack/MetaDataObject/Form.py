@@ -4,8 +4,7 @@ from ..MetaDataObject.core.Simple import SimpleNameFolder
 from ..MetaDataObject.versions.Form801 import Form801
 from ..MetaDataObject.versions.Form802 import Form802
 from ..MetaDataObject.versions.Form803 import Form803
-from ..MetaDataObject.versions.OldForm803 import OldForm801, OldForm802, OldForm803
-from ..MetaDataObject.versions.Form802 import Form802
+from ..MetaDataObject.versions.OldForm803 import OldForm801, OldForm803
 from ..ext_exception import ExtException
 
 
@@ -37,6 +36,7 @@ class Form(SimpleNameFolder):
         "12": 2,
         "13": 2,
     }
+
     @classmethod
     def decode_get_handler(cls, src_dir, file_name, options):
         obj_version, form_version = cls.get_form_version(src_dir, file_name)
@@ -57,4 +57,3 @@ class Form(SimpleNameFolder):
                 return obj_type_version, form_version
         except Exception as err:
             raise ExtException(message="Неудалось опеределить версию формы", detail=f'{cls.__name__} {file_name}')
-
