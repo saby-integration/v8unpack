@@ -5,7 +5,7 @@ import unittest
 
 sys.path.append("../../src/")
 from v8unpack import helper
-from v8unpack.file_organizer_ce import FileOrganizerCE
+from v8unpack.organizer_file_ce import OrganizerFileCE
 
 
 class TestFileOrganizerCE(unittest.TestCase):
@@ -35,21 +35,21 @@ class TestFileOrganizerCE(unittest.TestCase):
         helper.clear_dir(self.temp_dir)
         self.copy_data_to_temp('test.1c', ['3000070060', '3000075100', '3000088001'], '')
 
-        FileOrganizerCE.unpack_file(self.data_dir, 'test.1c', self.temp_dir, '', 'test.1c', {}, 3000088001)
+        OrganizerFileCE.unpack_file(self.data_dir, 'test.1c', self.temp_dir, '', 'test.1c', {}, 3000088001)
 
         self.assertEqual(
             os.path.getsize(os.path.join(self.data_dir, 'test.1c')),
             os.path.getsize(os.path.join(self.temp_dir, 'test.3000088001.1c'))
         )
 
-        FileOrganizerCE.unpack_file(self.data_dir, 'test.1c', self.temp_dir, '', 'test.1c', {}, 3000075101)
+        OrganizerFileCE.unpack_file(self.data_dir, 'test.1c', self.temp_dir, '', 'test.1c', {}, 3000075101)
         self.assertEqual(
             os.path.getsize(os.path.join(self.data_dir, 'test.1c')),
             os.path.getsize(os.path.join(self.temp_dir, 'test.3000075101.1c'))
         )
 
         self.copy_data_to_temp('test.obj.1c', ['3000070060'])
-        FileOrganizerCE.unpack_file(self.data_dir, 'test.obj.1c', self.temp_dir, '', 'test.obj.1c', {}, 3000070061)
+        OrganizerFileCE.unpack_file(self.data_dir, 'test.obj.1c', self.temp_dir, '', 'test.obj.1c', {}, 3000070061)
         self.assertRaises(
             FileNotFoundError,
             lambda: os.path.getsize(os.path.join(self.temp_dir, 'test.obj.3000070061.1c'))

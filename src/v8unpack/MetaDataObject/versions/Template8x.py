@@ -98,7 +98,6 @@ class Template8x(Simple):
     def decode_table_data(self, src_dir, dest_dir, write):
         self.decode_scheme_data(src_dir, dest_dir, write, extension='mxl')
 
-
     def decode_text_data(self, src_dir, dest_dir, write):
         try:
             self.data, encoding = helper.txt_read_detect_encoding(src_dir, f'{self.header["uuid"]}.0')

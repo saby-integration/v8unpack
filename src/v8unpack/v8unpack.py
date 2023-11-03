@@ -10,8 +10,8 @@ from .container_reader import extract as container_extract, decompress_and_extra
 from .container_writer import build as container_build, compress_and_build
 from .decoder import decode, encode
 from .ext_exception import ExtException
-from .file_organizer import FileOrganizer
-from .file_organizer_ce import FileOrganizerCE
+from .organizer_file import OrganizerFile
+from .organizer_file_ce import OrganizerFileCE
 from .helper import check_index, load_json
 from .index import update_index
 from .version import __version__
@@ -55,9 +55,9 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, p
         decode(dir_stage1, dir_stage3, pool=pool, options=options)
 
         if descent is not None:
-            FileOrganizerCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
+            OrganizerFileCE.unpack(dir_stage3, out_dir_name, pool=pool, index=index, descent=descent)
         else:
-            FileOrganizer.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
+            OrganizerFile.unpack(dir_stage3, out_dir_name, pool=pool, index=index)
 
         end = datetime.now()
         print(f'{"Готово":30}: {end - begin0}')
@@ -100,9 +100,9 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
 
         descent = options.get('descent') if options else None
         if descent is None:
-            FileOrganizer.pack(in_dir_name, dir_stage3, pool=pool, index=index)
+            OrganizerFile.pack(in_dir_name, dir_stage3, pool=pool, index=index)
         else:
-            FileOrganizerCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
+            OrganizerFileCE.pack(in_dir_name, dir_stage3, pool=pool, index=index, descent=descent)
 
         encode(dir_stage3, dir_stage1, pool=pool, file_name=os.path.basename(out_file_name), options=options)
 

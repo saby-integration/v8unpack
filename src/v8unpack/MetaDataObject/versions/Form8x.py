@@ -91,12 +91,7 @@ class Form8x(SimpleNameFolder):
         if os.path.exists(_code_dir):
             if os.path.isdir(_code_dir):
                 self.form.append(helper.brace_file_read(_code_dir, 'form'))
-                try:
-                    encoding = helper.detect_by_bom(os.path.join(_code_dir, 'module'), 'utf-8')
-                    self.code['obj'] = self.read_raw_code(_code_dir, 'module', encoding=encoding)
-                except UnicodeDecodeError:
-                    encoding = 'windows-1251'
-                    self.code['obj'] = self.read_raw_code(_code_dir, 'module', encoding=encoding)
+                self.code['obj'], encoding = self.read_raw_code(_code_dir, 'module')
                 self.header['code_encoding_obj'] = encoding  # можно безболезненно поменять на utf-8-sig
                 self.header[f'code_info_obj'] = 1
             else:
@@ -122,8 +117,9 @@ class Form8x(SimpleNameFolder):
         super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name)
         helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.version}.json')
         if self.elements:
-            helper.json_write(self.elements, self.new_dest_dir, f'{file_name}.elements.tree{self.version}.json')
-            helper.json_write(self.elements_data, self.new_dest_dir, f'{file_name}.elements.data{self.version}.json')
+            helper.json_write(
+                dict(tree=self.elements, data=self.elements_data),
+                self.new_dest_dir, f'{file_name}.elements{self.version}.json')
         if self.props:
             helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
         return []
@@ -167,15 +163,16 @@ class Form8x(SimpleNameFolder):
                 index = get_form2_elem_index(root_data, file_name)
                 index_root_element_count = index[0]
                 if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-                    self.elements = helper.json_read(src_dir, f'{file_name}.elements.tree{self.version}.json')
-                    self.elements_data = helper.json_read(src_dir, f'{file_name}.elements.data{self.version}.json')
+                    elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
+                    self.elements = elements['tree']
+                    self.elements_data = elements['data']
                     # root_data[index_root_element_count] = str(len(self.elements))
                     FormElement803.encode_list(self, self.elements, root_data, index_root_element_count)
             else:
                 FormElement802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][1][2][2])
                 FormProps802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][2][2])
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{file_name}')
+            raise ExtException(parent=err, message='Ошибка при сборке формы', detail=f'{file_name}')
 
     def encode_header(self):
         return self.header['data']
