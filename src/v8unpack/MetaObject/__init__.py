@@ -12,7 +12,7 @@ from ..metadata_types import MetaDataTypes
 class MetaObject:
     version = '803'
     ext_code = {'obj': 0}
-    encrypted_types = ['text', 'image']
+    encrypted_types = ['text', 'image', 'bin']
     _unknown_binary = None
     _obj_info = None
     _obj_name = None
@@ -185,13 +185,25 @@ class MetaObject:
             return cls.__name__[:len(_version) * -1]
         return cls.__name__
 
-    def read_raw_code(self, src_dir, file_name, encoding=None):
-        code = helper.txt_read(src_dir, file_name, encoding=encoding)
+    def read_raw_code(self, src_dir, file_name):
+        try:
+            encoding = 'utf-8'
+            code = helper.txt_read(src_dir, file_name, encoding=encoding)
+            encoding = helper.detect_by_bom(os.path.join(src_dir, file_name), 'utf-8')
+        except FileNotFoundError as err:
+            raise err
+        except UnicodeDecodeError:
+            try:
+                encoding = 'windows-1251'
+                code = helper.txt_read(src_dir, file_name, encoding=encoding)
+            except UnicodeDecodeError:
+                encoding = 'bin'
+                code = helper.bin_read(src_dir, file_name)
 
-        if code:
+        if code and encoding != 'bin':
             # if self.version in ['801', '802']:  # убираем комментрии у директив
             code = self.directive_1c_comment.sub(r'\g<n>\g<d>', code)
-        return code
+        return code, encoding
 
     def write_raw_code(self, code, dest_dir, filename, encoding='uft-8'):
         if code is not None:
@@ -207,12 +219,7 @@ class MetaObject:
             if os.path.isdir(_obj_code_dir):
                 self.header[f'code_info_{code_name}'] = helper.brace_file_read(_obj_code_dir, 'info')
                 try:
-                    try:
-                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
-                        encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
-                    except UnicodeDecodeError:
-                        encoding = 'windows-1251'
-                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text', encoding=encoding)
+                    self.code[code_name], encoding = self.read_raw_code(_obj_code_dir, 'text')
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
@@ -227,16 +234,7 @@ class MetaObject:
                         raise err from err
             else:
                 code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
-                try:
-                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
-                    encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
-                except UnicodeDecodeError:
-                    encoding = 'windows-1251'
-                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name, encoding=encoding)
-                except FileNotFoundError as err:
-                    continue
-                except Exception as err:
-                    raise err from err
+                self.code[code_name], encoding = self.read_raw_code(src_dir, code_file_name)
 
                 self.header[f'code_info_{code_name}'] = 'file'
                 self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
@@ -283,7 +281,9 @@ class MetaObject:
 
     def set_product_comment(self, product_version):
         header = self.get_decode_header(self.header['data'])
-        header[4] = helper.str_encode(helper.str_decode(header[4]) + product_version)
+        current_comment = helper.str_decode(header[4])
+        if current_comment.endswith(';'):  # так понимаем что хотим добавить информацию о продукте
+            header[4] = helper.str_encode(helper.str_decode(header[4]) + product_version)
 
     def set_product_info(self, src_dir, file_name):
         product_version = ''
@@ -293,13 +293,21 @@ class MetaObject:
         except FileNotFoundError:
             pass
         if file_name:
-            product_info = f';{file_name};{product_version}'
+            product_info = f'{file_name};{product_version}'
             self.set_product_comment(product_info)
 
     def _decode_html_data(self, src_dir, dest_dir, dest_file_name, *, header_field='html', file_number=0,
                           extension='html'):
         try:
-            data = helper.brace_file_read(src_dir, f'{self.header["uuid"]}.{file_number}')
+            file_name = f'{self.header["uuid"]}.{file_number}'
+            file_size = os.path.getsize(os.path.join(src_dir, file_name))
+            if file_size > 1000000:  # если файл больше мегабайте не разбираем
+                shutil.copy2(
+                    os.path.join(src_dir, file_name),
+                    os.path.join(dest_dir, f'{dest_file_name}.bin')
+                )
+                return
+            data = helper.brace_file_read(src_dir, file_name)
         except FileNotFoundError:
             return
         try:
@@ -325,17 +333,25 @@ class MetaObject:
         return bin_data
 
     def _encode_html_data(self, src_dir, file_name, dest_dir, *, header_field='html', file_number=0, extension='html'):
+        dest_file_name = f'{self.header["uuid"]}.{file_number}'
         try:
             bin_data = helper.bin_read(src_dir, f'{file_name}.{extension}')
         except FileNotFoundError:
-            bin_data = None
+            try:
+                shutil.copy2(
+                    os.path.join(src_dir, f'{file_name}.bin'),
+                    os.path.join(dest_dir, dest_file_name)
+                )
+                self.file_list.append(dest_file_name)
+                return
+            except FileNotFoundError:
+                bin_data = None
         header = self.header.get(header_field)
         if header and len(header[0]) > 2 and bin_data:
             header[0][3][0] += b64encode(bin_data).decode(encoding='utf-8')
         if header:
-            file_name = f'{self.header["uuid"]}.{file_number}'
-            self.file_list.append(file_name)
-            helper.brace_file_write(header, dest_dir, file_name)
+            self.file_list.append(dest_file_name)
+            helper.brace_file_write(header, dest_dir, dest_file_name)
 
     @staticmethod
     def _get_b64_string(bin_data):
