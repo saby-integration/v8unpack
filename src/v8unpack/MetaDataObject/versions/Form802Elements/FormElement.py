@@ -75,7 +75,7 @@ class FormElement:
         result = []
         index_element_count = 0
         if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            elements = helper.json_read(src_dir, f'{file_name}.elem{version}.json')
+            elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
             items = elements['tree']
             form.elements_data = elements['data']
             if items:

@@ -177,7 +177,7 @@ class Form8x(SimpleNameFolder):
                 FormElement802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][1][2][2])
                 FormProps802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][2][2])
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы', detail=f'{file_name}')
+            raise ExtException(parent=err, message='Ошибка при сборке формы', detail=f'{file_name}')
 
     def encode_header(self):
         return self.header['data']
