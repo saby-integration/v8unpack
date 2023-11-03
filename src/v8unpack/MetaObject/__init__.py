@@ -283,7 +283,9 @@ class MetaObject:
 
     def set_product_comment(self, product_version):
         header = self.get_decode_header(self.header['data'])
-        header[4] = helper.str_encode(helper.str_decode(header[4]) + product_version)
+        current_comment = helper.str_decode(header[4])
+        if current_comment.endswith(';'):  # так понимаем что хотим добавить информацию о продукте
+            header[4] = helper.str_encode(helper.str_decode(header[4]) + product_version)
 
     def set_product_info(self, src_dir, file_name):
         product_version = ''
@@ -293,7 +295,7 @@ class MetaObject:
         except FileNotFoundError:
             pass
         if file_name:
-            product_info = f';{file_name};{product_version}'
+            product_info = f'{file_name};{product_version}'
             self.set_product_comment(product_info)
 
     def _decode_html_data(self, src_dir, dest_dir, dest_file_name, *, header_field='html', file_number=0,
