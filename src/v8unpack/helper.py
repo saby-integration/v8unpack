@@ -67,10 +67,10 @@ def json_write(data, path, file_name):
 def txt_read(path, file_name, encoding='utf-8-sig'):
     try:
         return txt_read_detect_encoding(path, file_name, encoding=encoding)[0]
-    except FileNotFoundError as err:
+    except (FileNotFoundError, UnicodeDecodeError) as err:
         raise err from err
     except Exception as err:
-        raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({file_name})')
+        raise ExtException(parent=err, message='Ошибка чтения', detail=f'{err} в файле ({file_name})')
 
 
 def txt_read_detect_encoding(path, file_name, encoding=None):

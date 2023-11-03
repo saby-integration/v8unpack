@@ -12,7 +12,7 @@ from ..metadata_types import MetaDataTypes
 class MetaObject:
     version = '803'
     ext_code = {'obj': 0}
-    encrypted_types = ['text', 'image']
+    encrypted_types = ['text', 'image', 'bin']
     _unknown_binary = None
     _obj_info = None
     _obj_name = None
@@ -185,13 +185,25 @@ class MetaObject:
             return cls.__name__[:len(_version) * -1]
         return cls.__name__
 
-    def read_raw_code(self, src_dir, file_name, encoding=None):
-        code = helper.txt_read(src_dir, file_name, encoding=encoding)
+    def read_raw_code(self, src_dir, file_name):
+        try:
+            encoding = 'utf-8'
+            code = helper.txt_read(src_dir, file_name, encoding=encoding)
+            encoding = helper.detect_by_bom(os.path.join(src_dir, file_name), 'utf-8')
+        except FileNotFoundError as err:
+            raise err
+        except UnicodeDecodeError:
+            try:
+                encoding = 'windows-1251'
+                code = helper.txt_read(src_dir, file_name, encoding=encoding)
+            except UnicodeDecodeError:
+                encoding = 'bin'
+                code = helper.bin_read(src_dir, file_name)
 
-        if code:
+        if code and encoding != 'bin':
             # if self.version in ['801', '802']:  # убираем комментрии у директив
             code = self.directive_1c_comment.sub(r'\g<n>\g<d>', code)
-        return code
+        return code, encoding
 
     def write_raw_code(self, code, dest_dir, filename, encoding='uft-8'):
         if code is not None:
@@ -207,12 +219,7 @@ class MetaObject:
             if os.path.isdir(_obj_code_dir):
                 self.header[f'code_info_{code_name}'] = helper.brace_file_read(_obj_code_dir, 'info')
                 try:
-                    try:
-                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text')
-                        encoding = helper.detect_by_bom(os.path.join(_obj_code_dir, 'text'), 'utf-8')
-                    except UnicodeDecodeError:
-                        encoding = 'windows-1251'
-                        self.code[code_name] = self.read_raw_code(_obj_code_dir, 'text', encoding=encoding)
+                    self.code[code_name], encoding = self.read_raw_code(_obj_code_dir, 'text')
                     self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
                 except FileNotFoundError as err:
                     # todo могут быть зашифрованные модули тогда файл будет # image.json - зашифрованный контент
@@ -227,16 +234,7 @@ class MetaObject:
                         raise err from err
             else:
                 code_file_name = f'{self.header["uuid"]}.{self.ext_code[code_name]}'
-                try:
-                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name)
-                    encoding = helper.detect_by_bom(os.path.join(src_dir, code_file_name), 'utf-8')
-                except UnicodeDecodeError:
-                    encoding = 'windows-1251'
-                    self.code[code_name] = self.read_raw_code(src_dir, code_file_name, encoding=encoding)
-                except FileNotFoundError as err:
-                    continue
-                except Exception as err:
-                    raise err from err
+                self.code[code_name], encoding = self.read_raw_code(src_dir, code_file_name)
 
                 self.header[f'code_info_{code_name}'] = 'file'
                 self.header[f'code_encoding_{code_name}'] = encoding  # можно безболезненно поменять на utf-8-sig
