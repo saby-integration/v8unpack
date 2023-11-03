@@ -91,12 +91,7 @@ class Form8x(SimpleNameFolder):
         if os.path.exists(_code_dir):
             if os.path.isdir(_code_dir):
                 self.form.append(helper.brace_file_read(_code_dir, 'form'))
-                try:
-                    encoding = helper.detect_by_bom(os.path.join(_code_dir, 'module'), 'utf-8')
-                    self.code['obj'] = self.read_raw_code(_code_dir, 'module', encoding=encoding)
-                except UnicodeDecodeError:
-                    encoding = 'windows-1251'
-                    self.code['obj'] = self.read_raw_code(_code_dir, 'module', encoding=encoding)
+                self.code['obj'], encoding = self.read_raw_code(_code_dir, 'module')
                 self.header['code_encoding_obj'] = encoding  # можно безболезненно поменять на utf-8-sig
                 self.header[f'code_info_obj'] = 1
             else:
