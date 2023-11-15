@@ -21,7 +21,7 @@ class OrganizerFile:
         helper.run_in_pool(cls.unpack_code_file, tasks_code_file, pool=pool,
                            title=f'{"Раскладываем код по файлам":30}')
         helper.run_in_pool(OrganizerFormElem.unpack, tasks_form_elem, pool=pool,
-                           title=f'{"Раскладываем элементы форм по файлам":30}')
+                           title=f'{"Раскладываем элементы форм":30}')
         print(f'{"Организуем код - готово":30}: {datetime.now() - begin}')
 
     @classmethod
@@ -145,7 +145,7 @@ class OrganizerFile:
             cls._pack(src_dir, dest_dir, '', tasks_code_file, tasks_form_elem, index, index_code_areas, descent)
             helper.run_in_pool(OrganizerCode.pack, tasks_code_file, pool=pool, title=f'{"Собираем код из файлов":30}')
             helper.run_in_pool(OrganizerFormElem.pack, tasks_form_elem, pool=pool,
-                               title=f'{"Собираем элементы форм из файлов":30}')
+                               title=f'{"Собираем элементы форм":30}')
         except Exception as err:
             raise ExtException(parent=err)
         print(f'{"Собираем код - готово":30}: {datetime.now() - begin}')
