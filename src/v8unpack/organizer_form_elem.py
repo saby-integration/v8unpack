@@ -44,7 +44,7 @@ class OrganizerFormElem:
                 )
                 cls._pop_area_data(area['tree'], new_path, root_data, area['data'])
                 elem['child'] = 'В отдельном файле'
-                if area_type == '_include_':  # _includr_ только чтение
+                if area_type == 'include_':  # includr_ только чтение
                     areas[area_name] = area
                 continue
             child = elem.get('child')
@@ -112,36 +112,6 @@ class OrganizerFormElem:
             if child:
                 cls._pack_get_areas(src_dir, src_path, file_name, child, new_path, root_data, index_code_areas)
 
-    @classmethod
-    def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename):
-        try:
-            data = ''
-            elements = helper.json_read(os.path.join(src_dir, path), file_name)
-            while line:
-                data += line
-                _line = line.strip()
-                if _line and _line[0] == '#':
-                    if _line.startswith('#Область include'):
-                        include_path = _line[17:].strip()
-                        _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
-                                                                   descent)
-                        _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
-                        if _src_abs_path.startswith(src_dir):
-                            _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
-                        data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
-                                              pack_get_descent_filename)
-                line = file.readline()
-            return data
-        except ExtException as err:
-            raise ExtException(
-                parent=err,
-                action=f'{cls.__name__}.pack_file {file_name}') from err
-        except Exception as err:
-            raise ExtException(
-                parent=err,
-                action=f'{cls.__name__}.pack_file {file_name}',
-                message='Ошибка упаковки файла', detail=f'{os.path.join(path, file_name)}: {err}') from err
-
     @staticmethod
     def parse_include_path(include_path, path, file_name, index_code_areas, descent):
         if index_code_areas and include_path in index_code_areas:
@@ -188,6 +158,6 @@ class OrganizerFormElem:
             raise ExtException(
                 parent=err,
                 message='Ошибка получения пути из index.json',
-                detail=f'{path}\{file_name}',
+                detail=f'{path}/{file_name}',
                 action='CodeOrganizer.get_dest_path',
             ) from err
