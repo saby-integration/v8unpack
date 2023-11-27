@@ -94,5 +94,6 @@ if __name__ == '__main__':
 Разметка форм и свойства объектов по прежнему является не читаемыми, но в этом виде проще проводить их 
 анализ и при желании дополнить парсер.
 
-На текущий момент [утилита покрывает только нужные нам типы метаданных](https://github.com/saby-integration/v8unpack/blob/main/src/v8unpack/metadata_types.py), 
-мы будем рады [любому участию в проекте](https://github.com/saby-integration/v8unpack/blob/main/docs/develop.md).
+На текущий момент [утилита покрывает все типы метаданных в нужном нам объеме](https://github.com/saby-integration/v8unpack/blob/main/src/v8unpack/metadata_types.py), 
+если Вам нужно более детальная распаковка каких то объектов напишите здесь обращение
+или сделайте самостоятельно, мы будем рады [любому участию в проекте](https://github.com/saby-integration/v8unpack/blob/main/docs/develop.md).
