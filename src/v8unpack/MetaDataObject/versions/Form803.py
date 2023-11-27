@@ -1,4 +1,5 @@
 import json
+import os
 
 from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
 from .Form8x import Form8x, OF
@@ -183,24 +184,32 @@ class Form803(Form8x):
             FormCommands.encode_list(self, src_dir, file_name, self.version)
             FormProps.encode_list(self, src_dir, file_name, self.version)
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при разборе формы')
+            raise ExtException(parent=err, message='Ошибка при сборке формы',
+                               detail=f"{os.path.join(src_dir, file_name)}")
 
     def encode_elements(self, src_dir, file_name, dest_dir, version):
-        index = self.get_form_elem_index()
-        root_data = self.form[0][0][1]
+        try:
+            index = self.get_form_elem_index()
+            root_data = self.form[0][0][1]
 
-        # index_panel_count = index[1]
-        # form_panels_count = int(root_data[index_panel_count])
-        # if form_panels_count == 'В отдельном файле':
-        #     self.command_panels = helper.json_read(src_dir, f'{file_name}.panels{version}.json')
+            # index_panel_count = index[1]
+            # form_panels_count = int(root_data[index_panel_count])
+            # if form_panels_count == 'В отдельном файле':
+            #     self.command_panels = helper.json_read(src_dir, f'{file_name}.panels{version}.json')
 
-        index_root_element_count = index[0]
-        if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-            elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
-            self.elements = elements['tree']
-            self.elements_data = elements['data']
-            # root_data[index_root_element_count] = str(len(self.elements))
-            FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
+            index_root_element_count = index[0]
+            if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
+                elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
+                try:
+                    self.elements = elements['tree']
+                    self.elements_data = elements['data']
+                except (KeyError, TypeError):
+                    raise ExtException(message='Форма разобрана старым сборщиком (<0.16), разберите её новым сборщиком',
+                                       action='Form803.encode_elements')
+                # root_data[index_root_element_count] = str(len(self.elements))
+                FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
+        except Exception as err:
+            raise ExtException(parent=err)
 
     def write_encode_object(self, dest_dir):
         if self.header['Тип формы'] == OF:
