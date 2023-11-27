@@ -35,6 +35,7 @@ class HelperTestDecode(unittest.TestCase):
         self.result = None
         self.version = '803'
         self.index = None
+        self.descent = None
 
     def init(self, *, index_file_name=None, **kwargs):
         if not self.test_dir:
@@ -88,11 +89,12 @@ class HelperTestDecode(unittest.TestCase):
             files = os.listdir(self.decode_dir_stage3)
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
-    def decode_stage4(self, descent=None):
+    def decode_stage4(self):
         helper.clear_dir(os.path.normpath(self.decode_dir_stage4))
         if not self.index:
             return
-        if descent:
+        descent = self.options.get('descent')
+        if descent is not None:
             OrganizerFileCE.unpack(self.decode_dir_stage3, self.decode_dir_stage4,
                                    pool=self.pool, index=self.index, descent=descent)
         else:
@@ -102,11 +104,12 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage4'], 'count_root_files_stage4')
             pass
 
-    def encode_stage4(self, descent=None):
+    def encode_stage4(self):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage3))
         if not self.index:
             return
-        if descent:
+        descent = self.options.get('descent')
+        if descent is not None:
             OrganizerFileCE.pack(self.decode_dir_stage4, self.encode_dir_stage3,
                                  pool=self.pool, index=self.index, descent=descent)
         else:

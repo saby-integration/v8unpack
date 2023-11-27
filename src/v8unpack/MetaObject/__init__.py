@@ -186,12 +186,12 @@ class MetaObject:
         return cls.__name__
 
     def read_raw_code(self, src_dir, file_name):
+        encoding = 'utf-8'
         try:
-            encoding = 'utf-8'
             code = helper.txt_read(src_dir, file_name, encoding=encoding)
             encoding = helper.detect_by_bom(os.path.join(src_dir, file_name), 'utf-8')
         except FileNotFoundError as err:
-            raise err
+            code = None
         except UnicodeDecodeError:
             try:
                 encoding = 'windows-1251'
