@@ -60,7 +60,7 @@ class FormElement:
     @classmethod
     def encode(cls, form, path, data):
         key = f"{path}/{data['name']}"
-        detail= None
+        detail = None
         try:
             return form.elements_data[key]
         except KeyError as err:
@@ -68,7 +68,11 @@ class FormElement:
             if key.startswith('/includr_'):
                 try:
                     key = f'/include_{key[9:]}'
-                    return form.elements_data[key]
+                    elem_data = form.elements_data[key]
+                    handler = cls.get_class_form_elem(data['type'])
+                    name_offset = handler.get_name_node_offset(elem_data)
+                    elem_data[name_offset] = helper.str_encode(data['name'])
+                    return elem_data
                 except KeyError as err:
                     detail = err
         raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
@@ -91,24 +95,7 @@ class FormElement:
                         message='Неизвестный тип элемента формы',
                         detail=f'{form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid}'
                     )
-                try:
-                    handler = cls.get_class_form_elem(metadata_type.name)
-                except Exception as err:
-                    raise ExtException(
-                        parent=err,
-                        message='Проблема с парсером элемента формы',
-                        detail=f'{metadata_type.name} - {err}'
-                    )
-                try:
-                    elem_data = handler.decode(form, path, elem_raw_data)
-                except helper.FuckingBrackets as err:
-                    raise err from err
-                except Exception as err:
-                    raise ExtException(
-                        parent=err,
-                        detail=f'{metadata_type.name} - {err}',
-                        message='Ошибка разбора элемента формы'
-                    )
+                elem_data = cls.decode_elem(metadata_type.name, form, path, elem_raw_data)
                 result.append(elem_data)
 
             raw_data[index_element_count] = 'Дочерние элементы отдельно'
@@ -118,6 +105,27 @@ class FormElement:
             raise err
         except Exception as err:
             raise ExtException(parent=err)
+
+    @classmethod
+    def decode_elem(cls, metadata_type_name, form, path, elem_raw_data):
+        try:
+            handler = cls.get_class_form_elem(metadata_type_name)
+        except Exception as err:
+            raise ExtException(
+                parent=err,
+                message='Проблема с парсером элемента формы',
+                detail=f'{metadata_type_name} - {err}'
+            )
+        try:
+            return handler.decode(form, path, elem_raw_data)
+        except helper.FuckingBrackets as err:
+            raise err from err
+        except Exception as err:
+            raise ExtException(
+                parent=err,
+                detail=f'{metadata_type_name} - {err}',
+                message='Ошибка разбора элемента формы'
+            )
 
     @staticmethod
     def get_class_form_elem(name):
