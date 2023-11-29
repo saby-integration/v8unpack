@@ -18,7 +18,7 @@ class OrganizerFormElem:
         elements = helper.json_read(os.path.join(src_dir, path), file_name)
         cls._unpack_get_areas(elements['tree'], '', elements['data'], areas)
         areas['root'] = dict(tree=elements['tree'], data=elements['data'])
-        cls._unpack_write_areas(src_dir, path, file_name, dest_dir, index, areas)
+        cls._unpack_write_areas(src_dir, path, file_name, dest_dir, index, descent, areas)
 
     @staticmethod
     def is_area(name):
@@ -65,14 +65,15 @@ class OrganizerFormElem:
                 cls._pop_area_data(child, new_path, root_data, data)
 
     @staticmethod
-    def _unpack_write_areas(src_dir, path, file_name, dest_dir, index, areas):
+    def _unpack_write_areas(src_dir, path, file_name, dest_dir, index, descent, areas):
         try:
             for elem in areas:
                 if elem == 'root':
-                    dest_entry_path, dest_file_name = OrganizerCode.get_dest_path(dest_dir, path, file_name, index)
+                    dest_entry_path, dest_file_name = OrganizerCode.get_dest_path(dest_dir, path, file_name, index,
+                                                                                  descent)
                 else:
                     dest_entry_path, dest_file_name = OrganizerCode.parse_include_path(
-                        elem, path, elem, index.get('Области include') if index else None,
+                        elem, path, elem, index.get('Области include') if index else None, descent,
                         file_extension=file_name[-16::])
                 dest_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
 

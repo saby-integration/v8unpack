@@ -2,6 +2,7 @@ from enum import Enum
 
 from .... import helper
 from ....ext_exception import ExtException
+from ....ext_exception import ExtException
 
 
 def calc_offset(counters, raw_data):
@@ -58,7 +59,19 @@ class FormElement:
 
     @classmethod
     def encode(cls, form, path, data):
-        return form.elements_data[f"{path}/{data['name']}"]
+        key = f"{path}/{data['name']}"
+        detail= None
+        try:
+            return form.elements_data[key]
+        except KeyError as err:
+            detail = err
+            if key.startswith('/includr_'):
+                try:
+                    key = f'/include_{key[9:]}'
+                    return form.elements_data[key]
+                except KeyError as err:
+                    detail = err
+        raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
 
     @classmethod
     def decode_list(cls, form, raw_data, index_element_count, path=''):
@@ -112,29 +125,32 @@ class FormElement:
 
     @classmethod
     def encode_list(cls, form, items, raw_data, index_element_count, path=''):
-        result = []
-        for item in items:
-            try:
-                metadata_type = FormItemTypes[item['type']]
-            except ValueError:
-                raise ExtException(
-                    message='Неизвестный тип элемента формы',
-                    detail=f'{form.__class__.__name__} {form.header["name"]} : {item["type"]}'
-                )
-            try:
-                handler = cls.get_class_form_elem(metadata_type.name)
-            except Exception as err:
-                raise ExtException(
-                    message='Проблема с парсером элемента формы',
-                    detail=f'{metadata_type.name} - {err}'
-                )
-            elem_data = handler.encode(form, path, item)
-            result.append(metadata_type.value)
-            result.append(elem_data)
-        raw_data[index_element_count] = str(len(items))
-        raw_data[index_element_count + 1:index_element_count + 1] = result
+        try:
+            result = []
+            for item in items:
+                try:
+                    metadata_type = FormItemTypes[item['type']]
+                except ValueError:
+                    raise ExtException(
+                        message='Неизвестный тип элемента формы',
+                        detail=f'{form.__class__.__name__} {form.header["name"]} : {item["type"]}'
+                    )
+                try:
+                    handler = cls.get_class_form_elem(metadata_type.name)
+                except Exception as err:
+                    raise ExtException(
+                        message='Проблема с парсером элемента формы',
+                        detail=f'{metadata_type.name} - {err}'
+                    )
+                elem_data = handler.encode(form, path, item)
+                result.append(metadata_type.value)
+                result.append(elem_data)
+            raw_data[index_element_count] = str(len(items))
+            raw_data[index_element_count + 1:index_element_count + 1] = result
 
-        return result
+            return result
+        except Exception as err:
+            raise ExtException(parent=err)
 
 
 class _FormRoot:

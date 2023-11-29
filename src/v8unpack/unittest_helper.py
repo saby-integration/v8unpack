@@ -12,6 +12,7 @@ from .decoder import decode, encode
 from .organizer_file import OrganizerFile
 from .organizer_file_ce import OrganizerFileCE
 from .json_container_decoder import JsonContainerDecoder
+from v8unpack import extract_all, build_all
 
 
 class HelperTestDecode(unittest.TestCase):
@@ -223,6 +224,11 @@ class HelperTestDecode(unittest.TestCase):
             dest_data = file.read()
         self.assertEqual(dest_data, src_data)
 
+    def extract_all(self, product_file_name: str, product_code: str = None, processes=None):
+        extract_all(product_file_name, product_code, processes)
+
+    def build_all(self, product_file_name: str, product_code: str = None, processes=None):
+        build_all(product_file_name, product_code, processes)
 
 class NotEqualLine(Exception):
     pass

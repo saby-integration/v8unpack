@@ -29,12 +29,15 @@ class Group(FormElement):
     @classmethod
     def encode(cls, form, path, data):
         try:
-            child = data['child']
-        except KeyError:
-            child = []
-        raw_data = super().encode(form, path, data)
-        if not child:
+            try:
+                child = data['child']
+            except KeyError:
+                child = []
+            raw_data = super().encode(form, path, data)
+            if not child:
+                return raw_data
+            index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
+            cls.encode_list(form, child, raw_data, index, f"{path}/{data['name']}")
             return raw_data
-        index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
-        cls.encode_list(form, child, raw_data, index, f"{path}/{data['name']}")
-        return raw_data
+        except Exception as err:
+            raise ExtException(parent=err)
