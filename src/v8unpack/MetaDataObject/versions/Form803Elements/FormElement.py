@@ -2,11 +2,11 @@ from enum import Enum
 
 from .... import helper
 from ....ext_exception import ExtException
-from ....ext_exception import ExtException
 
 
 def calc_offset(counters, raw_data):
     # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
+    #  [(3, 1), (1, 0)] (смещение относительно предыдущей записи, количество записей в единице)
     index = 0
     for counter_index, size in counters:
         index += counter_index
@@ -60,22 +60,17 @@ class FormElement:
     @classmethod
     def encode(cls, form, path, data):
         key = f"{path}/{data['name']}"
-        detail = None
         try:
-            return form.elements_data[key]
+            elem_data = form.elements_data[key]
         except KeyError as err:
-            detail = err
-            if key.startswith('/includr_'):
-                try:
-                    key = f'/include_{key[9:]}'
-                    elem_data = form.elements_data[key]
-                    handler = cls.get_class_form_elem(data['type'])
-                    name_offset = handler.get_name_node_offset(elem_data)
-                    elem_data[name_offset] = helper.str_encode(data['name'])
-                    return elem_data
-                except KeyError as err:
-                    detail = err
-        raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
+            raise ExtException(message='Остутствуют данные элемента формы', detail=err)
+        includr_index = key.find('/includr_')
+        if includr_index < 0:
+            return elem_data
+        handler = cls.get_class_form_elem(data['type'])
+        name_offset = handler.get_name_node_offset(elem_data)
+        elem_data[name_offset] = helper.str_encode(data['name'])
+        return elem_data
 
     @classmethod
     def decode_list(cls, form, raw_data, index_element_count, path=''):

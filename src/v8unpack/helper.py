@@ -49,7 +49,7 @@ def json_read(path, file_name):
         with open(_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except FileNotFoundError as err:
-        raise err from err
+        raise err
     except Exception as err:
         raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({_path})')
 
@@ -227,6 +227,8 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
                     if obj_type not in include_index[parent_id]:
                         include_index[parent_id][obj_type] = []
                     include_index[parent_id][obj_type].append(obj_uuid)
+                elif _object_task is None:
+                    continue
                 else:
                     raise NotImplementedError()
                 pbar.update()

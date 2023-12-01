@@ -3,6 +3,7 @@ import re
 
 from .Form802Elements.FormElement import FormElement as FormElement802, FormProps as FormProps802
 from .Form803Elements.FormElement import FormElement as FormElement803, calc_offset
+from .Form802Elements.Form27 import Form27
 from ..core.Simple import SimpleNameFolder
 from ... import helper
 from ...ext_exception import ExtException
@@ -107,7 +108,8 @@ class Form8x(SimpleNameFolder):
                 self.elements = FormElement803.decode_list(self, self.form[0][0][1], 23)
                 # self.props = FormPros802.decode_list(self, self.form[0][0][2][2])
             else:
-                self.elements = FormElement802.decode_list(self, self.form[0][0][1][2][2])
+                self.elements = Form27.decode_elements(self, self.form[0][0])
+                self.elements = FormElement802.decgode_list(self, self.form[0][0][1][2][2])
                 self.props = FormProps802.decode_list(self, self.form[0][0][2][2])
         except Exception as err:
             pass  # todo если какие то елементы формы не разбираются, не прерываем
