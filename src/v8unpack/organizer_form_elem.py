@@ -105,7 +105,14 @@ class OrganizerFormElem:
                 _path, _file_name = OrganizerCode.parse_include_path(area_name, src_path, file_name, index_code_areas,
                                                                      file_extension=file_name[-16::])
                 _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
+
                 include_elements = helper.json_read(_src_abs_path, _file_name)
+                if area_type == 'includr_':  # меняем имя ключа у первого элемента
+                    first_elem_key: str = list(include_elements['data'].keys())[0]
+                    first_elem_data = include_elements['data'].pop(first_elem_key)
+                    first_elem_key = first_elem_key.replace('include_', 'includr_')
+                    include_elements['data'][first_elem_key] = first_elem_data
+
                 root_data.update(include_elements['data'])
                 elem['child'] = include_elements['tree']
                 continue

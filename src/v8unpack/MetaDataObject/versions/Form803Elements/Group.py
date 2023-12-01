@@ -1,6 +1,6 @@
 from .FormElement import FormElement, check_count_element, calc_offset
-from ....helper import FuckingBrackets, str_decode
 from ....ext_exception import ExtException
+from ....helper import FuckingBrackets
 
 
 class Group(FormElement):
@@ -37,7 +37,8 @@ class Group(FormElement):
             if not child:
                 return raw_data
             index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
-            cls.encode_list(form, child, raw_data, index, f"{path}/{data['name']}")
+            name_for_child = f"include_{data['name'][8:]}" if data['name'][:8] == 'includr_' else data['name']
+            cls.encode_list(form, child, raw_data, index, f"{path}/{name_for_child}")
             return raw_data
         except Exception as err:
             raise ExtException(parent=err)

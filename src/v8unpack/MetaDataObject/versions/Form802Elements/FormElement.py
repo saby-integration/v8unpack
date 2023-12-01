@@ -36,19 +36,12 @@ class FormElement:
     name = 'elements'
 
     @classmethod
-    def decode_list(cls, form, raw_data, index_element_count=0, path=''):
-        result = []
-        element_count = int(raw_data[index_element_count])
-        if not element_count:
-            return
-
-        for i in range(element_count):
-            elem_raw_data = raw_data[index_element_count + i + 1]
-            result.append(cls.decode(form, path, elem_raw_data))
-
-        raw_data[index_element_count] = 'Дочерние элементы отдельно'
-        del raw_data[index_element_count + 1:index_element_count + 1 + element_count]
-        return result
+    def get_class_form_elem(cls, name):
+        index = ['Panel']
+        if name in index:
+            return helper.get_class(f'v8unpack.MetaDataObject.versions.Form802Elements.{name}.{name}')
+        else:
+            return FormElement
 
     @classmethod
     def decode(cls, form, path, elem_raw_data):
@@ -62,33 +55,48 @@ class FormElement:
                 detail=f'{metadata_type_uuid} {name} - {form.__class__.__name__} {form.header["name"]}',
                 action='Form802Element.decode'
             )
-        form.elements_data[f'{path}/{name}'] = elem_raw_data
+        page = elem_raw_data[-3][-5]
         elem_data = dict(
             name=name,
             type=metadata_type.name,
-            # raw=raw_data
         )
-        return elem_data
+        return form.add_elem(page, path, name, elem_data, elem_raw_data)
 
     @classmethod
     def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
-        result = []
-        index_element_count = 0
-        if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
-            items = elements['tree']
-            form.elements_data = elements['data']
-            if items:
-                for item in items:
-                    result.append(cls.encode(form, path, item))
-                raw_data[index_element_count] = str(len(items))
-                raw_data[index_element_count + 1:index_element_count + 1] = result
-            else:
-                raw_data[index_element_count] = '0'
+        try:
+            result = []
+            index_element_count = 0
+            if raw_data[index_element_count] == 'Дочерние элементы отдельно':
+                elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
+                items = elements['tree']
+                form.elements_data = elements['data']
+                if items:
+                    for item in items:
+                        result.append(cls.encode(form, path, item))
+                    raw_data[index_element_count] = str(len(items))
+                    raw_data[index_element_count + 1:index_element_count + 1] = result
+                else:
+                    raw_data[index_element_count] = '0'
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @classmethod
     def encode(cls, form, path, data):
-        return form.elements_data[f"{path}/{data['name']}"]
+        key = f"{path}/{data['name']}"
+        try:
+            return form.elements_data[key]
+        except KeyError as err:
+            detail = err
+            if key.startswith('/includr_'):
+                try:
+                    key = f'/include_{key[9:]}'
+                    elem_data = form.elements_data[key]
+                    elem_data[-2][1] = helper.str_encode(data['name'])
+                    return elem_data
+                except KeyError as err:
+                    detail = err
+            raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
 
 
 class FormProps(FormElement):
