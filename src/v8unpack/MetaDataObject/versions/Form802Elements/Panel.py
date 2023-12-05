@@ -8,6 +8,7 @@ class Panel(FormElement):
     def __init__(self):
         self.elements_tree = []
         self.pages = []
+        self.form = None
         self._elements_tree_index = {}
         self.elements_data = {}
 
@@ -43,7 +44,6 @@ class Panel(FormElement):
     def decode(cls, form, path, elem_raw_data):
         try:
             self = cls()
-            tree = {}
             root = 0 if isinstance(elem_raw_data[1], list) else 1
             if root:
                 elem, elem_id = super().decode(form, path, elem_raw_data)
@@ -56,7 +56,7 @@ class Panel(FormElement):
                 self.decode_elements('', elem_raw_data[2])
             return self.elements_tree, self.elements_data
         except Exception as err:
-            pass
+            raise ExtException(parent=err)
 
     def decode_elements(self, path, raw_data):
         try:
@@ -105,7 +105,57 @@ class Panel(FormElement):
 
     def decode_pages(self, path, raw_data):
         try:
-            pages_offset = calc_offset([[3, 1], [1, 1], [1, 1], [1, 1], [1, 1], [3, 0]], raw_data)
+            pages_offset = calc_offset([[2, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [3, 0]], raw_data)
+        except Exception as err:
+            raise ExtException(message='Не смогли найти описание страниц элементов формы')
+        if raw_data[pages_offset] != '1':
+            raise ExtException(message=f"Неизвестный формат элементов формы",
+                               detail=f"Количество элементов описывающих страницы не равно 1 "
+                                      f"({raw_data[pages_offset]}) ")
+        try:
+            pages_raw_data = raw_data[pages_offset + 1]
+            format_version = pages_raw_data[0]
+            if format_version != '1':
+                print(f'Неизвестный формат страниц. {format_version} != 1')
+            page_count = int(pages_raw_data[1])
+            self.pages = []
+            for i in range(page_count):
+                raw_page = pages_raw_data[i + 2]
+                page_format_version = raw_page[0]
+                if page_format_version != '3':
+                    print(f'Неизвестный формат страницы. {page_format_version} != 3')
+                page_name = helper.str_decode(raw_page[6])
+
+                self.elements_tree.append({
+                    "name": page_name,
+                    "type": "Page",
+                    "child": []
+                })
+                elem_id = self.calc_id(path, page_name, None)
+
+                self._elements_tree_index[elem_id] = len(self.elements_tree) - 1
+                self.pages.append(page_name)
+
+                self.elements_data[elem_id] = {
+                    "version": page_format_version,
+                    "raw": raw_page
+                }
+
+            del pages_raw_data[2:2 + page_count]
+        except Exception as err:
+            raise ExtException(parent=err)
+
+    @classmethod
+    def encode(cls, form, path, raw_data):
+        self = cls()
+        if path == '':
+            super().encode(form, path, raw_data)
+            self.encode_pages(path, raw_data)
+            self.encode_elements(data['tree'])
+
+    def encode_pages(self, path, raw_data):
+        try:
+            pages_offset = calc_offset([[2, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [3, 0]], raw_data)
         except Exception as err:
             raise ExtException(message='Не смогли найти описание страниц элементов формы')
         if raw_data[pages_offset] != '1':

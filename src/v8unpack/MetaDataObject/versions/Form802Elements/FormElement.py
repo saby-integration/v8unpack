@@ -59,8 +59,24 @@ class FormElement:
         elem_data = dict(
             name=name,
             type=metadata_type.name,
+            ver=802
         )
         return form.add_elem(page, path, name, elem_data, elem_raw_data)
+
+    @classmethod
+    def decode_list(cls, form, raw_data, index_element_count=0):
+        result = []
+        element_count = int(raw_data[index_element_count])
+        if not element_count:
+            return
+
+        for i in range(element_count):
+            elem_raw_data = raw_data[index_element_count + i + 1]
+            result.append(cls.decode(form, elem_raw_data))
+
+        raw_data[index_element_count] = 'Дочерние элементы отдельно'
+        del raw_data[index_element_count + 1:index_element_count + 1 + element_count]
+        return result
 
     @classmethod
     def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
@@ -68,7 +84,7 @@ class FormElement:
             result = []
             index_element_count = 0
             if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-                elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
+                elements = helper.json_read(src_dir, f'{file_name}.elements_tree{version}.json')
                 items = elements['tree']
                 form.elements_data = elements['data']
                 if items:
@@ -87,15 +103,15 @@ class FormElement:
         try:
             return form.elements_data[key]
         except KeyError as err:
-            detail = err
-            if key.startswith('/includr_'):
-                try:
-                    key = f'/include_{key[9:]}'
-                    elem_data = form.elements_data[key]
-                    elem_data[-2][1] = helper.str_encode(data['name'])
-                    return elem_data
-                except KeyError as err:
-                    detail = err
+            # detail = err
+            # if key.startswith('/includr_'):
+            #     try:
+            #         key = f'/include_{key[9:]}'
+            #         elem_data = form.elements_data[key]
+            #         elem_data[-2][1] = helper.str_encode(data['name'])
+            #         return elem_data
+            #     except KeyError as err:
+            #         detail = err
             raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
 
 
