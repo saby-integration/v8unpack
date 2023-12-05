@@ -20,7 +20,7 @@ class Form8x(SimpleNameFolder):
     def __init__(self, *, obj_name=None, options=None):
         super().__init__(obj_name=obj_name, options=options)
         self.form = []
-        self.elements = []
+        self.elements_tree = []
         self.elements_data = {}
         self.props = []
 
@@ -105,11 +105,11 @@ class Form8x(SimpleNameFolder):
                 return
             _ver = self.form[0][0][0]
             if _ver == '2':
-                self.elements = FormElement803.decode_list(self, self.form[0][0][1], 23)
+                self.elements_tree = FormElement803.decode_list(self, self.form[0][0][1], 23)
                 # self.props = FormPros802.decode_list(self, self.form[0][0][2][2])
             else:
-                self.elements = Form27.decode_elements(self, self.form[0][0])
-                self.elements = FormElement802.decgode_list(self, self.form[0][0][1][2][2])
+                self.elements_tree, self.elements_data = Form27.decode_elements(self, self.form[0][0])
+                # self.elements_tree = FormElement802.decgode_list(self, self.form[0][0][1][2][2])
                 self.props = FormProps802.decode_list(self, self.form[0][0][2][2])
         except Exception as err:
             pass  # todo если какие то елементы формы не разбираются, не прерываем
@@ -118,9 +118,9 @@ class Form8x(SimpleNameFolder):
     def write_decode_object(self, dest_dir, dest_path, file_name):
         super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name)
         helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.version}.json')
-        if self.elements:
+        if self.elements_tree:
             helper.json_write(
-                dict(tree=self.elements, data=self.elements_data),
+                dict(tree=self.elements_tree, data=self.elements_data),
                 self.new_dest_dir, f'{file_name}.elements{self.version}.json')
         if self.props:
             helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
@@ -166,12 +166,13 @@ class Form8x(SimpleNameFolder):
                 index_root_element_count = index[0]
                 if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
                     elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
-                    self.elements = elements['tree']
+                    self.elements_tree = elements['tree']
                     self.elements_data = elements['data']
-                    # root_data[index_root_element_count] = str(len(self.elements))
-                    FormElement803.encode_list(self, self.elements, root_data, index_root_element_count)
+                    # root_data[index_root_element_count] = str(len(self.elements_tree))
+                    FormElement803.encode_list(self, self.elements_tree, root_data, index_root_element_count)
             else:
-                FormElement802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][1][2][2])
+                Form27.encode(self, src_dir, file_name, self.version, self.form[0][0])
+                # FormElement802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][1][2][2])
                 FormProps802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][2][2])
         except Exception as err:
             raise ExtException(parent=err, message='Ошибка при сборке формы', detail=f'{file_name}')

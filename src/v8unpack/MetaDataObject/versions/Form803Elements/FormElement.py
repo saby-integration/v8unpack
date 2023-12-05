@@ -54,6 +54,7 @@ class FormElement:
         return dict(
             name=helper.str_decode(name),
             type=cls.__name__,
+            ver=803
             # raw=raw_data
         )
 

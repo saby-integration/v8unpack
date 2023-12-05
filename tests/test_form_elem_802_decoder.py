@@ -36,13 +36,12 @@ class TestFormElem802(unittest.TestCase):
         self.assertEqual('', result)
 
     def test_decode_form_elem(self):
-        file_name = '7 на 5 странице 3 элемента'
+        file_name = 'СтраницыИПанели'
         result = self.decode_form_elem(file_name)
 
     def test_decode_form_elem7(self):
         file_name = 'form7'  # не панель страницы 01 поставлен ручной порядок обхода и изменен порядок 2 и 3 флагов
         result = self.decode_form_elem(file_name)
-
 
     def decode_form_elem(self, file_name):
         helper.clear_dir(self.temp_dir)

@@ -73,7 +73,7 @@ class Form803(Form8x):
         index_root_element_count = index[0]
         form_items_count = int(root_data[index_root_element_count])
         if form_items_count:
-            self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
+            self.elements_tree = FormElement.decode_list(self, root_data, index_root_element_count)
             self.elements_data = dict(sorted(self.elements_data.items()))
         pass
 
@@ -201,13 +201,13 @@ class Form803(Form8x):
             if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
                 elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
                 try:
-                    self.elements = elements['tree']
+                    self.elements_tree = elements['tree']
                     self.elements_data = elements['data']
                 except (KeyError, TypeError):
                     raise ExtException(message='Форма разобрана старым сборщиком (<0.16), разберите её новым сборщиком',
                                        action='Form803.encode_elements')
-                # root_data[index_root_element_count] = str(len(self.elements))
-                FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
+                # root_data[index_root_element_count] = str(len(self.elements_tree))
+                FormElement.encode_list(self, self.elements_tree, root_data, index_root_element_count)
         except Exception as err:
             raise ExtException(parent=err)
 
