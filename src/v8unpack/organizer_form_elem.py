@@ -44,8 +44,9 @@ class OrganizerFormElem:
                         },
                         tree=elem.pop('child', [])
                     )
-                    cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
-                    elem['child'] = 'В отдельном файле'
+                    if area['tree']:
+                        cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
+                        elem['child'] = 'В отдельном файле'
                     if area_type == 'include_':  # includr_ только чтение
                         areas[area_name] = area
                     continue
@@ -57,18 +58,21 @@ class OrganizerFormElem:
 
     @classmethod
     def _pop_area_data(cls, tree, path, root_data, data, remove_path):
-        size_prefix = len(remove_path)
-        for elem in tree:
-            name: str = elem['name']
-            old_path = f'{path}/{name}'
-            new_path = f'{path[size_prefix:]}/{name}'
-            try:
-                data[new_path] = root_data.pop(old_path)
-            except Exception:
-                raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
-            child = elem.get('child')
-            if child:
-                cls._pop_area_data(child, old_path, root_data, data, remove_path)
+        try:
+            size_prefix = len(remove_path)
+            for elem in tree:
+                name: str = elem['name']
+                old_path = f'{path}/{name}'
+                new_path = f'{path[size_prefix:]}/{name}'
+                try:
+                    data[new_path] = root_data.pop(old_path)
+                except Exception:
+                    raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                child = elem.get('child')
+                if child:
+                    cls._pop_area_data(child, old_path, root_data, data, remove_path)
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @staticmethod
     def _unpack_write_areas(src_dir, path, file_name, dest_dir, index, descent, areas):
