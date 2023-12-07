@@ -52,7 +52,6 @@ class TestFormElem802(unittest.TestCase):
         form.new_dest_dir = self.temp_dir
         form.form = [raw_data]
         form.decode_includes(None, self.temp_dir, '', None)
-
         form.write_decode_object(self.temp_dir, '', file_name)
         form.encode_nested_includes(self.temp_dir, file_name, self.temp_dir, '')
         helper.json_write(form.form[0], self.temp_dir, file_name)

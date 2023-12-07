@@ -128,9 +128,9 @@ class OrganizerFormElem:
                 if area_type == 'includr_':
                     _path = f'include_{path[8:]}'
                     new_first_elem_key = first_elem_key.replace('include_', 'includr_')
-                    elem_class = cls.form_elem_class(elem['ver'], elem['type'])
-                    name_offset = elem_class.get_name_node_offset(first_elem_data)
-                    first_elem_data[name_offset] = helper.str_encode(new_first_elem_key[1:])
+                    elem_class = cls.form_elem_class(first_elem_data['ver'], elem['type'])
+                    name_offset = elem_class.get_name_node_offset(first_elem_data['raw'])
+                    first_elem_data['raw'][name_offset] = helper.str_encode(new_first_elem_key[1:])
                 root_data[f'{path}{new_first_elem_key}'] = first_elem_data
                 cls._append_area_data(include_elements['tree'], first_elem_key[1:], root_data, include_elements['data'],
                                       path, area_type)

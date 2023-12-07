@@ -44,15 +44,15 @@ class Panel(FormElement):
     def decode(cls, form, path, elem_raw_data):
         try:
             self = cls()
-            root = 0 if isinstance(elem_raw_data[1], list) else 1
-            if root:
+            is_child = 0 if isinstance(elem_raw_data[1], list) else 1
+            if is_child:
                 elem, elem_id = super().decode(form, path, elem_raw_data)
-                self.decode_pages(elem_id, elem_raw_data[1 + root][1])
+                self.decode_pages(elem_id, elem_raw_data[1 + is_child][1])
                 self.decode_elements(elem_id, elem_raw_data[-1])
                 elem['child'] = self.elements_tree
                 form.elements_data.update(self.elements_data)
             else:
-                self.decode_pages(path, elem_raw_data[1 + root][1])
+                self.decode_pages(path, elem_raw_data[1 + is_child][1])
                 self.decode_elements('', elem_raw_data[2])
             return self.elements_tree, self.elements_data
         except Exception as err:
@@ -141,17 +141,26 @@ class Panel(FormElement):
                     "raw": raw_page
                 }
 
-            del pages_raw_data[2:2 + page_count]
+            del pages_raw_data[1:1 + 2 + page_count]
         except Exception as err:
             raise ExtException(parent=err)
 
     @classmethod
-    def encode(cls, form, path, raw_data):
+    def encode(cls, form, path, elem_raw_data):
         self = cls()
-        if path == '':
-            super().encode(form, path, raw_data)
-            self.encode_pages(path, raw_data)
-            self.encode_elements(data['tree'])
+        is_child = 0 if isinstance(elem_raw_data[1], list) else 1
+        if is_child:
+            elem, elem_id = super().encode(form, path, elem_raw_data)
+            self.encode_pages(elem_id, elem_raw_data[1 + is_child][1])
+            self.encode_elements(elem_id, elem_raw_data[-1])
+            elem['child'] = self.elements_tree
+            form.elements_data.update(self.elements_data)
+        else:
+            self.elements_tree = form.elements_tree
+            self.elements_data = form.elements_data
+            self.encode_pages(path, elem_raw_data[1 + is_child][1])
+            self.encode_elements('', elem_raw_data[2])
+            # super().encode(form, path, raw_data)
 
     def encode_pages(self, path, raw_data):
         try:
@@ -167,30 +176,49 @@ class Panel(FormElement):
             format_version = pages_raw_data[0]
             if format_version != '1':
                 print(f'Неизвестный формат страниц. {format_version} != 1')
-            page_count = int(pages_raw_data[1])
-            self.pages = []
-            for i in range(page_count):
-                raw_page = pages_raw_data[i + 2]
-                page_format_version = raw_page[0]
-                if page_format_version != '3':
-                    print(f'Неизвестный формат страницы. {page_format_version} != 3')
-                page_name = helper.str_decode(raw_page[6])
+            pages = []
+            pages.append(str(len(self.elements_tree)))
+            # self.pages = []
+            for elem in self.elements_tree:
+                name = elem['name']
+                elem_id = '/'.join([path, name]) if path else name
+                page = self.elements_data[elem_id]
+                pages.append(page)
+            raw_data.insert(1, pages)
+        except Exception as err:
+            raise ExtException(parent=err)
 
-                self.elements_tree.append({
-                    "name": page_name,
-                    "type": "Page",
-                    "child": []
-                })
-                elem_id = self.calc_id(path, page_name, None)
+    def encode_elements(self, path, raw_data):
+        try:
+            _id = [path] if path else []
+            result = []
+            for i, page in enumerate(self.elements_tree):
+                page_id = '/'.join(_id + [page['name']])
+                if page['child']:
+                    for elem in page['child']:
+                        # elem_id = '/'.join(page_id + [elem['name']])
+                        # elem_data = self.elements_data[elem_id]
+                        try:
+                            handler = self.get_class_form_elem(elem['type'])
+                        except Exception as err:
+                            raise ExtException(
+                                parent=err,
+                                message='Проблема с парсером элемента формы',
+                                detail=f"{elem['type']} - {err}"
+                            )
 
-                self._elements_tree_index[elem_id] = len(self.elements_tree) - 1
-                self.pages.append(page_name)
+                        try:
+                            res = handler.encode(self, page_id, elem)
+                        except ExtException as err:
+                            raise ExtException(
+                                parent=err,
+                                message='Проблема с парсером элемента формы',
+                                detail=f"{elem['type']} - {err}"
+                            )
 
-                self.elements_data[elem_id] = {
-                    "version": page_format_version,
-                    "raw": raw_page
-                }
+                        result.append(res)
 
-            del pages_raw_data[2:2 + page_count]
+            raw_data[0] = str(len(result))
+            raw_data.insert(1, result)
         except Exception as err:
             raise ExtException(parent=err)
