@@ -228,7 +228,7 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
                         include_index[parent_id][obj_type] = []
                     include_index[parent_id][obj_type].append(obj_uuid)
                 elif _object_task is None:
-                    continue
+                    pass
                 else:
                     raise NotImplementedError()
                 pbar.update()

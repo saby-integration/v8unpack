@@ -22,6 +22,7 @@ class Form8x(SimpleNameFolder):
         self.form = []
         self.elements_tree = []
         self.elements_data = {}
+        self.props_index = {}
         self.props = []
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header_data):
@@ -29,6 +30,10 @@ class Form8x(SimpleNameFolder):
         self.set_write_decode_mode(dest_dir, dest_path)
         self.decode_data(src_dir, uuid)
         self.decode_code(src_dir)
+
+    @property
+    def name(self):
+        return self.header.get('name')
 
     def decode_form0(self, src_dir, uuid):
         try:

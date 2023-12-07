@@ -29,7 +29,7 @@ class Form27:
             elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
             form.elements_data = elements['data']
             form.elements_tree = elements['tree']
-            result = Panel.encode(form, '', raw_data)
+            result = Panel.encode(form, '', raw_data[1][2])
             return result
         except Exception as err:
             raise ExtException(parent=err)
