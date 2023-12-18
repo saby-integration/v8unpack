@@ -52,60 +52,33 @@ class Form803(Form8x):
         backup = json.dumps(self.form)
         try:
             Form4(self).decode(src_dir, dest_dir, dest_path, self.form[0][0])
-            # self.props = FormProps.decode_list(self, self.form[0][0])
-            # self.decode_elements(src_dir, dest_dir, dest_path, header_data)
-            # self.params = FormParams.decode_list(self, self.form[0][0])
-            # self.commands = FormCommands.decode_list(self, self.form[0][0])
         except Exception as err:
             self.form = json.loads(backup)
             pass  # todo если какие то елементы формы не разбираются, не прерываем
             # raise ExtException(parent=err, message='Ошибка при разборе формы')
-    #
-    # def decode_elements(self, src_dir, dest_dir, dest_path, header_data):
-    #     index = self.get_form_elem_index()
-    #     root_data = self.form[0][0][1]
-    #     self.props_index = {}
-    #     for prop in self.props:
-    #         self.props_index[prop['id']] = {'name': prop['name'], 'child': {}}
-    #         childs = prop.get('child', [])
-    #         for child in childs:
-    #             self.props_index[prop['id']]['child'][child['id']] = {'name': child['name'], 'child': {}}
-    #     # index_panel_count = index[1]
-    #     # form_panels_count = int(root_data[index_panel_count])
-    #     # if form_panels_count:
-    #     #     self.command_panels = [root_data[index_panel_count + 1]]
-    #     #     root_data[index_panel_count] = 'В отдельном файле'
-    #     #     del root_data[index_panel_count + 1]
-    #
-    #     index_root_element_count = index[0]
-    #     form_items_count = int(root_data[index_root_element_count])
-    #     if form_items_count:
-    #         self.elements_tree = FormElement.decode_list(self, root_data, index_root_element_count)
-    #         self.elements_data = dict(sorted(self.elements_data.items()))
-    #     pass
-    #
-    # def get_form_elem_index(self):
-    #     try:
-    #         root_data = self.form[0][0][1]
-    #         index_command_panel_count = calc_offset([(18, 2), (3, 0)], root_data)
-    #         command_panel_count = int(root_data[index_command_panel_count])
-    #         index_root_elem_count = index_command_panel_count + command_panel_count + 1
-    #         return index_root_elem_count, index_command_panel_count
-    #     except Exception as err:
-    #         raise ExtException(
-    #             message='случай требующий анализа, предоставьте образец формы разработчикам',
-    #             detail=f'{self.header["name"]}, {err}')
 
     def write_decode_object(self, dest_dir, dest_path, file_name):
         if self.header['Тип формы'] == OF:
             self.version = 802
         super().write_decode_object(dest_dir, dest_path, file_name)
-        if self.commands:
-            helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.version}.json')
-        if self.params:
-            helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.version}.json')
-        if self.command_panels:
-            helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.version}.json')
+        if self.elements_tree or self.props or self.params or self.commands:
+            helper.json_write(
+                dict(
+                    tree=self.elements_tree,
+                    data=self.elements_data,
+                    params=self.params,
+                    props=self.props,
+                    commands=self.commands
+                ),
+                self.new_dest_dir, f'{file_name}.elements{self.version}.json')
+        # if self.props:
+        #     helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
+        # if self.commands:
+        #     helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.version}.json')
+        # if self.params:
+        #     helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.version}.json')
+        # if self.command_panels:
+        #     helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.version}.json')
 
     def decode_form1(self, src_dir, uuid):
         try:

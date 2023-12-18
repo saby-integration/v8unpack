@@ -23,7 +23,7 @@ class Form4:
         try:
             self.form.props = FormProps.decode_list(self, raw_data)
             self.form.commands = FormCommands.decode_list(self, raw_data)
-            self.decode_elements(src_dir, dest_dir, dest_path, raw_data)
+            self.decode_elements(raw_data)
             self.form.params = FormParams.decode_list(self, raw_data)
         except Exception as err:
             raise ExtException(parent=err)
@@ -58,7 +58,7 @@ class Form4:
             for command in self.form.commands:
                 self.commands_index[command['name']] = command['raw'][1]
 
-    def decode_elements(self, src_dir, dest_dir, dest_path, raw_data):
+    def decode_elements(self, raw_data):
         try:
             index = self.get_form_elem_index(raw_data)
             root_data = raw_data[1]
@@ -94,6 +94,17 @@ class Form4:
 
     def encode(self, src_dir, file_name, dest_dir, raw_data):
         try:
+            elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
+            try:
+                self.form.elements_tree = elements.get('tree')
+                self.form.elements_data = elements.get('data')
+                self.form.props = elements.get('props')
+                self.form.params = elements.get('params')
+                self.form.commands = elements.get('commands')
+            except (KeyError, TypeError):
+                raise ExtException(message='Форма разобрана старым сборщиком (<0.16), разберите её новым сборщиком',
+                                   action='Form803.encode_elements')
+
             self.form.commands = FormCommands.encode_list(self, src_dir, file_name, self.version, raw_data)
             self.form.props = FormProps.encode_list(self, src_dir, file_name, self.version, raw_data)
 
@@ -117,13 +128,6 @@ class Form4:
 
             index_root_element_count = index[0]
             if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-                elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
-                try:
-                    self.form.elements_tree = elements['tree']
-                    self.form.elements_data = elements['data']
-                except (KeyError, TypeError):
-                    raise ExtException(message='Форма разобрана старым сборщиком (<0.16), разберите её новым сборщиком',
-                                       action='Form803.encode_elements')
                 # root_data[index_root_element_count] = str(len(self.elements_tree))
                 FormElement.encode_list(self, self.form.elements_tree, root_data, index_root_element_count)
         except Exception as err:

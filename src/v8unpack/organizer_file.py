@@ -201,6 +201,8 @@ class OrganizerFile:
                         cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
                 else:
                     raise Exception('Некорректный формат файла индекса')
+            except FileNotFoundError:
+                pass
             except Exception as err:
                 raise ExtException(parent=err)
 

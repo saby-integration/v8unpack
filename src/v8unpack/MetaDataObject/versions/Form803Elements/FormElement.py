@@ -73,16 +73,22 @@ class FormElement:
                     prop_src = form.props_index
                     for i in range(int(prop_link[0])):
                         prop_id = prop_link[i + 1][0]
-                        prop.append(prop_src[prop_id]['name'])
-                        prop_src = prop_src[prop_id]['child']
-                    prop = '.'.join(prop)
+                        try:
+                            prop_name = prop_src[prop_id]['name']
+                            prop_src = prop_src[prop_id]['child']
+                            prop.append(prop_name)
+                        except KeyError:
+                            prop = None
+                            break
+                    if prop:
+                        prop = '.'.join(prop)
 
             command_link_offset = cls.get_command_link_offset(raw_data)
             command = []
             if command_link_offset is not None:
                 command_link = raw_data[command_link_offset]
                 if command_link and int(command_link[0]):
-                    command = form.commands_index[command_link[0]]
+                    command = form.commands_index.get(command_link[0])
 
             if not isinstance(name, str) or not name:
                 raise ExtException(message='form elem name not string')
@@ -243,9 +249,10 @@ class FormElement:
         except Exception as err:
             raise ExtException(parent=err)
 
+
 class _FormRoot:
     element_node_offset = [[2, 1], [3, 1], [4, 1]]
-    name = 0
+    name = ''
     index = 0
     index_name = 0
 
@@ -284,7 +291,7 @@ class _FormRoot:
         result = []
         index_element_count = 1
         if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
+            items = getattr(form.form, cls.name)  # helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
             if items:
                 for item in items:
                     result.append(cls.encode(form, item))
