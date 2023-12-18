@@ -155,7 +155,7 @@ class Decoder:
         include_type, (new_src_dir, entry, dest_dir, options, parent_id, include_index) = params
         try:
             handler = helper.get_class_metadata_object(include_type)
-            handler = handler.get_version(options.get('version')[:3])(options=options)
+            handler = handler.get_version(options.get('version', '803')[:3])(options=options)
             handler.title = include_type
             object_task, child_tasks = handler.encode(new_src_dir, entry, dest_dir, parent_id, include_index)
             return object_task, child_tasks

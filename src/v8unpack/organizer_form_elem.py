@@ -17,7 +17,7 @@ class OrganizerFormElem:
         areas = {}
         elements = helper.json_read(os.path.join(src_dir, path), file_name)
         cls._unpack_get_areas(elements['tree'], '', elements['data'], areas)
-        areas['root'] = dict(tree=elements['tree'], data=elements['data'])
+        areas['root'] = elements
         cls._unpack_write_areas(src_dir, path, file_name, dest_dir, index, descent, areas)
 
     @staticmethod
@@ -150,6 +150,8 @@ class OrganizerFormElem:
     @classmethod
     def _append_area_data(cls, tree, path, root_data, data, append_path, area_type=None):
         try:
+            if not tree:
+                return
             _path = f'include_{path[8:]}' if area_type == 'includr_' else path
             for elem in tree:
                 name: str = elem['name']

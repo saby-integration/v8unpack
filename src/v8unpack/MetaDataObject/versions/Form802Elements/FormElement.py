@@ -59,9 +59,30 @@ class FormElement:
         elem_data = dict(
             name=name,
             type=metadata_type.name,
+            id=elem_raw_data[1],
             ver=802
         )
         return form.add_elem(page, path, name, elem_data, elem_raw_data)
+
+    @classmethod
+    def encode(cls, form, path, elem_tree, raw_data):
+        return raw_data
+
+
+class FormProps:
+    name = 'props'
+
+    @classmethod
+    def decode(cls, form, elem_raw_data):
+        try:
+            elem_data = dict(
+                name=helper.str_decode(elem_raw_data[4]),
+                id=elem_raw_data[0][0],
+                raw=elem_raw_data
+            )
+            return elem_data
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @classmethod
     def decode_list(cls, form, raw_data, index_element_count=0):
@@ -79,18 +100,15 @@ class FormElement:
         return result
 
     @classmethod
-    def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
+    def encode_list(cls, form, raw_data, path=''):
         try:
             result = []
             index_element_count = 0
             if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-                elements = helper.json_read(src_dir, f'{file_name}.elements_tree{version}.json')
-                items = elements['tree']
-                form.elements_data = elements['data']
-                if items:
-                    for item in items:
-                        result.append(cls.encode(form, path, item))
-                    raw_data[index_element_count] = str(len(items))
+                if form.props:
+                    for prop in form.props:
+                        result.append(cls.encode(form, path, prop))
+                    raw_data[index_element_count] = str(len(form.props))
                     raw_data[index_element_count + 1:index_element_count + 1] = result
                 else:
                     raw_data[index_element_count] = '0'
@@ -99,47 +117,6 @@ class FormElement:
 
     @classmethod
     def encode(cls, form, path, data):
-        key = f"{path}/{data['name']}"
-        try:
-            return form.elements_data[key]
-        except KeyError as err:
-            # detail = err
-            # if key.startswith('/includr_'):
-            #     try:
-            #         key = f'/include_{key[9:]}'
-            #         elem_data = form.elements_data[key]
-            #         elem_data[-2][1] = helper.str_encode(data['name'])
-            #         return elem_data
-            #     except KeyError as err:
-            #         detail = err
-            raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
-
-
-class FormProps(FormElement):
-    name = 'props'
-
-    @classmethod
-    def decode(cls, form, path, elem_raw_data):
-        elem_data = dict(
-            name=helper.str_decode(elem_raw_data[4]),
-            raw=elem_raw_data
-        )
-        return elem_data
-
-    @classmethod
-    def encode(cls, form, path, data):
         return data['raw']
 
-    @classmethod
-    def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
-        result = []
-        index_element_count = 0
-        if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
-            if items:
-                for item in items:
-                    result.append(cls.encode(form, path, item))
-                raw_data[index_element_count] = str(len(items))
-                raw_data[index_element_count + 1:index_element_count + 1] = result
-            else:
-                raw_data[index_element_count] = '0'
+
