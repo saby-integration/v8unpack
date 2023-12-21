@@ -176,7 +176,7 @@ class Form8x(SimpleNameFolder):
                     # root_data[index_root_element_count] = str(len(self.elements_tree))
                     FormElement803.encode_list(self, self.elements_tree, root_data, index_root_element_count)
             else:
-                Form27.encode(self, src_dir, file_name, self.version, self.form[0][0])
+                Form27(self).encode(src_dir, file_name, self.version, self.form[0][0])
                 # FormElement802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][1][2][2])
                 # FormProps802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][2][2])
         except Exception as err:

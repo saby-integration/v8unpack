@@ -44,6 +44,10 @@ class FormElement:
             return FormElement
 
     @classmethod
+    def set_name(cls, name, raw_data):
+        raw_data[-2][1] = helper.str_encode(name)
+
+    @classmethod
     def decode(cls, form, path, elem_raw_data):
         metadata_type_uuid = elem_raw_data[0]
         name = helper.str_decode(elem_raw_data[-2][1])
@@ -65,7 +69,24 @@ class FormElement:
         return form.add_elem(page, path, name, elem_data, elem_raw_data)
 
     @classmethod
-    def encode(cls, form, path, elem_tree, raw_data):
+    def encode(cls, form, path, elem_tree, elem_data):
+        raw_data = elem_data['raw']
+        if form.auto_include:
+            form.last_elem_id += 1
+            raw_data[1] = str(form.last_elem_id)
+
+        elem_id = raw_data[1]
+
+        prop = elem_data.get('prop')
+        prop_index = form.props_index.get(prop)
+        if prop:
+            form.field_data_source.append((elem_id, prop_index))
+
+        type_index = elem_data.get('type_index')
+        if type_index:
+            for group in type_index:
+                form.elements_types_index[group].append([type_index[group][0], elem_id, type_index[group][1]])
+
         return raw_data
 
 
@@ -118,5 +139,3 @@ class FormProps:
     @classmethod
     def encode(cls, form, path, data):
         return data['raw']
-
-
