@@ -9,13 +9,32 @@ class Form27:
 
     def __init__(self, form):
         self.form = form
-        self.props_index = None
+        self.props_index = {}
+        self.last_elem_id = 1
+        self.field_data_source = []
+
+    @property
+    def options(self):
+        return self.form.options
+
+    @property
+    def auto_include(self):
+        if self.form.options:
+            return self.form.options.get('auto_include')
+        return False
+
+    @property
+    def elements_data(self):
+        return self.form.elements_data
+
+    @property
+    def elements_tree(self):
+        return self.form.elements_tree
 
     def decode(self, raw_data):
         try:
             self.form.props = FormProps.decode_list(self.form, raw_data[2][2])
             self.form.elements_tree, self.form.elements_data = self.decode_elements(raw_data)
-            a = 1
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -29,10 +48,6 @@ class Form27:
             self.create_prop_index_by_elem_id(form_data[2][3])
 
             elements_tree, elements_data = Panel.decode(self, '', form_data[1][2])
-            form_version = form_data[1][10]
-            element_count_all = form_data[1][1][
-                1]  # хз что это, +3 к количеству элементов (может дополнительно количество панелей по количеству страниц плюсуется
-            element_count_by_pages = form_data[2][1]  # дальше идут пачками по типам
             return elements_tree, elements_data
         except Exception as err:
             raise ExtException(parent=err)
@@ -61,21 +76,28 @@ class Form27:
         if self.form.props:
             for prop in self.form.props:
                 self.props_index[prop['name']] = prop['id']
-                childs = prop.get('child', [])
-                for child in childs:
-                    self.props_index[f"{prop['name']}.{child['name']}"] = prop['id'], child['id']
 
-    @classmethod
-    def encode(cls, form, src_dir, file_name, version, raw_data, path=''):
+    def fill_datasource(self, raw_data):
+        raw_data.append(str(len(self.field_data_source)))
+        for elem_id, prop_id in self.field_data_source:
+            raw_data.append(
+                [str(elem_id), ['1', [str(prop_id)]]]
+            )
+
+    def encode(self, src_dir, file_name, version, raw_data, path=''):
         try:
             # index_element_count = 0
             # if raw_data[index_element_count] == 'Дочерние элементы отдельно':
             elements = helper.json_read(src_dir, f'{file_name}.elements802.json')
-            form.props = elements['props']
-            form.elements_data = elements['data']
-            form.elements_tree = elements['tree']
-            FormProps.encode_list(form, raw_data[2][2])
-            result = Panel.encode(form, '', None, raw_data[1][2])
-            return result
+            self.form.props = elements['props']
+            self.form.elements_data = elements['data']
+            self.form.elements_tree = elements['tree']
+            FormProps.encode_list(self.form, raw_data[2][2])
+            self.create_prop_index_by_name()
+            Panel.encode(self, '', None, dict(raw=raw_data[1][2]))
+            if self.auto_include:
+                raw_data[2][3] = []
+                self.fill_datasource(raw_data[2][3])
+            return raw_data
         except Exception as err:
             raise ExtException(parent=err)

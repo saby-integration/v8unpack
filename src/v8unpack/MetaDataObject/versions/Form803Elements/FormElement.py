@@ -56,6 +56,11 @@ class FormElement:
         return None
 
     @classmethod
+    def set_name(cls, name, raw_data):
+        name_offset = cls.get_name_node_offset(raw_data)
+        raw_data[name_offset] = helper.str_encode(name)
+
+    @classmethod
     def get_command_link_offset(cls, raw_data):
         return None
 

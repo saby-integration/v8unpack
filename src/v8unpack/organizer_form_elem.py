@@ -34,9 +34,10 @@ class OrganizerFormElem:
             for elem in tree:
                 name: str = elem['name']
                 area_type = cls.is_area(name)
-                old_path = f'{path}/{name}'
+                old_path = f'{path}/{name}' if path else name
                 if area_type:
-                    new_path = f'{path[len(path):]}/{name}'
+                    _path = path[len(path):]
+                    new_path = f'{_path}/{name}' if _path else name
                     area_name = name[8:]
                     area = dict(
                         data={
@@ -44,15 +45,15 @@ class OrganizerFormElem:
                         },
                         tree=elem.pop('child', [])
                     )
-                    if area['tree']:
-                        cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
-                        elem['child'] = 'В отдельном файле'
+                    cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
+                    elem['child'] = 'В отдельном файле'
                     if area_type == 'include_':  # includr_ только чтение
                         areas[area_name] = area
                     continue
                 child = elem.get('child')
                 if child:
                     cls._unpack_get_areas(child, old_path, root_data, areas)
+
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -63,7 +64,7 @@ class OrganizerFormElem:
             for elem in tree:
                 name: str = elem['name']
                 old_path = f'{path}/{name}'
-                new_path = f'{path[size_prefix:]}/{name}'
+                new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
                 try:
                     data[new_path] = root_data.pop(old_path)
                 except Exception:
@@ -71,6 +72,19 @@ class OrganizerFormElem:
                 child = elem.get('child')
                 if child:
                     cls._pop_area_data(child, old_path, root_data, data, remove_path)
+
+            pages = root_data.pop(f'{path}/-pages-', None)
+            if pages:
+                new_path = f'{path[size_prefix + 1:] if size_prefix else path}/-pages-'
+                data[new_path] = pages
+                for name in pages:
+                    old_path = f'{path}/{name}'
+                    new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
+                    try:
+                        data[new_path] = root_data.pop(old_path)
+                    except Exception:
+                        raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -113,7 +127,7 @@ class OrganizerFormElem:
     def _pack_get_areas(cls, src_dir, src_path, file_name, tree, path, root_data, index_code_areas):
         for elem in tree:
             name: str = elem['name']
-            new_path = f'{path}/{name}'
+            new_path = f'{path}/{name}' if path else name
             area_type = cls.is_area(name)
             if area_type:
                 area_name = name[8:]
@@ -129,10 +143,11 @@ class OrganizerFormElem:
                     _path = f'include_{path[8:]}'
                     new_first_elem_key = first_elem_key.replace('include_', 'includr_')
                     elem_class = cls.form_elem_class(first_elem_data['ver'], elem['type'])
-                    name_offset = elem_class.get_name_node_offset(first_elem_data['raw'])
-                    first_elem_data['raw'][name_offset] = helper.str_encode(new_first_elem_key[1:])
-                root_data[f'{path}{new_first_elem_key}'] = first_elem_data
-                cls._append_area_data(include_elements['tree'], first_elem_key[1:], root_data, include_elements['data'],
+                    # name_offset = elem_class.get_name_node_offset(first_elem_data['raw'])
+                    # first_elem_data['raw'][name_offset] = helper.str_encode(new_first_elem_key[1:])
+                    elem_class.set_name(new_first_elem_key, first_elem_data['raw'])
+                root_data[f'{path}/{new_first_elem_key}' if path else new_first_elem_key] = first_elem_data
+                cls._append_area_data(include_elements['tree'], first_elem_key, root_data, include_elements['data'],
                                       path, area_type)
                 # if area_type == 'includr_':  # меняем имя ключа у первого элемента
                 #     first_elem_key: str = list(include_elements['data'].keys())[0]
@@ -155,15 +170,27 @@ class OrganizerFormElem:
             _path = f'include_{path[8:]}' if area_type == 'includr_' else path
             for elem in tree:
                 name: str = elem['name']
-                old_path = f'/{_path}/{name}'
-                new_path = f'{append_path}/{path}/{name}'
+                old_path = f'{_path}/{name}'
+                new_path = f'{append_path}/{path}/{name}' if append_path else f'{path}/{name}'
                 try:
                     root_data[new_path] = data.pop(old_path)
                 except Exception:
                     raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
                 child = elem.get('child')
                 if child:
-                    cls._append_area_data(child, old_path[1:], root_data, data, append_path)
+                    cls._append_area_data(child, old_path, root_data, data, append_path)
+
+            pages = data.pop(f'{path}/-pages-', None)
+            if pages:
+                new_path = f'{append_path}/{_path}/-pages-' if append_path else f'{_path}/-pages-'
+                root_data[new_path] = pages
+                for name in pages:
+                    old_path = f'{path}/{name}'
+                    new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
+                    try:
+                        root_data[new_path] = data.pop(old_path)
+                    except Exception:
+                        raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
         except Exception as err:
             raise ExtException(parent=err)
 
