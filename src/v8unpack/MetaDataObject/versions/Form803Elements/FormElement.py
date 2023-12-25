@@ -102,10 +102,11 @@ class FormElement:
                 data['ПутьКДанным'] = prop
             if command:
                 data['ИмяКоманды'] = command
-
-            form.elements_data[f'{path}/{helper.str_decode(name)}'] = data
+            name = helper.str_decode(name)
+            key = f'{path}/{name}' if path else name
+            form.elements_data[key] = data
             return dict(
-                name=helper.str_decode(name),
+                name=name,
                 type=cls.__name__,
             )
         except Exception as err:

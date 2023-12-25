@@ -61,17 +61,18 @@ class OrganizerFormElem:
     def _pop_area_data(cls, tree, path, root_data, data, remove_path):
         try:
             size_prefix = len(remove_path)
-            for elem in tree:
-                name: str = elem['name']
-                old_path = f'{path}/{name}'
-                new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
-                try:
-                    data[new_path] = root_data.pop(old_path)
-                except Exception:
-                    raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
-                child = elem.get('child')
-                if child:
-                    cls._pop_area_data(child, old_path, root_data, data, remove_path)
+            if tree:
+                for elem in tree:
+                    name: str = elem['name']
+                    old_path = f'{path}/{name}'
+                    new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
+                    try:
+                        data[new_path] = root_data.pop(old_path)
+                    except Exception:
+                        raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                    child = elem.get('child')
+                    if child:
+                        cls._pop_area_data(child, old_path, root_data, data, remove_path)
 
             pages = root_data.pop(f'{path}/-pages-', None)
             if pages:
