@@ -177,8 +177,8 @@ class Panel(FormElement):
             for i in range(page_count):
                 raw_page = pages_raw_data[i + 2]
                 page_format_version = raw_page[0]
-                if page_format_version not in ['3', '4']:
-                    print(f'Неизвестный формат страницы. {page_format_version} != 3')
+                # if page_format_version not in ['3', '4']:
+                #     print(f'Неизвестный формат страницы. {page_format_version} != 3')
                 page_name = helper.str_decode(raw_page[6])
                 if self.auto_include:
                     self.elements_tree.append({

@@ -198,7 +198,7 @@ class FormElement:
     @classmethod
     def encode(cls, form, path, data):
         try:
-            key = f"{path}/{data['name']}"
+            key = f"{path}/{data['name']}" if path else data['name']
             try:
                 elem_data = form.elements_data[key]
             except KeyError as err:

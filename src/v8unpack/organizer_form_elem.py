@@ -78,13 +78,13 @@ class OrganizerFormElem:
             if pages:
                 new_path = f'{path[size_prefix + 1:] if size_prefix else path}/-pages-'
                 data[new_path] = pages
-                for name in pages:
-                    old_path = f'{path}/{name}'
-                    new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
-                    try:
-                        data[new_path] = root_data.pop(old_path)
-                    except Exception:
-                        raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                # for name in pages:
+                #     old_path = f'{path}/{name}'
+                #     new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
+                #     try:
+                #         data[new_path] = root_data.pop(old_path)
+                #     except Exception:
+                #         raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
 
         except Exception as err:
             raise ExtException(parent=err)
@@ -185,13 +185,13 @@ class OrganizerFormElem:
             if pages:
                 new_path = f'{append_path}/{_path}/-pages-' if append_path else f'{_path}/-pages-'
                 root_data[new_path] = pages
-                for name in pages:
-                    old_path = f'{path}/{name}'
-                    new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
-                    try:
-                        root_data[new_path] = data.pop(old_path)
-                    except Exception:
-                        raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                # for name in pages:
+                #     old_path = f'{path}/{name}'
+                #     new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
+                #     try:
+                #         root_data[new_path] = data.pop(old_path)
+                #     except Exception:
+                #         raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
         except Exception as err:
             raise ExtException(parent=err)
 

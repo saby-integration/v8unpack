@@ -39,7 +39,8 @@ class Group(FormElement):
                 return raw_data
             index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
             name_for_child = f"include_{data['name'][8:]}" if data['name'][:8] == 'includr_' else data['name']
-            cls.encode_list(form, child, raw_data, index, f"{path}/{name_for_child}")
+            new_path = f"{path}/{name_for_child}" if path else name_for_child
+            cls.encode_list(form, child, raw_data, index, new_path)
             return raw_data
         except Exception as err:
             raise ExtException(parent=err)
