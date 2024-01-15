@@ -162,7 +162,9 @@ class Form803(Form8x):
             Form4(self).encode(src_dir, file_name, dest_dir, self.form[0][0])
         except Exception as err:
             raise ExtException(parent=err, message='Ошибка при сборке формы',
-                               detail=f"{os.path.join(src_dir, file_name)}")
+                               detail=f"{os.path.join(src_dir, file_name)}",
+                               action='Form803.encode_nested_includes'
+                               )
 
     def write_encode_object(self, dest_dir):
         if self.header['Тип формы'] == OF:

@@ -143,6 +143,7 @@ class Form8x(SimpleNameFolder):
             version = self.options.get('version')
             if version is None:
                 version = '803' if self.header['Тип формы'] == 1 else '802'
+            version = version[:3]
             self.form = helper.json_read(src_dir, f'{file_name}.form{version}.json')
         except FileNotFoundError:
             self.form = self.encode_empty_form()
