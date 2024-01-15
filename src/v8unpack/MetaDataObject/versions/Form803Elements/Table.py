@@ -33,7 +33,7 @@ class Table(FormElement):
             index = calc_offset([
                 (4, 1), (50, 2), (7, 0)
             ], raw_data)
-            data['child'] = cls.decode_list(form, raw_data, index, f"{path}/{data['name']}")
+            data['child'] = cls.decode_list(form, raw_data, index, f"{path}/{data['name']}" if path else data['name'])
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -58,6 +58,6 @@ class Table(FormElement):
             index = calc_offset([
                 (4, 1), (50, 2), (7, 0)
             ], raw_data)
-            cls.encode_list(form, child, raw_data, index, f"{path}/{data['name']}")
+            cls.encode_list(form, child, raw_data, index, f"{path}/{data['name']}" if path else data['name'])
         except Exception as err:
             raise ExtException(parent=err)
