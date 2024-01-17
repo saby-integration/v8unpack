@@ -70,24 +70,30 @@ class FormElement:
 
     @classmethod
     def encode(cls, form, path, elem_tree, elem_data):
-        raw_data = elem_data['raw']
-        if form.auto_include:
-            form.last_elem_id += 1
-            raw_data[1] = str(form.last_elem_id)
+        try:
+            raw_data = elem_data['raw']
+            if form.auto_include:
+                form.last_elem_id += 1
+                raw_data[1] = str(form.last_elem_id)
 
-        elem_id = raw_data[1]
+            elem_id = raw_data[1]
 
-        prop = elem_data.get('prop')
-        prop_index = form.props_index.get(prop)
-        if prop:
-            form.field_data_source.append((elem_id, prop_index))
+            prop = elem_data.get('prop')
+            if prop:
+                prop_index = form.props_index.get(prop)
+                if not prop_index:
+                    raise ExtException(message='Отсутствует свойство', detail=prop)
+                form.field_data_source.append((elem_id, prop_index))
 
-        type_index = elem_data.get('type_index')
-        if type_index:
-            for group in type_index:
-                form.elements_types_index[group].append([type_index[group][0], elem_id, type_index[group][1]])
+            type_index = elem_data.get('type_index')
+            if type_index:
+                for group in type_index:
+                    for elem in type_index[group]:
+                        form.elements_types_index[group].append([elem[0], elem_id, elem[1]])
 
-        return raw_data
+            return raw_data
+        except Exception as err:
+            raise ExtException(parent=err)
 
 
 class FormProps:

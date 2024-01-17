@@ -45,6 +45,9 @@ class OrganizerFormElem:
                         },
                         tree=elem.pop('child', [])
                     )
+                    # в пути детей includr не используется.
+                    name: str = f'include_{area_name}'
+                    old_path = f'{path}/{name}' if path else name
                     cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
                     elem['child'] = 'В отдельном файле'
                     if area_type == 'include_':  # includr_ только чтение
@@ -75,16 +78,17 @@ class OrganizerFormElem:
                         cls._pop_area_data(child, old_path, root_data, data, remove_path)
 
             pages = root_data.pop(f'{path}/-pages-', None)
-            if pages:
+            if pages is not None:
                 new_path = f'{path[size_prefix + 1:] if size_prefix else path}/-pages-'
                 data[new_path] = pages
-                # for name in pages:
-                #     old_path = f'{path}/{name}'
-                #     new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
-                #     try:
-                #         data[new_path] = root_data.pop(old_path)
-                #     except Exception:
-                #         raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                for name in pages:
+                    old_path = f'{path}/{name}'
+                    new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
+                    try:
+                        data[new_path] = root_data.pop(old_path)
+                    except KeyError:
+                        pass
+                        # raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
 
         except Exception as err:
             raise ExtException(parent=err)
@@ -166,32 +170,32 @@ class OrganizerFormElem:
     @classmethod
     def _append_area_data(cls, tree, path, root_data, data, append_path, area_type=None):
         try:
-            if not tree:
-                return
             _path = f'include_{path[8:]}' if area_type == 'includr_' else path
-            for elem in tree:
-                name: str = elem['name']
-                old_path = f'{_path}/{name}'
-                new_path = f'{append_path}/{path}/{name}' if append_path else f'{path}/{name}'
-                try:
-                    root_data[new_path] = data.pop(old_path)
-                except Exception:
-                    raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
-                child = elem.get('child')
-                if child:
-                    cls._append_area_data(child, old_path, root_data, data, append_path)
+            if tree:
+                for elem in tree:
+                    name: str = elem['name']
+                    old_path = f'{_path}/{name}'
+                    new_path = f'{append_path}/{path}/{name}' if append_path else f'{path}/{name}'
+                    try:
+                        root_data[new_path] = data.pop(old_path)
+                    except Exception:
+                        raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                    child = elem.get('child')
+                    if child:
+                        cls._append_area_data(child, old_path, root_data, data, append_path)
 
             pages = data.pop(f'{path}/-pages-', None)
-            if pages:
+            if pages is not None:
                 new_path = f'{append_path}/{_path}/-pages-' if append_path else f'{_path}/-pages-'
                 root_data[new_path] = pages
-                # for name in pages:
-                #     old_path = f'{path}/{name}'
-                #     new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
-                #     try:
-                #         root_data[new_path] = data.pop(old_path)
-                #     except Exception:
-                #         raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
+                for name in pages:
+                    old_path = f'{path}/{name}'
+                    new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
+                    try:
+                        root_data[new_path] = data.pop(old_path)
+                    except KeyError:
+                        pass
+                        # raise KeyNotFound(message='Не найден элемент формы', detail=old_path)
         except Exception as err:
             raise ExtException(parent=err)
 

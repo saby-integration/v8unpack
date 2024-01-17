@@ -36,8 +36,16 @@ class TestFormElem802(unittest.TestCase):
         self.assertEqual('', result)
 
     def test_decode_form_elem(self):
-        file_name = 'СтраницыИПанели'
+        # file_name = 'СтраницыИПанели'
+        # file_name = 'Фильтр'
+        # file_name = '2 добавлена страница'
+        # file_name = '4 страница 1 добавлена надпись'
+        file_name = 'ДоПереносаПоля'
+        file_name = 'ПослеПереносаПоля'
+        file_name = 'ДоПереноса2'
+        file_name = 'ПослеПереноса2'
         result = self.decode_form_elem(file_name)
+        self.assertEqual('', result)
 
     def test_decode_form_elem7(self):
         file_name = 'form7'  # не панель страницы 01 поставлен ручной порядок обхода и изменен порядок 2 и 3 флагов
@@ -45,25 +53,25 @@ class TestFormElem802(unittest.TestCase):
 
     def decode_form_elem(self, file_name):
         helper.clear_dir(self.temp_dir)
-        json_file_name = f'{file_name}.json'
+        json_origin_file_name = f'{file_name}.origin.json'
+        json_result_file_name = f'{file_name}.result.json'
         raw_data = helper.brace_file_read(self.data_dir, file_name)
-        helper.json_write(raw_data, self.temp_dir, json_file_name)
-        form = Form802()
+        helper.json_write(raw_data, self.temp_dir, json_origin_file_name)
+        form = Form802(options=dict(auto_include=True))
         form.new_dest_dir = self.temp_dir
         form.form = [raw_data]
         form.decode_includes(None, self.temp_dir, '', None)
         form.write_decode_object(self.temp_dir, '', file_name)
         form.encode_nested_includes(self.temp_dir, file_name, self.temp_dir, '')
-        helper.json_write(form.form[0], self.temp_dir, file_name)
+        helper.json_write(form.form[0], self.temp_dir, json_result_file_name)
+        helper.brace_file_write(helper.json_read(self.temp_dir, json_result_file_name), self.temp_dir, file_name)
         problems = ''
         try:
             result = compare_file(
-                os.path.join(self.data_dir, file_name),
-                os.path.join(self.temp_dir, file_name),
+                os.path.join(self.temp_dir, json_origin_file_name),
+                os.path.join(self.temp_dir, json_result_file_name),
                 problems
             )
         except NotEqualLine as err:
             result = str(err)
-        if result:
-            print(result)
         return result

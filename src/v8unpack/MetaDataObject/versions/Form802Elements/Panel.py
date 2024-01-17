@@ -77,8 +77,9 @@ class Panel(FormElement):
                 self.form = form
                 self.form.props_index = form.form.props_index
                 elem, elem_id = super().decode(form, path, elem_raw_data)
-                self.decode_pages(elem_id, elem_raw_data[1 + is_child][1])
-                self.decode_elements(elem_id, elem_raw_data[-1])
+                new_path = elem_id.replace('includr_', 'include_')
+                self.decode_pages(new_path, elem_raw_data[1 + is_child][1])
+                self.decode_elements(new_path, elem_raw_data[-1])
                 elem['child'] = self.elements_tree
                 form.elements_data.update(self.elements_data)
             else:
@@ -138,14 +139,16 @@ class Panel(FormElement):
         def element_index():
             self.elements_types_index = {}
             type_offset = 2
-            for types in range(4):
+            for types in range(1, 5):
                 type_count = int(raw_data[type_offset])
                 for elem in range(type_count):
                     _elem_data = raw_data[type_offset + 1 + elem]
                     _elem_id = _elem_data[1]
                     if _elem_id not in self.elements_types_index:
                         self.elements_types_index[_elem_id] = {}
-                    self.elements_types_index[_elem_id][types + 1] = [_elem_data[0], _elem_data[2]]
+                    if types not in self.elements_types_index[_elem_id]:
+                        self.elements_types_index[_elem_id][types] = []
+                    self.elements_types_index[_elem_id][types] += [[_elem_data[0], _elem_data[2]]]
                 raw_data[type_offset] = '0'
                 del raw_data[type_offset + 1: type_offset + 1 + type_count]
                 type_offset += 1
@@ -210,19 +213,20 @@ class Panel(FormElement):
         try:
             self = cls()
             self.form = form
-            self.last_elem_id = form.last_elem_id
             self.auto_include = form.auto_include
             self.props_index = form.props_index
             elem_raw_data = elem_data['raw']
             is_child = 0 if isinstance(elem_raw_data[1], list) else 1
             if is_child:
                 super().encode(form, path, elem_tree, elem_data)
+                self.last_elem_id = form.last_elem_id
                 path = f"{path}/{elem_tree['name']}" if path else elem_tree['name']
                 self.elements_tree = elem_tree['child']
                 self.elements_data = form.elements_data
                 elem_raw_data[1 + is_child][1] = self.encode_pages(path, elem_raw_data[1 + is_child][1])
                 self.encode_elements(path, elem_raw_data[-1])
                 elem_raw_data[1 + is_child][1] = self.encode_elements_types(elem_raw_data[1 + is_child][1])
+                form.last_elem_id = self.last_elem_id
                 pass
                 # return elem_raw_data
                 # elem['child'] = self.elements_tree
@@ -252,6 +256,7 @@ class Panel(FormElement):
             page = self.elements_data[elem_id]
             pages.append(page['raw'])
             return page['info']
+        _path = path
         _path = path.replace('includr_', 'include_')
         pages_offset = self.pages_offset(raw_data)
         try:
@@ -287,8 +292,8 @@ class Panel(FormElement):
     def encode_elements_types(self, raw_data):
         try:
             result = []
-            for types in range(4):
-                type_index = self.elements_types_index[str(types + 1)]
+            for types in range(1, 5):
+                type_index = self.elements_types_index[str(types)]
                 type_index.sort(key=lambda row: row[1])
                 result += [str(len(type_index))]
                 if type_index:
