@@ -24,7 +24,7 @@ class TestDecode(HelperTestDecode):
         }
         self.init(
             index_file_name='index.json',
-            auto_include=False,
+            auto_include=True,
             version='802'
         )
         pass

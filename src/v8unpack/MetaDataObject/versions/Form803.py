@@ -13,7 +13,6 @@ class Form803(Form8x):
 
     def __init__(self, *, obj_name=None, options=None):
         super().__init__(obj_name=obj_name, options=options)
-        self.command_panels = []
         self.params = []
         self.commands = []
 
@@ -61,16 +60,7 @@ class Form803(Form8x):
         if self.header['Тип формы'] == OF:
             self.version = 802
         super().write_decode_object(dest_dir, dest_path, file_name)
-        if self.elements_tree or self.props or self.params or self.commands:
-            helper.json_write(
-                dict(
-                    tree=self.elements_tree,
-                    data=self.elements_data,
-                    params=self.params,
-                    props=self.props,
-                    commands=self.commands
-                ),
-                self.new_dest_dir, f'{file_name}.elements{self.version}.json')
+
         # if self.props:
         #     helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
         # if self.commands:

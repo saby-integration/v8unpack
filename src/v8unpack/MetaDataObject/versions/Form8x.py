@@ -24,6 +24,8 @@ class Form8x(SimpleNameFolder):
         self.elements_data = {}
         self.props_index = {}
         self.props = []
+        self.params = []
+        self.commands = []
         self._form = None
 
     def decode_object(self, src_dir, uuid, dest_dir, dest_path, version, header_data):
@@ -126,6 +128,16 @@ class Form8x(SimpleNameFolder):
     def write_decode_object(self, dest_dir, dest_path, file_name):
         super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name)
         helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.version}.json')
+        if self.elements_tree or self.props or self.params or self.commands:
+            helper.json_write(
+                dict(
+                    tree=self.elements_tree,
+                    data=self.elements_data,
+                    params=self.params,
+                    props=self.props,
+                    commands=self.commands
+                ),
+                self.new_dest_dir, f'{file_name}.elements{self.version}.json')
         return []
 
     def decode_data(self, src_dir, uuid):
@@ -181,7 +193,7 @@ class Form8x(SimpleNameFolder):
                 # FormElement802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][1][2][2])
                 # FormProps802.encode_list(self, src_dir, file_name, self.version, self.form[0][0][2][2])
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при сборке формы', detail=f'{file_name}')
+            raise ExtException(parent=err, message='Ошибка при сборке формы', detail=f'{file_name} {src_dir}')
 
     def encode_header(self):
         return self.header['data']
