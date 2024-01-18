@@ -1,0 +1,15 @@
+{
+  "saby_vo3_83_uf": {
+      "src": "src",
+      "bin": "temp/ВнешняяОбработка803.epf",
+      "temp": "temp",
+      "index": "index.json",
+      "disable": false,
+	  "options": {
+         "version": "80314",
+         "descent": null,
+         "gui": null,
+         "auto_include": true
+      }
+  }
+}

@@ -36,19 +36,16 @@ class FormElement:
     name = 'elements'
 
     @classmethod
-    def decode_list(cls, form, raw_data, index_element_count=0, path=''):
-        result = []
-        element_count = int(raw_data[index_element_count])
-        if not element_count:
-            return
+    def get_class_form_elem(cls, name):
+        index = ['Panel']
+        if name in index:
+            return helper.get_class(f'v8unpack.MetaDataObject.versions.Form802Elements.{name}.{name}')
+        else:
+            return FormElement
 
-        for i in range(element_count):
-            elem_raw_data = raw_data[index_element_count + i + 1]
-            result.append(cls.decode(form, path, elem_raw_data))
-
-        raw_data[index_element_count] = 'Дочерние элементы отдельно'
-        del raw_data[index_element_count + 1:index_element_count + 1 + element_count]
-        return result
+    @classmethod
+    def set_name(cls, name, raw_data):
+        raw_data[-2][1] = helper.str_encode(name)
 
     @classmethod
     def decode(cls, form, path, elem_raw_data):
@@ -62,60 +59,89 @@ class FormElement:
                 detail=f'{metadata_type_uuid} {name} - {form.__class__.__name__} {form.header["name"]}',
                 action='Form802Element.decode'
             )
-        form.elements_data[f'{path}/{name}'] = elem_raw_data
+        page = elem_raw_data[-3][-5]
         elem_data = dict(
             name=name,
             type=metadata_type.name,
-            # raw=raw_data
+            id=elem_raw_data[1],
+            ver=802
         )
-        return elem_data
+        return form.add_elem(page, path, name, elem_data, elem_raw_data)
 
     @classmethod
-    def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
-        result = []
-        index_element_count = 0
-        if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
-            items = elements['tree']
-            form.elements_data = elements['data']
-            if items:
-                for item in items:
-                    result.append(cls.encode(form, path, item))
-                raw_data[index_element_count] = str(len(items))
-                raw_data[index_element_count + 1:index_element_count + 1] = result
-            else:
-                raw_data[index_element_count] = '0'
+    def encode(cls, form, path, elem_tree, elem_data):
+        try:
+            raw_data = elem_data['raw']
+            if form.auto_include:
+                form.last_elem_id += 1
+                raw_data[1] = str(form.last_elem_id)
 
-    @classmethod
-    def encode(cls, form, path, data):
-        return form.elements_data[f"{path}/{data['name']}"]
+            elem_id = raw_data[1]
+
+            prop = elem_data.get('prop')
+            if prop:
+                prop_index = form.props_index.get(prop)
+                if not prop_index:
+                    raise ExtException(message='Отсутствует свойство', detail=prop)
+                form.field_data_source.append((elem_id, prop_index))
+
+            type_index = elem_data.get('type_index')
+            if type_index:
+                for group in type_index:
+                    for elem in type_index[group]:
+                        form.elements_types_index[group].append([elem[0], elem_id, elem[1]])
+
+            return raw_data
+        except Exception as err:
+            raise ExtException(parent=err)
 
 
-class FormProps(FormElement):
+class FormProps:
     name = 'props'
 
     @classmethod
-    def decode(cls, form, path, elem_raw_data):
-        elem_data = dict(
-            name=helper.str_decode(elem_raw_data[4]),
-            raw=elem_raw_data
-        )
-        return elem_data
+    def decode(cls, form, elem_raw_data):
+        try:
+            elem_data = dict(
+                name=helper.str_decode(elem_raw_data[4]),
+                id=elem_raw_data[0][0],
+                raw=elem_raw_data
+            )
+            return elem_data
+        except Exception as err:
+            raise ExtException(parent=err)
+
+    @classmethod
+    def decode_list(cls, form, raw_data, index_element_count=0):
+        result = []
+        element_count = int(raw_data[index_element_count])
+        if not element_count:
+            return
+
+        for i in range(element_count):
+            elem_raw_data = raw_data[index_element_count + i + 1]
+            result.append(cls.decode(form, elem_raw_data))
+
+        raw_data[index_element_count] = 'Дочерние элементы отдельно'
+        del raw_data[index_element_count + 1:index_element_count + 1 + element_count]
+        return result
+
+    @classmethod
+    def encode_list(cls, form, raw_data, path=''):
+        try:
+            result = []
+            index_element_count = 0
+            if raw_data[index_element_count] == 'Дочерние элементы отдельно':
+                if form.props:
+                    for prop in form.props:
+                        result.append(cls.encode(form, path, prop))
+                    raw_data[index_element_count] = str(len(form.props))
+                    raw_data[index_element_count + 1:index_element_count + 1] = result
+                else:
+                    raw_data[index_element_count] = '0'
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @classmethod
     def encode(cls, form, path, data):
         return data['raw']
-
-    @classmethod
-    def encode_list(cls, form, src_dir, file_name, version, raw_data, path=''):
-        result = []
-        index_element_count = 0
-        if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
-            if items:
-                for item in items:
-                    result.append(cls.encode(form, path, item))
-                raw_data[index_element_count] = str(len(items))
-                raw_data[index_element_count + 1:index_element_count + 1] = result
-            else:
-                raw_data[index_element_count] = '0'

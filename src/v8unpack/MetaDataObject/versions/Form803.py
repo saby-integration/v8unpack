@@ -3,6 +3,7 @@ import os
 
 from .Form803Elements.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
 from .Form8x import Form8x, OF
+from .Form803Elements.Form4 import Form4
 from ... import helper
 from ...ext_exception import ExtException
 
@@ -12,7 +13,6 @@ class Form803(Form8x):
 
     def __init__(self, *, obj_name=None, options=None):
         super().__init__(obj_name=obj_name, options=options)
-        self.command_panels = []
         self.params = []
         self.commands = []
 
@@ -50,55 +50,25 @@ class Form803(Form8x):
 
         backup = json.dumps(self.form)
         try:
-            self.decode_elements(src_dir, dest_dir, dest_path, header_data)
-            self.params = FormParams.decode_list(self, self.form[0][0])
-            self.commands = FormCommands.decode_list(self, self.form[0][0])
-            self.props = FormProps.decode_list(self, self.form[0][0])
+            Form4(self).decode(src_dir, dest_dir, dest_path, self.form[0][0])
         except Exception as err:
             self.form = json.loads(backup)
             pass  # todo если какие то елементы формы не разбираются, не прерываем
             # raise ExtException(parent=err, message='Ошибка при разборе формы')
 
-    def decode_elements(self, src_dir, dest_dir, dest_path, header_data):
-        index = self.get_form_elem_index()
-        root_data = self.form[0][0][1]
-
-        # index_panel_count = index[1]
-        # form_panels_count = int(root_data[index_panel_count])
-        # if form_panels_count:
-        #     self.command_panels = [root_data[index_panel_count + 1]]
-        #     root_data[index_panel_count] = 'В отдельном файле'
-        #     del root_data[index_panel_count + 1]
-
-        index_root_element_count = index[0]
-        form_items_count = int(root_data[index_root_element_count])
-        if form_items_count:
-            self.elements = FormElement.decode_list(self, root_data, index_root_element_count)
-            self.elements_data = dict(sorted(self.elements_data.items()))
-        pass
-
-    def get_form_elem_index(self):
-        try:
-            root_data = self.form[0][0][1]
-            index_command_panel_count = calc_offset([(18, 2), (3, 0)], root_data)
-            command_panel_count = int(root_data[index_command_panel_count])
-            index_root_elem_count = index_command_panel_count + command_panel_count + 1
-            return index_root_elem_count, index_command_panel_count
-        except Exception as err:
-            raise ExtException(
-                message='случай требующий анализа, предоставьте образец формы разработчикам',
-                detail=f'{self.header["name"]}, {err}')
-
     def write_decode_object(self, dest_dir, dest_path, file_name):
         if self.header['Тип формы'] == OF:
             self.version = 802
         super().write_decode_object(dest_dir, dest_path, file_name)
-        if self.commands:
-            helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.version}.json')
-        if self.params:
-            helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.version}.json')
-        if self.command_panels:
-            helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.version}.json')
+
+        # if self.props:
+        #     helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.version}.json')
+        # if self.commands:
+        #     helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.version}.json')
+        # if self.params:
+        #     helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.version}.json')
+        # if self.command_panels:
+        #     helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.version}.json')
 
     def decode_form1(self, src_dir, uuid):
         try:
@@ -179,37 +149,12 @@ class Form803(Form8x):
         except:
             return
         try:
-            self.encode_elements(src_dir, file_name, dest_dir, self.version)
-            FormParams.encode_list(self, src_dir, file_name, self.version)
-            FormCommands.encode_list(self, src_dir, file_name, self.version)
-            FormProps.encode_list(self, src_dir, file_name, self.version)
+            Form4(self).encode(src_dir, file_name, dest_dir, self.form[0][0])
         except Exception as err:
             raise ExtException(parent=err, message='Ошибка при сборке формы',
-                               detail=f"{os.path.join(src_dir, file_name)}")
-
-    def encode_elements(self, src_dir, file_name, dest_dir, version):
-        try:
-            index = self.get_form_elem_index()
-            root_data = self.form[0][0][1]
-
-            # index_panel_count = index[1]
-            # form_panels_count = int(root_data[index_panel_count])
-            # if form_panels_count == 'В отдельном файле':
-            #     self.command_panels = helper.json_read(src_dir, f'{file_name}.panels{version}.json')
-
-            index_root_element_count = index[0]
-            if root_data[index_root_element_count] == 'Дочерние элементы отдельно':
-                elements = helper.json_read(src_dir, f'{file_name}.elements{version}.json')
-                try:
-                    self.elements = elements['tree']
-                    self.elements_data = elements['data']
-                except (KeyError, TypeError):
-                    raise ExtException(message='Форма разобрана старым сборщиком (<0.16), разберите её новым сборщиком',
-                                       action='Form803.encode_elements')
-                # root_data[index_root_element_count] = str(len(self.elements))
-                FormElement.encode_list(self, self.elements, root_data, index_root_element_count)
-        except Exception as err:
-            raise ExtException(parent=err)
+                               detail=f"{os.path.join(src_dir, file_name)}",
+                               action='Form803.encode_nested_includes'
+                               )
 
     def write_encode_object(self, dest_dir):
         if self.header['Тип формы'] == OF:

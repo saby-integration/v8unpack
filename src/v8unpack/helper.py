@@ -49,7 +49,7 @@ def json_read(path, file_name):
         with open(_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except FileNotFoundError as err:
-        raise err from err
+        raise err
     except Exception as err:
         raise ExtException(message='Ошибка чтения', detail=f'{err} в файле ({_path})')
 
@@ -125,7 +125,10 @@ def decode_header(obj: dict, header: list):
     count_locale = int(header[3][0])
     for i in range(count_locale):
         obj['name2'][str_decode(header[3][i * 2 + 1])] = str_decode(header[3][i * 2 + 2])
-    comment = str_decode(header[4]).split(';')[0]  # удаляем имя файла и номер версии которую добавляем при сборке
+    comment = str_decode(header[4]).split(';')  # удаляем имя файла и номер версии которую добавляем при сборке
+    comment = comment[0]
+    if len(comment) > 1:
+        comment += ';'
     header[4] = str_encode(comment)
     obj['comment'] = comment
     obj['h1_0'] = header[1][0]
@@ -227,6 +230,8 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
                     if obj_type not in include_index[parent_id]:
                         include_index[parent_id][obj_type] = []
                     include_index[parent_id][obj_type].append(obj_uuid)
+                elif _object_task is None:
+                    pass
                 else:
                     raise NotImplementedError()
                 pbar.update()
