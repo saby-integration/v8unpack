@@ -102,7 +102,7 @@ class MetaDataObject(MetaObject):
             try:
                 self.header = helper.json_read(src_dir, f'{src_file_name}.json')
             except FileNotFoundError:
-                return
+                return None, None
             if include_index and self.get_options('auto_include'):
                 self.fill_header_includes(include_index)  # todo dynamic index
             self.encode_object(src_dir, src_file_name, dest_dir)

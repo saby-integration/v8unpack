@@ -2,16 +2,23 @@ from enum import Enum
 
 from .... import helper
 from ....ext_exception import ExtException
-from ....ext_exception import ExtException
 
 
 def calc_offset(counters, raw_data):
     # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
+    #  [(3, 1), (1, 0)] (смещение относительно предыдущей записи, количество записей в единице)
     index = 0
     for counter_index, size in counters:
         index += counter_index
         if size:
-            value = int(raw_data[index])
+            try:
+                value = int(raw_data[index])
+            except Exception as err:
+                raise ExtException(
+                    message='bad offset',
+                    detail=f'{counter_index}={index}',
+                    dump={'counters': counters, 'value': raw_data[index]}
+                )
             index += value * size
     return index
 
@@ -45,37 +52,65 @@ class FormElement:
         return calc_offset([(3, 1), (1, 0)], raw_data)
 
     @classmethod
-    def decode(cls, form, path, raw_data):
-        offset = cls.get_name_node_offset(raw_data)
-        name = raw_data[offset]
-        if not isinstance(name, str) or not name:
-            raise ExtException(message='form elem name not string')
-        form.elements_data[f'{path}/{helper.str_decode(name)}'] = raw_data
-        return dict(
-            name=helper.str_decode(name),
-            type=cls.__name__,
-            # raw=raw_data
-        )
+    def get_prop_link_offset(cls, raw_data):
+        return None
 
     @classmethod
-    def encode(cls, form, path, data):
-        key = f"{path}/{data['name']}"
-        detail = None
+    def set_name(cls, name, raw_data):
+        name_offset = cls.get_name_node_offset(raw_data)
+        raw_data[name_offset] = helper.str_encode(name)
+
+    @classmethod
+    def get_command_link_offset(cls, raw_data):
+        return None
+
+    @classmethod
+    def decode(cls, form, path, raw_data):
         try:
-            return form.elements_data[key]
-        except KeyError as err:
-            detail = err
-            if key.startswith('/includr_'):
-                try:
-                    key = f'/include_{key[9:]}'
-                    elem_data = form.elements_data[key]
-                    handler = cls.get_class_form_elem(data['type'])
-                    name_offset = handler.get_name_node_offset(elem_data)
-                    elem_data[name_offset] = helper.str_encode(data['name'])
-                    return elem_data
-                except KeyError as err:
-                    detail = err
-        raise ExtException(message='Остутствуют данные элемента формы', detail=detail)
+            name_offset = cls.get_name_node_offset(raw_data)
+            name = raw_data[name_offset]
+            prop_link_offset = cls.get_prop_link_offset(raw_data)
+            prop = ''
+            if prop_link_offset is not None:
+                prop_link = raw_data[prop_link_offset]
+                if prop_link and int(prop_link[0]):
+                    prop = []
+                    prop_src = form.props_index
+                    for i in range(int(prop_link[0])):
+                        prop_id = prop_link[i + 1][0]
+                        try:
+                            prop_name = prop_src[prop_id]['name']
+                            prop_src = prop_src[prop_id]['child']
+                            prop.append(prop_name)
+                        except KeyError:
+                            prop = None
+                            break
+                    if prop:
+                        prop = '.'.join(prop)
+
+            command_link_offset = cls.get_command_link_offset(raw_data)
+            command = []
+            if command_link_offset is not None:
+                command_link = raw_data[command_link_offset]
+                if command_link and int(command_link[0]):
+                    command = form.commands_index.get(command_link[0])
+
+            if not isinstance(name, str) or not name:
+                raise ExtException(message='form elem name not string')
+            data = dict(raw=raw_data, ver=803)
+            if prop:
+                data['ПутьКДанным'] = prop
+            if command:
+                data['ИмяКоманды'] = command
+            name = helper.str_decode(name)
+            key = f'{path}/{name}' if path else name
+            form.elements_data[key] = data
+            return dict(
+                name=name,
+                type=cls.__name__,
+            )
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @classmethod
     def decode_list(cls, form, raw_data, index_element_count, path=''):
@@ -93,7 +128,7 @@ class FormElement:
                 except ValueError:
                     raise ExtException(
                         message='Неизвестный тип элемента формы',
-                        detail=f'{form.__class__.__name__} {form.header["name"]} : {metadata_type_uuid}'
+                        detail=f'{form.__class__.__name__} {form.header.get("name")} : {metadata_type_uuid}'
                     )
                 elem_data = cls.decode_elem(metadata_type.name, form, path, elem_raw_data)
                 result.append(elem_data)
@@ -160,10 +195,70 @@ class FormElement:
         except Exception as err:
             raise ExtException(parent=err)
 
+    @classmethod
+    def encode(cls, form, path, data):
+        try:
+            key = f"{path}/{data['name']}" if path else data['name']
+            try:
+                elem_data = form.elements_data[key]
+            except KeyError as err:
+                raise ExtException(message='Остутствуют данные элемента формы', detail=err)
+            includr_index = key.find('/includr_')
+            if includr_index >= 0:
+                handler = cls.get_class_form_elem(data['type'])
+                name_offset = handler.get_name_node_offset(elem_data['raw'])
+                elem_data['raw'][name_offset] = helper.str_encode(data['name'])
+                return elem_data['raw']
+            include_index = key.find('/include_')
+            if include_index >= 0:
+                prop = elem_data.get('ПутьКДанным')
+                if prop:
+                    raw_data = elem_data['raw']
+                    prop_link_offset = cls.get_prop_link_offset(raw_data)
+                    if prop_link_offset is not None:
+                        prop_link = raw_data[prop_link_offset]
+                        if prop_link:
+                            prop_index = form.props_index.get(prop)
+                            if prop_index:
+                                count = int(prop_link[0])
+                                if count == 1:
+                                    prop_link[1] = [prop_index]
+                                    pass
+                                elif count == 2:
+                                    prop_link[1] = [prop_index[0]]
+                                    prop_link[2] = [prop_index[1]]
+                                    pass
+                                elif count == 0:
+                                    pass
+                                else:
+                                    raise NotImplementedError()
+                            else:
+                                raise ExtException(message='Нет свойства', detail=f'{prop} форма {form.form.name}')
+                    pass
+
+                command = elem_data.get('ИмяКоманды')
+                if command:
+                    raw_data = elem_data['raw']
+                    command_link_offset = cls.get_command_link_offset(raw_data)
+                    if command_link_offset:
+                        command_link = raw_data[command_link_offset]
+                        if command_link:
+                            command_index = form.commands_index.get(command)
+                            if command_index:
+                                raw_data[command_link_offset] = command_index
+                            else:
+                                raise ExtException(message='Нет команды', detail=f'{command} форма {form.form.name}')
+                    pass
+                return elem_data['raw']
+
+            return elem_data['raw']
+        except Exception as err:
+            raise ExtException(parent=err)
+
 
 class _FormRoot:
     element_node_offset = [[2, 1], [3, 1], [4, 1]]
-    name = 0
+    name = ''
     index = 0
     index_name = 0
 
@@ -195,16 +290,14 @@ class _FormRoot:
             pass
 
     @classmethod
-    def encode_list(cls, form, src_dir, file_name, version):
-        raw_data = form.form[0][0]
-
+    def encode_list(cls, form, src_dir, file_name, version, raw_data):
         if len(raw_data) <= cls.index:
             return
         raw_data = raw_data[cls.index]
         result = []
         index_element_count = 1
         if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            items = helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
+            items = getattr(form.form, cls.name)  # helper.json_read(src_dir, f'{file_name}.{cls.name}{version}.json')
             if items:
                 for item in items:
                     result.append(cls.encode(form, item))
@@ -212,6 +305,7 @@ class _FormRoot:
                 raw_data[index_element_count + 1:index_element_count + 1] = result
             else:
                 raw_data[index_element_count] = '0'
+            return items
 
     @classmethod
     def encode(cls, form, data):
@@ -228,9 +322,58 @@ class FormProps(_FormRoot):
     name = 'props'
     index = 3
     index_name = 3
+    child_offset = 13
+
+    @classmethod
+    def decode(cls, raw_data):
+        result = dict(
+            name=helper.str_decode(raw_data[cls.index_name]),
+            id=raw_data[1][0],
+            raw=raw_data
+        )
+        child_count = int(raw_data[cls.child_offset])
+        if child_count:
+            result['child'] = []
+            for i in range(child_count):
+                child = raw_data[cls.child_offset + i + 1]
+                result['child'].append(cls.decode_child(child))
+            raw_data[cls.child_offset] = "отдельно"
+            del raw_data[cls.child_offset + 1:cls.child_offset + 1 + child_count]
+
+        return result
+
+    @classmethod
+    def decode_child(cls, raw_data):
+        return dict(
+            name=helper.str_decode(raw_data[cls.index_name]),
+            id=raw_data[1],
+            raw=raw_data
+        )
+
+    @classmethod
+    def encode(cls, form, data):
+        raw_data = data['raw']
+        if data.get('child'):
+            child_count = len(data['child'])
+            raw_data[cls.child_offset] = str(child_count)
+            childs = []
+            for i in range(child_count):
+                child = data['child'][i]
+                childs.append(child['raw'])
+            raw_data[cls.child_offset + 1: cls.child_offset + 1] = childs
+        return raw_data
 
 
 class FormCommands(_FormRoot):
     name = 'commands'
     index = 5
     index_name = 2
+
+    @classmethod
+    def decode(cls, raw_data):
+        result = dict(
+            name=helper.str_decode(raw_data[cls.index_name]),
+            id=raw_data[1][0],
+            raw=raw_data
+        )
+        return result

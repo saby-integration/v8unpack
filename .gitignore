@@ -13,7 +13,7 @@ docs/_build/
 tmp/
 venv/
 temp/
-tests_temp/
+tests_tmp/
 temp2/
 tests/*/src/
 tests/*/core/

@@ -282,7 +282,7 @@ class MetaObject:
     def set_product_comment(self, product_version):
         header = self.get_decode_header(self.header['data'])
         current_comment = helper.str_decode(header[4])
-        if current_comment.endswith(';'):  # так понимаем что хотим добавить информацию о продукте
+        if current_comment.rstrip().endswith(';'):  # так понимаем что хотим добавить информацию о продукте
             header[4] = helper.str_encode(helper.str_decode(header[4]) + product_version)
 
     def set_product_info(self, src_dir, file_name):

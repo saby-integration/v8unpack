@@ -92,7 +92,7 @@ class HelperTestDecode(unittest.TestCase):
 
     def decode_stage4(self):
         helper.clear_dir(os.path.normpath(self.decode_dir_stage4))
-        if not self.index:
+        if self.index is None:
             return
         descent = self.options.get('descent')
         if descent is not None:
@@ -107,7 +107,7 @@ class HelperTestDecode(unittest.TestCase):
 
     def encode_stage4(self):
         helper.clear_dir(os.path.normpath(self.encode_dir_stage3))
-        if not self.index:
+        if self.index is None:
             return
         descent = self.options.get('descent')
         if descent is not None:
@@ -120,7 +120,8 @@ class HelperTestDecode(unittest.TestCase):
             self.assertEqual(len(files), self.result['count_root_files_stage3'], 'count_root_files_stage3')
 
     def encode_stage3(self):
-        encode(self.decode_dir_stage3, self.encode_dir_stage1, pool=self.pool,
+        src_dir = self.encode_dir_stage3 if self.index is not None else self.decode_dir_stage3
+        encode(src_dir, self.encode_dir_stage1, pool=self.pool,
                file_name=os.path.basename(self.src_file), options=self.options)
         self.assert_stage(self.decode_dir_stage1, self.encode_dir_stage1)
         if self.result:

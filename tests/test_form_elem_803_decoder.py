@@ -27,7 +27,7 @@ class TestFormElem803(unittest.TestCase):
         self.assertEqual('', result)
 
     def test_decode_form_elem(self):
-        uuid = '66f22eef-9167-4661-acc1-769de41ab428'
+        uuid = 'c611d632-eadf-4989-9e2e-f6042148db62'
         result = self.decode_form_elem(uuid)
         self.assertEqual('', result)
 
@@ -44,6 +44,7 @@ class TestFormElem803(unittest.TestCase):
         form = Form802() if raw_data[0][0] == '2' else Form803()
         form.new_dest_dir = self.temp_dir
         form.form = [raw_data]
+        form.header['Тип формы'] = '1'
         form.decode_includes(None, self.temp_dir, '', None)
 
         form.write_decode_object(self.temp_dir, '', uuid)

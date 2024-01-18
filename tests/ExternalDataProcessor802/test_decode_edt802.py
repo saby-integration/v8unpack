@@ -8,7 +8,7 @@ from v8unpack.unittest_helper import HelperTestDecode
 
 
 class TestDecode(HelperTestDecode):
-    # processes = 1  # uncomment for debug
+    processes = 1  # uncomment for debug
 
     def setUp(self):
         super(TestDecode, self).setUp()
@@ -23,7 +23,8 @@ class TestDecode(HelperTestDecode):
             # 'count_templates_files': 2
         }
         self.init(
-            # index='index.json',
+            index_file_name='index.json',
+            auto_include=True,
             version='802'
         )
         pass
