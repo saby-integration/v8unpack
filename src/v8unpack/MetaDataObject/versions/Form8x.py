@@ -123,21 +123,22 @@ class Form8x(SimpleNameFolder):
                 # self.props = FormProps802.decode_list(self, self.form[0][0][2][2])
         except Exception as err:
             pass  # todo если какие то елементы формы не разбираются, не прерываем
+            print(ExtException(parent=err, message='Элементы формы не разобраны', detail=f'{self.name}'))
             # raise ExtException(parent=err)
 
     def write_decode_object(self, dest_dir, dest_path, file_name):
         super(Form8x, self).write_decode_object(dest_dir, dest_path, file_name)
         helper.json_write(self.form, self.new_dest_dir, f'{file_name}.form{self.version}.json')
-        if self.elements_tree or self.props or self.params or self.commands:
-            helper.json_write(
-                dict(
-                    tree=self.elements_tree,
-                    data=self.elements_data,
-                    params=self.params,
-                    props=self.props,
-                    commands=self.commands
-                ),
-                self.new_dest_dir, f'{file_name}.elements{self.version}.json')
+        # if self.elements_tree or self.props or self.params or self.commands:
+        helper.json_write(
+            dict(
+                tree=self.elements_tree,
+                data=self.elements_data,
+                params=self.params,
+                props=self.props,
+                commands=self.commands
+            ),
+            self.new_dest_dir, f'{file_name}.elements{self.version}.json')
         return []
 
     def decode_data(self, src_dir, uuid):
