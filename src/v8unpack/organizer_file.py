@@ -174,7 +174,7 @@ class OrganizerFile:
                         _dest_path = os.path.join(*path)
 
                         _src_abs_path = os.path.abspath(_src_path)
-                        if _src_abs_path.startswith(src_dir):
+                        if os.path.normcase(_src_path).find('\\src\\') >= 0:
                             func_descent_filename = cls.pack_get_descent_filename
                         else:
                             func_descent_filename = OrganizerFile.pack_get_descent_filename

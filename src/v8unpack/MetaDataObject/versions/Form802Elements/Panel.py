@@ -157,12 +157,19 @@ class Panel(FormElement):
             pages_info_offset = pages_offset + 4
 
             pages_info_count = int(raw_data[pages_info_offset])
-            if page_count * 4 != pages_info_count:
-                raise NotImplementedError()
+            extra_page_info_count = pages_info_count - page_count * 4  # хрен его знает что это, но встречается большее количество записей
+            # if page_count * 4 != pages_info_count:
+            #     raise NotImplementedError()
 
             for i in range(page_count):
                 offset = i * 4 + 1 + pages_info_offset
-                page_info = raw_data[offset: offset + 4]
+                if i == 0:
+                    offset = 1 + pages_info_offset
+                    page_info = raw_data[offset: offset + 4 + extra_page_info_count]
+                else:
+                    offset = i * 4 + 1 + pages_info_offset + extra_page_info_count
+                    page_info = raw_data[offset: offset + 4]
+
                 elem_id = self.calc_id(path, self.pages[i], None)
                 self.elements_data[elem_id]['info'] = page_info
 
@@ -284,7 +291,7 @@ class Panel(FormElement):
 
             pages_info_offset = pages_offset + 4
             raw_data = raw_data[:pages_info_offset + 1] + pages_info + raw_data[pages_info_offset + 1:]
-            raw_data[pages_info_offset] = str(page_count * 4)
+            raw_data[pages_info_offset] = str(len(pages_info))
             return raw_data
         except Exception as err:
             raise ExtException(parent=err)
