@@ -53,23 +53,28 @@ class Form27:
             raise ExtException(parent=err)
 
     def create_prop_index_by_elem_id(self, raw_data):
-        self.props_index = {}
-        _props = {}
-        for prop in self.form.props:
-            _props[prop['id']] = prop
+        try:
+            self.props_index = {}
+            _props = {}
+            if not self.form.props:
+                return
+            for prop in self.form.props:
+                _props[prop['id']] = prop
 
-        element_count = int(raw_data[0])
-        if not element_count:
-            return
+            element_count = int(raw_data[0])
+            if not element_count:
+                return
 
-        for i in range(element_count):
-            elem_raw_data = raw_data[i + 1]
-            elem_id = elem_raw_data[0]
-            if elem_raw_data[1][0] == '1':
+            for i in range(element_count):
+                elem_raw_data = raw_data[i + 1]
+                elem_id = elem_raw_data[0]
+                # if elem_raw_data[1][0] == '1':
                 prop_id = elem_raw_data[1][1][0]
                 self.props_index[elem_id] = {'name': _props[prop_id]['name'], 'index': elem_raw_data[1]}
-            else:
-                raise NotImplementedError('prop index  > 1')
+                # else:
+                #     raise NotImplementedError('prop index  > 1')
+        except Exception as err:
+            raise ExtException(parent=err)
 
     def create_prop_index_by_name(self):
         self.props_index = {}
