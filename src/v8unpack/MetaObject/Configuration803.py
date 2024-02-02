@@ -34,7 +34,6 @@ class Configuration803(MetaObject):
     def __init__(self, *, obj_name=None, options=None):
         super().__init__(obj_name=obj_name, options=options)
         self.counter = {}
-        self.product = None
 
     def decode(self, src_dir, dest_dir, *, version=None, **kwargs):
         self.header = {}
