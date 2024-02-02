@@ -133,10 +133,12 @@ def build_all(product_file_name: str, product_code: str = None, processes=None):
             if params.get('disable'):
                 continue
             print(f'\nСобираем {product}')
+            options = params.get('options', {})
+            options['product'] = product
             build(
                 params['src'], params['bin'],
                 temp_dir=params.get('temp'), index=params.get('index'),
-                options=params.get('options'), processes=processes
+                options=options, processes=processes
             )
         pass
     except Exception as err:
