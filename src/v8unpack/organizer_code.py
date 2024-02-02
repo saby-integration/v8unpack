@@ -71,7 +71,11 @@ class OrganizerCode:
     def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename):
         try:
             data = ''
-            with open(os.path.join(src_dir, path, file_name), 'r', encoding='utf-8') as file:
+            _src_abs_path = os.path.abspath(os.path.join(src_dir, path))
+            if _src_abs_path.startswith(src_dir) or os.path.normcase(path).find('\\src\\') >= 0:
+                _src_abs_path, file_name = pack_get_descent_filename(_src_abs_path, file_name, descent)
+
+            with open(os.path.join(_src_abs_path, file_name), 'r', encoding='utf-8') as file:
                 line = file.readline()
                 while line:
                     data += line
@@ -82,7 +86,7 @@ class OrganizerCode:
                             _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
                                                                        descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
-                            if _src_abs_path.startswith(src_dir):
+                            if _src_abs_path.startswith(src_dir) or os.path.normcase(_path).find('\\src\\') >= 0:
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
                             data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
                                                   pack_get_descent_filename)
