@@ -47,7 +47,7 @@ class Form27:
                                           f"просьба передать файл формы {self.form.header.get('name')} разработчикам")
             self.create_prop_index_by_elem_id(form_data[2][3])
 
-            elements_tree, elements_data = Panel.decode(self, '', form_data[1][2])
+            elements_tree, elements_data, elements_id = Panel.decode(self, '', form_data[1][2])
             return elements_tree, elements_data
         except Exception as err:
             raise ExtException(parent=err)
