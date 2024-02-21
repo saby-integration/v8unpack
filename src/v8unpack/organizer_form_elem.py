@@ -41,7 +41,7 @@ class OrganizerFormElem:
                     area_name = name[8:]
                     area = dict(
                         data={
-                            new_path: root_data.pop(old_path)
+                            # new_path: root_data.pop(old_path)
                         },
                         tree=elem.pop('child', [])
                     )
@@ -141,18 +141,18 @@ class OrganizerFormElem:
                 _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
 
                 include_elements = helper.json_read(_src_abs_path, _file_name)
-                first_elem_key: str = list(include_elements['data'].keys())[0]
-                first_elem_data = include_elements['data'].pop(first_elem_key)
-                new_first_elem_key = first_elem_key
-                if area_type == 'includr_':
-                    _path = f'include_{path[8:]}'
-                    new_first_elem_key = first_elem_key.replace('include_', 'includr_')
-                    elem_class = cls.form_elem_class(first_elem_data['ver'], elem['type'])
-                    # name_offset = elem_class.get_name_node_offset(first_elem_data['raw'])
-                    # first_elem_data['raw'][name_offset] = helper.str_encode(new_first_elem_key[1:])
-                    elem_class.set_name(new_first_elem_key, first_elem_data['raw'])
-                root_data[f'{path}/{new_first_elem_key}' if path else new_first_elem_key] = first_elem_data
-                cls._append_area_data(include_elements['tree'], first_elem_key, root_data, include_elements['data'],
+                # first_elem_key: str = list(include_elements['data'].keys())[0]
+                # first_elem_data = include_elements['data'].pop(first_elem_key)
+                # new_first_elem_key = first_elem_key
+                # if area_type == 'includr_':
+                #     _path = f'include_{path[8:]}'
+                #     new_first_elem_key = first_elem_key.replace('include_', 'includr_')
+                #     elem_class = cls.form_elem_class(first_elem_data['ver'], elem['type'])
+                #    # name_offset = elem_class.get_name_node_offset(first_elem_data['raw'])
+                #    # first_elem_data['raw'][name_offset] = helper.str_encode(new_first_elem_key[1:])
+                #    elem_class.set_name(new_first_elem_key, first_elem_data['raw'])
+                # root_data[f'{path}/{new_first_elem_key}' if path else new_first_elem_key] = first_elem_data
+                cls._append_area_data(include_elements['tree'], name, root_data, include_elements['data'],
                                       path, area_type)
                 # if area_type == 'includr_':  # меняем имя ключа у первого элемента
                 #     first_elem_key: str = list(include_elements['data'].keys())[0]
@@ -175,7 +175,7 @@ class OrganizerFormElem:
                 for elem in tree:
                     name: str = elem['name']
                     old_path = f'{_path}/{name}'
-                    new_path = f'{append_path}/{path}/{name}' if append_path else f'{path}/{name}'
+                    new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
                     try:
                         root_data[new_path] = data.pop(old_path)
                     except Exception:
