@@ -47,7 +47,7 @@ class Form27:
                                           f"просьба передать файл формы {self.form.header.get('name')} разработчикам")
             self.create_prop_index_by_elem_id(form_data[2][3])
 
-            elements_tree, elements_data = Panel.decode(self, '', form_data[1][2])
+            elements_tree, elements_data, elements_id = Panel.decode(self, '', form_data[1][2])
             return elements_tree, elements_data
         except Exception as err:
             raise ExtException(parent=err)
@@ -70,7 +70,10 @@ class Form27:
                 elem_id = elem_raw_data[0]
                 # if elem_raw_data[1][0] == '1':
                 prop_id = elem_raw_data[1][1][0]
-                self.props_index[elem_id] = {'name': _props[prop_id]['name'], 'index': elem_raw_data[1]}
+                try:
+                    self.props_index[elem_id] = {'name': _props[prop_id]['name'], 'index': elem_raw_data[1]}
+                except KeyError:
+                    pass
                 # else:
                 #     raise NotImplementedError('prop index  > 1')
         except Exception as err:

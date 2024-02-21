@@ -32,8 +32,18 @@ class FormItemTypes(Enum):
     Dendrogram = '984981b1-622d-4ebc-94f7-885f0cdfb59a'
 
 
+class Anchor(Enum):
+    top = '0'
+    bottom_center = '1'
+    left = '2'
+    right = '3'
+
+
 class FormElement:
     name = 'elements'
+
+    def __init__(self):
+        self.anchored = {}
 
     @classmethod
     def get_class_form_elem(cls, name):
@@ -60,13 +70,45 @@ class FormElement:
                 action='Form802Element.decode'
             )
         page = elem_raw_data[-3][-5]
+        elem_id = elem_raw_data[1]
         elem_data = dict(
             name=name,
             type=metadata_type.name,
-            id=elem_raw_data[1],
+            id=elem_id,
             ver=802
         )
+        # cls.decode_anchored(elem_id, form.anchored, path, elem_raw_data[3], 12)
         return form.add_elem(page, path, name, elem_data, elem_raw_data)
+
+
+
+    # @classmethod
+    # def decode_anchored(cls, anchor_id, anchored, path, elem_raw_data, offset):
+    #     def add_anchor():
+    #         if len(anchor_data) != 3 or anchor_data[0] != '0':
+    #             raise ExtException(message='Неизвестный формат данных привязки', detail=path,
+    #                                dump=dict(anchor_data=anchor_data, anchor_id=anchor_id))
+    #
+    #         elem_id = anchor_data[1]
+    #         border = Anchor(anchor_data[2]).name
+    #         if elem_id not in anchored:
+    #             anchored[elem_id] = []
+    #         anchored[elem_id].append(dict(
+    #             border=border,
+    #             anchor=anchor_id,
+    #             anchor_border=Anchor(str(anchor_border)).name,
+    #         ))
+    #     try:
+    #         for anchor_border in range(4):
+    #             count_anchor = int(elem_raw_data[offset])
+    #             for j in range(count_anchor):
+    #                 anchor_data = elem_raw_data[offset + j + 1]
+    #                 add_anchor()
+    #             elem_raw_data[offset] = '0'
+    #             del elem_raw_data[offset + 1: offset + 1 + count_anchor]
+    #             offset += 1
+    #     except Exception as err:
+    #         raise ExtException(parent=err)
 
     @classmethod
     def encode(cls, form, path, elem_tree, elem_data):
@@ -85,13 +127,13 @@ class FormElement:
                     raise ExtException(message='Отсутствует свойство', detail=prop)
                 form.field_data_source.append((elem_id, prop_index))
 
-            type_index = elem_data.get('type_index')
-            if type_index:
-                for group in type_index:
-                    for elem in type_index[group]:
-                        form.elements_types_index[group].append([elem[0], elem_id, elem[1]])
+            # type_index = elem_data.get('type_index')
+            # if type_index:
+            #     for group in type_index:
+            #         for elem in type_index[group]:
+            #             form.anchored[group].append([elem[0], elem_id, elem[1]])
 
-            return raw_data
+            return elem_id, raw_data
         except Exception as err:
             raise ExtException(parent=err)
 
