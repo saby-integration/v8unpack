@@ -21,7 +21,7 @@ class Panel(FormElement):
         self.field_data_source = []
 
     @staticmethod
-    def calc_id(path, page, name):
+    def calc_id(path, page, name=None):
         id = []
         if path:
             id.append(path)
@@ -49,7 +49,7 @@ class Panel(FormElement):
                 parent = self.elements_tree[self._elements_tree_index[page_id]]
                 parent['child'].append(elem_tree)
             else:
-                elem_id = self.calc_id(path, None, name)
+                elem_id = self.calc_id(path, page_name, name)
                 elem_tree['page'] = page_name
                 self.elements_tree.append(elem_tree)
 
@@ -305,7 +305,12 @@ class Panel(FormElement):
             if is_child:
                 elem_id, elem_data = super().encode(form, path, elem_tree, elem_data)
                 self.last_elem_id = form.last_elem_id
-                path = f"{path}/{elem_tree['name']}" if path else elem_tree['name']
+
+                if self.auto_include:
+                    path = self.calc_id(path, elem_tree['name'])
+                else:
+                    path = self.calc_id(path, elem_tree['page'], elem_tree['name'])
+                # path = f"{elem_tree['page']}/{path}/{}" if path else f"{elem_tree['page']}/{elem_tree['name']}"
                 self.elements_tree = elem_tree['child']
                 self.elements_data = form.elements_data
                 elem_raw_data[1 + is_child][1] = self.encode_pages(path, elem_raw_data[1 + is_child][1])
@@ -336,12 +341,12 @@ class Panel(FormElement):
             raise ExtException(message='Не смогли найти описание страниц элементов формы')
 
     def encode_pages(self, path, raw_data):
-        def encode_page(_name):
+        def encode_page(_elem_id):
             try:
-                elem_id = '/'.join([_path, _name]) if path else _name
-                page = self.elements_data[elem_id]
-                pages.append(page['raw'])
-                return page.get('info', [])
+                # elem_id = '/'.join([_path, _name]) if path else _name
+                page_data = self.elements_data[_elem_id]
+                pages.append(page_data['raw'])
+                return page_data.get('info', [])
             except Exception as err:
                 raise ExtException(parent=err)
 
@@ -360,14 +365,14 @@ class Panel(FormElement):
                 page_count = len(self.elements_tree)
                 pages.append(str(page_count))
                 for elem in self.elements_tree:
-                    pages_info += encode_page(elem['name'])
+                    pages_info += encode_page(self.calc_id(_path, elem['name']))
 
             else:
-                _pages = self.elements_data[self.calc_id(_path, '-pages-', None)]
+                _pages = self.elements_data[self.calc_id(_path, '-pages-')]
                 page_count = len(_pages)
                 pages.append(str(page_count))
                 for name in _pages:
-                    pages_info += encode_page(name)
+                    pages_info += encode_page(self.calc_id(_path, name))
 
             raw_data[pages_offset] = pages_raw_data[:1] + pages + pages_raw_data[1:]
 
@@ -438,7 +443,7 @@ class Panel(FormElement):
             else:
                 for elem in self.elements_tree:
                     page_id = '/'.join(_id)
-                    key = f"{_path}/{elem['name']}" if _path else elem['name']
+                    key = f"{_path}/{elem['page']}/{elem['name']}" if _path else f"{elem['page']}/{elem['name']}"
                     self.encode_element(page_id, elem, key, result)
 
             raw_data[0] = str(len(result))
