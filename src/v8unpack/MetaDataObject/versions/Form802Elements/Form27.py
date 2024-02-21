@@ -70,7 +70,10 @@ class Form27:
                 elem_id = elem_raw_data[0]
                 # if elem_raw_data[1][0] == '1':
                 prop_id = elem_raw_data[1][1][0]
-                self.props_index[elem_id] = {'name': _props[prop_id]['name'], 'index': elem_raw_data[1]}
+                try:
+                    self.props_index[elem_id] = {'name': _props[prop_id]['name'], 'index': elem_raw_data[1]}
+                except KeyError:
+                    pass
                 # else:
                 #     raise NotImplementedError('prop index  > 1')
         except Exception as err:
