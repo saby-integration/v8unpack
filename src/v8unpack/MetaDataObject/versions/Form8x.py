@@ -153,10 +153,10 @@ class Form8x(SimpleNameFolder):
     def encode_object(self, src_dir, file_name, dest_dir):
         super(Form8x, self).encode_object(src_dir, file_name, dest_dir)
         try:
-            version = self.options.get('version')
-            if version is None:
-                version = '803' if str(self.header['Тип формы']) == '1' else '802'
-            version = version[:3]
+            # version = self.options.get('version')
+            # if version is None:
+            version = '803' if str(self.header['Тип формы']) == '1' else '802'
+            # version = version[:3]
             self.form = helper.json_read(src_dir, f'{file_name}.form{version}.json')
         except FileNotFoundError:
             self.form = self.encode_empty_form()
