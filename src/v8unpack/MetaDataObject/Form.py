@@ -11,7 +11,7 @@ from ..ext_exception import ExtException
 class Form(SimpleNameFolder):
     versions = {
         '801': Form801,
-        '802': Form802,
+        '802': Form803,
         '803': Form803,
         '5-5': OldForm801,
         '7-7': OldForm801,

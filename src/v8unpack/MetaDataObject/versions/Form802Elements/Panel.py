@@ -149,7 +149,7 @@ class Panel(FormElement):
                         elem_id = data['id']
                     except (KeyError, TypeError):
                         continue
-                    self.anchored_elem_id_to_elem_name(data['raw'][-3], path)
+                    self.anchored_elem_id_to_elem_name(data['raw'][-3], path, elem)
                 pass
 
         # записываем привязки по элементам
@@ -170,16 +170,20 @@ class Panel(FormElement):
         except Exception as err:
             raise ExtException(parent=err)
 
-    def anchored_elem_id_to_elem_name(self, elem_raw_data, path):
+    def anchored_elem_id_to_elem_name(self, elem_raw_data, path, current_elem):
         try:
             offset = 6
+            # к чему привязан этот элемент
             for anchor_border in range(6):
                 for j in range(1, 3):
                     elem_id = elem_raw_data[offset][j][1]
                     if int(elem_id) > 0:
-                        elem_raw_data[offset][j][1] = self.elements_index[elem_id][len(path):]  # нужно имя относительно панели
+                        try:
+                            elem_raw_data[offset][j][1] = self.elements_index[elem_id][len(path):]  # нужно имя относительно панели
+                        except KeyError:  # если такого индекса нет, то это сам элемент - но это не точно
+                            elem_raw_data[offset][j][1] = current_elem[len(path):]
                 offset += 1
-
+            # кто привязан к этому элементу
             for anchor_border in range(4):
                 count_anchor = int(elem_raw_data[offset])
                 for j in range(count_anchor):
