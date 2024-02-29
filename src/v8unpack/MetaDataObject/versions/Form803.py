@@ -158,6 +158,7 @@ class Form803(Form8x):
 
     def write_encode_object(self, dest_dir):
         if self.header['Тип формы'] == OF:
+            self.version = '802'
             self.write_old_encode_object(dest_dir)
         else:
             helper.brace_file_write(self.encode_header(), dest_dir, self.header["uuid"])
