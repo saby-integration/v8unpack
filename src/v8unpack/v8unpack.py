@@ -22,7 +22,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, p
         begin0 = datetime.now()
         if options is None:
             options = dict()
-        print(f"v8unpack {__version__}")
+        print(f"saby v8unpack {__version__}")
 
         index = check_index(index)
         if not index and index is not None:
@@ -77,7 +77,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         if options is None:
             options = {}
 
-        print(f"v8unpack {__version__}")
+        print(f"saby v8unpack {__version__}")
 
         index = check_index(index)
         if not index and index is not None:

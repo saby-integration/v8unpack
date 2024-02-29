@@ -24,6 +24,7 @@ class Group(FormElement):
         data = super().decode(form, path, raw_data)
         index = calc_offset([(3, 1), (1, 1), (17, 0)], raw_data)
         new_path = f"{path}/{data['name']}" if path else data['name']
+        new_path = new_path.replace('includr_', 'include_')
         data['child'] = cls.decode_list(form, raw_data, index, new_path)
         return data
 
