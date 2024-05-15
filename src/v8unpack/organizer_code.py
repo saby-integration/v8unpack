@@ -30,11 +30,17 @@ class OrganizerCode:
             while line:
                 try:
                     _line = line.strip()
+                    if line.endswith(' //DynamicDirective'):
+                        directive_begin = line.find('&')
+                        if directive_begin >= 0:
+                            line = f'{line[0:directive_begin]} //DynamicDirective'
                     if _line and _line[0] == '#':
                         if _line.startswith('#Область'):
                             area_type = cls.is_area(_line)
                             if area_type:
-                                key = _line[17:].strip()
+                                area_name_parts = _line[17:].strip().split(' //')
+                                key = area_name_parts[0]
+
                                 # if key in self.code_areas:
                                 #     raise Exception(
                                 #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
@@ -68,7 +74,8 @@ class OrganizerCode:
         helper.txt_write(data, os.path.join(dest_dir, dest_path), dest_file_name)
 
     @classmethod
-    def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename):
+    def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename,
+                  dynamic_directive=None):
         try:
             data = ''
             _src_abs_path = os.path.abspath(os.path.join(src_dir, path))
@@ -78,18 +85,25 @@ class OrganizerCode:
             with open(os.path.join(_src_abs_path, file_name), 'r', encoding='utf-8') as file:
                 line = file.readline()
                 while line:
-                    data += line
                     _line = line.strip()
+                    if _line:
+                        if _line.startswith('//DynamicDirective') and dynamic_directive:
+                            line = f'{dynamic_directive} {line}'
+                    data += line
                     if _line and _line[0] == '#':
                         if cls.is_area(_line):
-                            include_path = _line[17:].strip()
+                            area_name_parts = _line[17:].strip().split(' //')
+                            include_path = area_name_parts[0]
+
+                            dynamic_directive = area_name_parts[1] if len(area_name_parts) > 1 else dynamic_directive
+
                             _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
                                                                        descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
                             if _src_abs_path.startswith(src_dir) or os.path.normcase(_path).find('\\src\\') >= 0:
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
                             data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
-                                                  pack_get_descent_filename)
+                                                  pack_get_descent_filename, dynamic_directive)
                     line = file.readline()
                 return data
         except ExtException as err:
