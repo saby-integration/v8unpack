@@ -30,15 +30,17 @@ class OrganizerCode:
             while line:
                 try:
                     _line = line.strip()
-                    if line.endswith('//DynamicDirective'):
+                    if line.endswith(' //DynamicDirective'):
                         directive_begin = line.find('&')
                         if directive_begin >= 0:
-                            line = f'{line[0:directive_begin]}//DynamicDirective'
+                            line = f'{line[0:directive_begin]} //DynamicDirective'
                     if _line and _line[0] == '#':
                         if _line.startswith('#Область'):
                             area_type = cls.is_area(_line)
                             if area_type:
-                                key = _line[17:].strip()
+                                area_name_parts = _line[17:].strip().split(' //')
+                                key = area_name_parts[0]
+
                                 # if key in self.code_areas:
                                 #     raise Exception(
                                 #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
@@ -86,11 +88,11 @@ class OrganizerCode:
                     _line = line.strip()
                     if _line:
                         if _line.startswith('//DynamicDirective') and dynamic_directive:
-                            line = f'{dynamic_directive}{line}'
+                            line = f'{dynamic_directive} {line}'
                     data += line
                     if _line and _line[0] == '#':
                         if cls.is_area(_line):
-                            area_name_parts = _line[17:].strip().split('//')
+                            area_name_parts = _line[17:].strip().split(' //')
                             include_path = area_name_parts[0]
 
                             dynamic_directive = area_name_parts[1] if len(area_name_parts) > 1 else dynamic_directive
