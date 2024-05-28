@@ -30,10 +30,10 @@ class OrganizerCode:
             while line:
                 try:
                     _line = line.strip()
-                    if line.endswith(' //DynamicDirective'):
-                        directive_begin = line.find('&')
-                        if directive_begin >= 0:
-                            line = f'{line[0:directive_begin]} //DynamicDirective'
+                    dynamic_directive_index = line.rfind(' //DynamicDirective')
+                    if dynamic_directive_index >= 0:
+                        if line.find('&') >= 0:
+                            line = line[dynamic_directive_index + 1:]
                     if _line and _line[0] == '#':
                         if _line.startswith('#Область'):
                             area_type = cls.is_area(_line)
