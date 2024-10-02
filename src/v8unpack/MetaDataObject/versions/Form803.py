@@ -41,7 +41,7 @@ class Form803(Form8x):
         if not self.form or not self.form[0]:
             return
         try:
-            supported_form = ['4-49', '3-49']  # not supported 27-18, контур вероятно обычные формы
+            supported_form = ['4-50', '4-49', '3-49']  # not supported 27-18, контур вероятно обычные формы
             current_form = f'{self.form[0][0][0]}-{self.form[0][0][1][0]}'
             if current_form not in supported_form:
                 return
