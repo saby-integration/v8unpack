@@ -10,6 +10,7 @@ from ...ext_exception import ExtException
 
 class Form803(Form8x):
     version = '803'
+    supported_form_versions = ['4-50', '4-49', '3-49']
 
     def __init__(self, *, obj_name=None, options=None):
         super().__init__(obj_name=obj_name, options=options)
@@ -41,9 +42,8 @@ class Form803(Form8x):
         if not self.form or not self.form[0]:
             return
         try:
-            supported_form = ['4-50', '4-49', '3-49']  # not supported 27-18, контур вероятно обычные формы
-            current_form = f'{self.form[0][0][0]}-{self.form[0][0][1][0]}'
-            if current_form not in supported_form:
+            current_form_version = f'{self.form[0][0][0]}-{self.form[0][0][1][0]}'
+            if current_form_version not in self.supported_form_versions:
                 return
         except:
             return
@@ -143,8 +143,8 @@ class Form803(Form8x):
         if not self.form or not self.form[0]:
             return
         try:
-            supported_form = ['4-49', '3-49']
-            if f'{self.form[0][0][0]}-{self.form[0][0][1][0]}' not in supported_form:
+            current_form_version = f'{self.form[0][0][0]}-{self.form[0][0][1][0]}'
+            if current_form_version not in self.supported_form_versions:
                 return
         except:
             return
