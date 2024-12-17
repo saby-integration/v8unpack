@@ -65,7 +65,8 @@ class MetaDataObject(MetaObject):
             ) from err
 
     def set_write_decode_mode(self, dest_dir, dest_path):
-        self.set_mode_decode_in_root_folder(dest_dir, dest_path)
+        self.set_mode_decode_in_name_folder(dest_dir, dest_path)
+        # self.set_mode_decode_in_root_folder(dest_dir, dest_path)
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         self.set_header_data(header_data)
@@ -73,6 +74,12 @@ class MetaDataObject(MetaObject):
 
     def write_decode_object(self, dest_dir, dest_path, file_name):
         dest_full_path = os.path.join(dest_dir, dest_path)
+
+        id_data = {
+            'uuid': self.header.pop('uuid'),
+            'name': self.header.pop('name')
+        }
+        helper.json_write(id_data, dest_full_path, f'{file_name}.id.json')
         helper.json_write(self.header, dest_full_path, f'{file_name}.json')
         self.write_decode_code(dest_full_path, file_name)
 
@@ -101,6 +108,9 @@ class MetaDataObject(MetaObject):
                     return object_task, child_tasks
             try:
                 self.header = helper.json_read(src_dir, f'{src_file_name}.json')
+                data_id = helper.json_read(src_dir, f'{src_file_name}.id.json')
+                self.header['name'] = data_id['name']
+                self.header['uuid'] = data_id['uuid']
             except FileNotFoundError:
                 return None, None
             if include_index and self.get_options('auto_include'):

@@ -116,11 +116,13 @@ def decode_header(obj: dict, header: list):
     try:
         obj['uuid'] = header[1][2]
         uuid.UUID(obj['uuid'])
+        header[1][2] = 'в отдельном файле'
 
     except (ValueError, IndexError):
         raise ValueError('Заголовок определен не верно')
 
     obj['name'] = str_decode(header[2])
+    header[2] = 'в отдельном файле'
     obj['name2'] = {}
     count_locale = int(header[3][0])
     for i in range(count_locale):
