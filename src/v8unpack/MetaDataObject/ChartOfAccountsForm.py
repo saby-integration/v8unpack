@@ -1,5 +1,5 @@
-from ..MetaDataObject.Form import Form
+from v8unpack.MetaDataObject.Form import Form0
 
 
-class ChartOfAccountsForm(Form):
+class ChartOfAccountsForm(Form0):
     pass

@@ -1,10 +1,7 @@
-from ..MetaDataObject.core.Simple import SimpleNameFolder
-from ..MetaDataObject.versions.CommonForm803 import CommonForm803
+from v8unpack.MetaDataObject.Form import Form1
+from .Form.Form9 import Form9
 
 
-class CommonForm(SimpleNameFolder):
-    versions = {
-        '802': CommonForm803,
-        '803': CommonForm803,
-        4: CommonForm803
-    }
+class CommonForm(Form1):
+
+    pass

@@ -13,6 +13,7 @@ from .organizer_file import OrganizerFile
 from .organizer_file_ce import OrganizerFileCE
 from .json_container_decoder import JsonContainerDecoder
 from v8unpack import extract_all, build_all
+from .ext_exception import ExtException
 
 
 class HelperTestDecode(unittest.TestCase):
@@ -121,6 +122,7 @@ class HelperTestDecode(unittest.TestCase):
 
     def encode_stage3(self):
         src_dir = self.encode_dir_stage3 if self.index is not None else self.decode_dir_stage3
+        helper.txt_write('23.0000', src_dir, 'version.bin')
         encode(src_dir, self.encode_dir_stage1, pool=self.pool,
                file_name=os.path.basename(self.src_file), options=self.options)
         self.assert_stage(self.decode_dir_stage1, self.encode_dir_stage1)
@@ -231,6 +233,7 @@ class HelperTestDecode(unittest.TestCase):
     def build_all(self, product_file_name: str, product_code: str = None, processes=None):
         build_all(product_file_name, product_code, processes)
 
+
 class NotEqualLine(Exception):
     pass
 
@@ -312,21 +315,29 @@ def compare_versions(decode_dir, encode_dir, problems):
             index.append(elem)
         return index
 
-    problems = ''
-    decode_data = helper.brace_file_read(decode_dir, 'versions')
-    decode_data = create_index(decode_data)
-    encode_data = helper.brace_file_read(encode_dir, 'versions')
-    encode_data = create_index(encode_data)
-    size = len(decode_data)
-    for i in range(size):
-        j = size - i - 1
+    try:
+        problems = ''
+        decode_data = helper.brace_file_read(decode_dir, 'versions')
+        decode_data = create_index(decode_data)
         try:
-            elem = decode_data[j]
-            encode_data.remove(elem)
-            decode_data.pop(j)
-        except ValueError:
-            pass
-    if encode_data or decode_data:
-        problems += f'\n      {"versions":73} {"":5} {json.dumps(encode_data)}'
-        problems += f'\n      {"":79} {json.dumps(decode_data)}'
-    return problems
+            encode_data = helper.brace_file_read(encode_dir, 'versions')
+        except FileNotFoundError:
+            title = 'versions'
+            problems += f'\n      {title:73}  not encode file'
+            return problems
+        encode_data = create_index(encode_data)
+        size = len(decode_data)
+        for i in range(size):
+            j = size - i - 1
+            try:
+                elem = decode_data[j]
+                encode_data.remove(elem)
+                decode_data.pop(j)
+            except ValueError:
+                pass
+        if encode_data or decode_data:
+            problems += f'\n      {"versions":73} {"":5} {json.dumps(encode_data)}'
+            problems += f'\n      {"":79} {json.dumps(decode_data)}'
+        return problems
+    except Exception as err:
+        raise ExtException(parent=err)

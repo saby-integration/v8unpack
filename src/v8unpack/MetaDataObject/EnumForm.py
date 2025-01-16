@@ -1,5 +1,5 @@
-from ..MetaDataObject.Form import Form
+from v8unpack.MetaDataObject.Form import Form1
 
 
-class EnumForm(Form):
+class EnumForm(Form1):
     pass

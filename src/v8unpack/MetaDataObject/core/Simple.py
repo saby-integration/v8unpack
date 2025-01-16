@@ -24,12 +24,13 @@ class Simple(MetaDataObject):
 
 
 class SimpleNameFolder(Simple):
-    def set_write_decode_mode(self, dest_dir, dest_path):
-        self.set_mode_decode_in_name_folder(dest_dir, dest_path)
+    pass
+    # def set_write_decode_mode(self, dest_dir, dest_path):
+    #     self.set_mode_decode_in_name_folder(dest_dir, dest_path)
 
-    @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, include_index):
-        cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, options, parent_id, include_index)
+    # @classmethod
+    # def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, include_index):
+    #     cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, options, parent_id, include_index)
 
-    def get_encode_file_name(self, file_name):
-        return self.get_obj_name()
+    # def get_encode_file_name(self, file_name):
+    #     return self.get_obj_name()

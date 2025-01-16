@@ -8,10 +8,10 @@ from ..metadata_types import MetaDataTypes, MetaDataGroup
 from ..version import __version__
 
 
-class Configuration803(MetaObject):
+class Configuration(MetaObject):
     ext_code = {
         'seance': 7,
-        '803': 6,
+        'app': 6,
         '802': 0,
         'con': 5
     }
@@ -31,8 +31,8 @@ class Configuration803(MetaObject):
         'd': 'd',
     }
 
-    def __init__(self, *, obj_name=None, options=None):
-        super().__init__(obj_name=obj_name, options=options)
+    def __init__(self, *, meta_obj_class=None, obj_version=None, options=None):
+        super().__init__(meta_obj_class=meta_obj_class, obj_version=obj_version, options=options)
         self.counter = {}
 
     def decode(self, src_dir, dest_dir, *, version=None, **kwargs):
@@ -40,10 +40,10 @@ class Configuration803(MetaObject):
         root = helper.brace_file_read(src_dir, 'root')
         self.header['v8unpack'] = __version__
         self.header["file_uuid"] = root[0][1]
-        self.header["root_data"] = root
+        self.header["root"] = root
 
         _header_data = helper.brace_file_read(src_dir, f'{self.header["file_uuid"]}')
-        self.set_header_data(_header_data)
+        self.decode_header(_header_data, id_in_separate_file=False)
 
         file_name = self.get_class_name_without_version()
 
@@ -57,8 +57,8 @@ class Configuration803(MetaObject):
         self._decode_info(src_dir, dest_dir, file_name)
         # self._decode_unknown(src_dir, dest_dir, file_name)
 
-        tasks = self.decode_includes(src_dir, dest_dir, '', self.header['data'])
-
+        tasks = self.decode_includes(src_dir, dest_dir, '', self.header['header'])
+        self.header['obj_version'] = self.obj_version
         helper.json_write(self.header, dest_dir, f'{file_name}.json')
         self.write_decode_code(dest_dir, file_name)
         return tasks
@@ -66,6 +66,13 @@ class Configuration803(MetaObject):
     @classmethod
     def get_decode_header(cls, header):
         return header[0][3][1][1][1][1]
+
+    def set_product_version(self, product_version):
+        _version = product_version
+        product = self.options.get('product')
+        if product:
+            _version = f'{product}_{_version}'
+        self.header['header'][0][3][1][1][15] = helper.str_encode(_version)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
         tasks = []
@@ -85,13 +92,12 @@ class Configuration803(MetaObject):
 
     def encode(self, src_dir, dest_dir, *, file_name=None, include_index=None, file_list=None):
         _file_name = self.get_class_name_without_version()
-        self.header = helper.json_read(src_dir, f'{_file_name}.json')
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
         if include_index and self.get_options('auto_include'):
             self.fill_header_includes(include_index)  # todo dynamic index
 
-        helper.brace_file_write(self.header["root_data"], dest_dir, 'root')
+        helper.brace_file_write(self.header["root"], dest_dir, 'root')
         file_list.append('root')
         helper.brace_file_write(self.encode_version(), dest_dir, 'version')
         file_list.append('version')
@@ -102,7 +108,7 @@ class Configuration803(MetaObject):
         self.encode_code(src_dir, _file_name)
         self._encode_info(src_dir, _file_name, dest_dir)
         self.write_encode_code(dest_dir)
-        helper.brace_file_write(self.header['data'], dest_dir, self.header["file_uuid"])
+        helper.brace_file_write(self.header['header'], dest_dir, self.header["file_uuid"])
         file_list.append(self.header["file_uuid"])
 
         file_list.append('versions')
@@ -144,7 +150,7 @@ class Configuration803(MetaObject):
                     self.file_list.append(file_name)
 
     def fill_header_includes(self, include_index):
-        header_data = self.header['data']
+        header_data = self.header['header']
         index_includes_group = 2
         count_includes_group = int(header_data[0][index_includes_group])
         for index_group in range(count_includes_group):
@@ -161,8 +167,4 @@ class Configuration803(MetaObject):
             except IndexError:
                 raise ExtException(message='Include types not found', detail=self.__class__.__name__)
             for i in range(count_include_types):
-                _metadata = include[i + 3]
-                if isinstance(_metadata, str):
-                    metadata_type = MetaDataTypes[_metadata]
-                    include_objects = include_index.get(_metadata, [])
-                    include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
+                self.fill_header_include(i, include, include_index)

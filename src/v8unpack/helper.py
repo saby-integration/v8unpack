@@ -112,17 +112,14 @@ def bin_read(path, file_name):
         return file.read()
 
 
-def decode_header(obj: dict, header: list):
+def decode_header(obj: dict, header: list, *, id_in_separate_file=True):
     try:
         obj['uuid'] = header[1][2]
         uuid.UUID(obj['uuid'])
-        header[1][2] = 'в отдельном файле'
-
     except (ValueError, IndexError):
         raise ValueError('Заголовок определен не верно')
 
     obj['name'] = str_decode(header[2])
-    header[2] = 'в отдельном файле'
     obj['name2'] = {}
     count_locale = int(header[3][0])
     for i in range(count_locale):
@@ -133,9 +130,17 @@ def decode_header(obj: dict, header: list):
     comment = comment[0]
     header[4] = str_encode(comment)
     obj['comment'] = comment
-    obj['h1_0'] = header[1][0]
-    obj['h0'] = header[0]
-    obj['h5'] = header[5:]
+    # obj['h1_0'] = header[1][0]
+    # obj['h0'] = header[0]
+    # obj['h5'] = header[5:]
+    if id_in_separate_file:
+        header[1][2] = 'в отдельном файле'
+        header[2] = 'в отдельном файле'
+
+
+def encode_header(obj: dict, header: list):
+    header[1][2] = obj['uuid']
+    header[2] = str_encode(obj['name'])
 
 
 def clear_dir(path: str) -> None:
@@ -222,16 +227,18 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
                     object_task.append(_object_task)
                 elif isinstance(_object_task, dict):
                     parent_id = _object_task['parent_id']
-                    obj_uuid = _object_task['obj_uuid']
-                    obj_type = _object_task['obj_type']
+                    obj_data = _object_task['obj_data']
 
                     if _object_task['file_list']:
                         file_list.extend(_object_task['file_list'])
-                    if parent_id not in include_index:
-                        include_index[parent_id] = {}
-                    if obj_type not in include_index[parent_id]:
-                        include_index[parent_id][obj_type] = []
-                    include_index[parent_id][obj_type].append(obj_uuid)
+                    if obj_data:
+                        obj_uuid = _object_task['obj_uuid']
+                        obj_type = _object_task['obj_type']
+                        if parent_id not in include_index:
+                            include_index[parent_id] = {}
+                        if obj_type not in include_index[parent_id]:
+                            include_index[parent_id][obj_type] = []
+                        include_index[parent_id][obj_type].append((obj_uuid, _object_task['obj_name'], obj_data))
                 elif _object_task is None:
                     pass
                 else:

@@ -1,5 +1,5 @@
-from ..MetaDataObject.Form import Form
+from v8unpack.MetaDataObject.Form import Form0
 
 
-class TaskForm(Form):
+class TaskForm(Form0):
     pass

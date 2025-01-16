@@ -3,37 +3,25 @@ import shutil
 from datetime import datetime
 
 from . import helper
-from .MetaObject.Configuration802 import Configuration802
-from .MetaObject.Configuration803 import Configuration803
-from .MetaObject.ConfigurationExtension803 import ConfigurationExtension803
-from .MetaObject.ExternalDataProcessor801 import ExternalDataProcessor801
-from .MetaObject.ExternalDataProcessor802 import ExternalDataProcessor802
-from .MetaObject.ExternalDataProcessor803 import ExternalDataProcessor803
+from .MetaObject.Configuration import Configuration
+from .MetaObject.ConfigurationExtension import ConfigurationExtension
+from .MetaObject.ExternalDataProcessor import ExternalDataProcessor
 from .ext_exception import ExtException
 from .metadata_types import MetaDataTypes
 
 available_types = {
-    'ExternalDataProcessor801': ExternalDataProcessor801,
-    'ExternalDataProcessor802': ExternalDataProcessor802,
-    'ExternalDataProcessor803': ExternalDataProcessor803,
-    'Configuration802': Configuration802,
-    'Configuration803': Configuration803
+    'ExternalDataProcessor': ExternalDataProcessor,
+    'Configuration': Configuration,
+    'ConfigurationExtension': ConfigurationExtension
 }
 
 
 class Decoder:
     @staticmethod
-    def detect_version(src_dir, options=None):
-        def init_handler(handler):
-            options['version'] = handler.version
-            return handler(options=options)
-
-        if os.path.isfile(os.path.join(src_dir, 'root')):
-            version = helper.brace_file_read(src_dir, 'version')
+    def get_handler_by_version_file(*, version=None, root=None, header=None, options=None, configinfo=None, **kwargs):
+        if root:
             if int(version[0][0][0]) >= 216:
                 _tmp = len(version[0][0])
-                root = helper.brace_file_read(src_dir, 'root')
-                header = helper.brace_file_read(src_dir, root[0][1])
                 obj_type = MetaDataTypes(header[0][3][0])
                 if _tmp == 2:
                     obj_version = '802'
@@ -48,19 +36,42 @@ class Decoder:
                 else:
                     raise Exception(f'Not supported version {_tmp}')
                 try:
-                    return init_handler(available_types[f'{obj_type.name}{obj_version}'])
+                    options['version'] = obj_version
+                    return available_types[obj_type.name](options=options, obj_version=options['version'])
                 except KeyError:
-                    raise Exception(f'Not supported version {obj_type.name}{obj_version}')
+                    raise Exception(f'Not supported type {obj_type.name}')
             elif version[0][0][0] == "106":
-                return init_handler(ExternalDataProcessor801)
-        if os.path.isfile(os.path.join(src_dir, 'configinfo')):
-            version = helper.brace_file_read(src_dir, 'configinfo')
-            if version[0][1][0] == "216":
-                if len(version[0][1]) == 3:
-                    obj_version = version[0][1][2][0]
+                options['version'] = '801'
+                return ExternalDataProcessor(options=options, obj_version=options['version'])
+        if configinfo:
+            if configinfo[0][1][0] == "216":
+                if len(configinfo[0][1]) == 3:
+                    obj_version = configinfo[0][1][2][0]
                     if obj_version[:3] == '803':
-                        return init_handler(ConfigurationExtension803)
+                        options['version'] = '803'
+                        return ConfigurationExtension(options=options, obj_version=options['version'])
         raise Exception('Не удалось определить парсер')
+
+    @classmethod
+    def detect_version(cls, src_dir, options=None):
+        version = None
+        root = None
+        header = None
+        configinfo = None
+        if os.path.isfile(os.path.join(src_dir, 'root')):
+            version = helper.brace_file_read(src_dir, 'version')
+            root = helper.brace_file_read(src_dir, 'root')
+            header = helper.brace_file_read(src_dir, root[0][1])
+        if os.path.isfile(os.path.join(src_dir, 'configinfo')):
+            configinfo = helper.brace_file_read(src_dir, 'configinfo')
+
+        return cls.get_handler_by_version_file(
+            version=version,
+            root=root,
+            header=header,
+            options=options,
+            configinfo=configinfo
+        )
 
     @classmethod
     def decode(cls, src_dir, dest_dir, *, pool=None, options=None):
@@ -96,7 +107,11 @@ class Decoder:
         begin = datetime.now()
         print(f'{"Собираем объект":30}')
         helper.clear_dir(dest_dir)
-        encoder = cls.get_encoder(src_dir, options)
+        _type = cls.get_encoder(src_dir, options)
+        header = helper.json_read(src_dir, f'{_type}.json')
+        encoder = cls.get_handler_by_version_file(options=options, **header)
+        encoder.header = header
+
         # возвращает список вложенных объектов MetaDataObject
         helper.clear_dir(dest_dir)
 
@@ -132,32 +147,22 @@ class Decoder:
 
     @classmethod
     def get_encoder(cls, src_dir, options=None):
-        version = helper.get_options_param(options, 'version', '803')[:3]
-        if os.path.isfile(os.path.join(src_dir, 'ExternalDataProcessor.json')):
-            versions = {
-                '801': ExternalDataProcessor801,
-                '802': ExternalDataProcessor802,
-                '803': ExternalDataProcessor803,
-            }
-            return versions[version](options=options)
-        if version == '803':
-            if os.path.isfile(os.path.join(src_dir, 'ConfigurationExtension.json')):
-                return ConfigurationExtension803(options=options)
-            if os.path.isfile(os.path.join(src_dir, 'Configuration.json')):
-                return Configuration803(options=options)
-        elif version == '802':
-            if os.path.isfile(os.path.join(src_dir, 'Configuration802.json')):
-                return Configuration802(options=options)
-        raise FileNotFoundError(f'Не найдены файлы для сборки версии {version} ({src_dir})')
+        _type = None
+        for _type in available_types:
+            if os.path.isfile(os.path.join(src_dir, f'{_type}.json')):
+                return _type
+        raise FileNotFoundError(f'Не найдены файлы для сборки версии ({src_dir})')
 
     @classmethod
     def encode_include(cls, params):
         include_type, (new_src_dir, entry, dest_dir, options, parent_id, include_index) = params
         try:
             handler = helper.get_class_metadata_object(include_type)
-            handler = handler.get_version(options.get('version', '803')[:3])(options=options)
-            handler.title = include_type
-            object_task, child_tasks = handler.encode(new_src_dir, entry, dest_dir, parent_id, include_index)
+
+            # handler = handler.get_version(options.get('version', '803')[:3])(options=options)
+            # handler.title = include_type
+            object_task, child_tasks = handler.encode(new_src_dir, entry, dest_dir, parent_id, include_index,
+                                                      options=options)
             return object_task, child_tasks
         except Exception as err:
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
@@ -167,13 +172,18 @@ def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
     def unpack_dummy():
         helper.clear_dir(dest_dir)
         dummy_path = os.path.join(src_dir, 'dummy.zip')
-        if version and int(str(version).ljust(5, '0')) >= 80316 and os.path.isfile(dummy_path):
+        if os.path.isfile(dummy_path):
             helper.clear_dir(container_dest_dir)
             shutil.unpack_archive(dummy_path, container_dest_dir)
             return os.path.join(dest_dir, '1')
         return container_dest_dir
 
     version = helper.get_options_param(options, 'version', '803')
+    try:
+        product_version = helper.txt_read(src_dir, 'version.bin', encoding='utf-8')
+        options['product_version'] = product_version
+    except FileNotFoundError:
+        pass
 
     container_dest_dir = os.path.join(dest_dir, '0')
     container_dest_dir = unpack_dummy()
