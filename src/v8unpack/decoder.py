@@ -44,7 +44,7 @@ class Decoder:
                 options['version'] = '801'
                 return ExternalDataProcessor(options=options, obj_version=options['version'])
         if configinfo:
-            if configinfo[0][1][0] == "216":
+            if int(configinfo[0][1][0]) >= 216:
                 if len(configinfo[0][1]) == 3:
                     obj_version = configinfo[0][1][2][0]
                     if obj_version[:3] == '803':
