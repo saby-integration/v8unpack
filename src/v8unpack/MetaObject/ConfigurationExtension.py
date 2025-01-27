@@ -29,7 +29,7 @@ class ConfigurationExtension(Configuration):
         # self.header['copyinfo'][2] = b64decode(self.header['copyinfo'][2])[:-16].hex()
         self.header['header'] = helper.brace_file_read(src_dir, f'{self.header["file_uuid"]}')
         _form_header = self.get_decode_header(self.header['header'])
-        helper.decode_header(self.header, _form_header, id_in_separate_file=False)
+        helper.decode_header(self, _form_header, id_in_separate_file=False)
         product_version = self.header['header'][0][3][1][1][15]
         if version is None:
             self.header['compatibility_version'] = self.header['header'][0][3][1][1][43]
@@ -68,9 +68,9 @@ class ConfigurationExtension(Configuration):
             if version is not None:
                 self.header['header'][0][3][1][1][43] = version
 
-            gui = self.get_options('gui')
-            if gui is not None:
-                self.header['header'][0][3][1][1][38] = gui
+            # gui = self.get_options('gui')
+            # if gui is not None:
+            #     self.header['header'][0][3][1][1][38] = gui
 
             helper.check_version(__version__, self.header.get('v8unpack', ''))
 

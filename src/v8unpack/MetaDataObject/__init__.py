@@ -15,6 +15,7 @@ class MetaDataObject(MetaObject):
         self.new_dest_path = None
         self.new_dest_dir = None
         self.new_dest_file_name = None
+        self.parent_id = None
 
     def get_obj_name(self):
         return self.meta_obj_class.__name__ if self.meta_obj_class else self.__class__.__name__
@@ -74,7 +75,7 @@ class MetaDataObject(MetaObject):
 
             id_data = {
                 'uuid': self.header.pop('uuid'),
-                'name': self.header.pop('name')
+                # 'name': self.header.pop('name')
             }
             self.header['obj_version'] = self.obj_version
             helper.json_write(id_data, dest_full_path, f'{file_name}.id.json')
@@ -100,7 +101,7 @@ class MetaDataObject(MetaObject):
     @classmethod
     def read_header(cls, src_dir, src_file_name, data_id):
         header = helper.json_read(src_dir, f'{src_file_name}.json')
-        header['name'] = data_id['name']
+        # header['name'] = data_id['name']
         header['uuid'] = data_id['uuid']
         return header
 
@@ -113,6 +114,7 @@ class MetaDataObject(MetaObject):
             # self = cls.get_handler(header_data, options)
             if not include_index:
                 self = cls(options=options)
+                self.parent_id = parent_id
                 current_obj_id = f"{parent_id}/{cls.__name__}/{file_name}"
                 child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, current_obj_id)
                 if child_tasks:
@@ -124,6 +126,7 @@ class MetaDataObject(MetaObject):
             except FileNotFoundError:
                 return None, None
             self = cls.get_handler(header['header'], options)
+            self.parent_id = parent_id
             self.header = header
         except Exception as err:
             raise ExtException(
@@ -132,7 +135,7 @@ class MetaDataObject(MetaObject):
                 action=f'{cls.__name__}.encode') from err
 
         try:
-            self.name = data_id['name']
+            self.name = self.header['name']
             self.uuid = data_id['uuid']
             self.obj_version = self.header['obj_version']
             if include_index:

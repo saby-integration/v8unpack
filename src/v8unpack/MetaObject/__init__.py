@@ -43,7 +43,7 @@ class MetaObject:
     def decode_header(self, header_data, *, id_in_separate_file=True):
         try:
             header = self.get_decode_header(header_data)
-            helper.decode_header(self.header, header, id_in_separate_file=id_in_separate_file)
+            helper.decode_header(self, header, id_in_separate_file=id_in_separate_file)
             self.uuid = self.header['uuid']
             self.name = self.header['name']
             self.header['header'] = header_data
@@ -52,7 +52,7 @@ class MetaObject:
 
     def encode_header(self):
         header = self.get_decode_header(self.header['header'])
-        helper.encode_header(self.header, header)
+        helper.encode_header(self, header)
 
     def decode_includes(self, src_dir, dest_dir, dest_path, header_data):
         tasks = []
@@ -138,44 +138,47 @@ class MetaObject:
                 raise ExtException(parent=err)
 
     def fill_header_include(self, i, include, include_index):
-        _metadata = include[i + 3]
-        if isinstance(_metadata, str):  # лежит идентификатор типа режим auto_include
-            metadata_type = MetaDataTypes[_metadata]
-            internal_data = include_index.get(_metadata, [])
+        try:
+            _metadata = include[i + 3]
+            if isinstance(_metadata, str):  # лежит идентификатор типа режим auto_include
+                metadata_type = MetaDataTypes[_metadata]
+                internal_data = include_index.get(_metadata, [])
 
-            include_objects = sorted(internal_data, key=lambda d: d[1])
-            include_objects = list(map(lambda d: d[2], include_objects))
+                include_objects = sorted(internal_data, key=lambda d: d[1])
+                include_objects = list(map(lambda d: d[2], include_objects))
 
-            include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
+                include[i + 3] = [metadata_type.value, str(len(include_objects)), *include_objects]
 
-            internal_data = include_index.get(metadata_type)
-            if not internal_data:
-                return
+                internal_data = include_index.get(metadata_type)
+                if not internal_data:
+                    return
 
-        elif isinstance(_metadata, list):  # лежат типы как положено
-            _count_obj = int(_metadata[1])
-            _metadata_type_uuid = _metadata[0]
-            try:
-                metadata_type = MetaDataTypes(_metadata_type_uuid)
-            except ValueError:
-                return
-            internal_data = include_index.get(metadata_type.name)
-            if not internal_data:
-                return
-            # данные простых объектов пришли из внешних файлов и нужно поместить из в объект
-            internal_data_uuid = {}
-            for i, elem in enumerate(internal_data):
-                internal_data_uuid[elem[0].lower()] = i
-            for j in range(_count_obj):
-                obj_uuid = _metadata[j + 2]
-                if not isinstance(obj_uuid, str):
-                    raise NotImplementedError('Плохой файл, должны быть просто идентификаторы')
+            elif isinstance(_metadata, list):  # лежат типы как положено
+                _count_obj = int(_metadata[1])
+                _metadata_type_uuid = _metadata[0]
                 try:
-                    index = internal_data_uuid[obj_uuid.lower()]
-                except KeyError:
-                    raise ExtException(message='Не найдены данные внутреннего типа',
-                                       detail=f"{metadata_type.name} {obj_uuid}")
-                _metadata[j + 2] = internal_data[index][2]
+                    metadata_type = MetaDataTypes(_metadata_type_uuid)
+                except ValueError:
+                    return
+                internal_data = include_index.get(metadata_type.name)
+                if not internal_data:
+                    return
+                # данные простых объектов пришли из внешних файлов и нужно поместить из в объект
+                internal_data_uuid = {}
+                for i, elem in enumerate(internal_data):
+                    internal_data_uuid[elem[0].lower()] = i
+                for j in range(_count_obj):
+                    obj_uuid = _metadata[j + 2]
+                    if not isinstance(obj_uuid, str):
+                        raise NotImplementedError('Плохой файл, должны быть просто идентификаторы')
+                    try:
+                        index = internal_data_uuid[obj_uuid.lower()]
+                    except KeyError:
+                        raise ExtException(message='Не найдены данные внутреннего типа',
+                                           detail=f"{metadata_type.name} {obj_uuid}")
+                    _metadata[j + 2] = internal_data[index][2]
+        except Exception as err:
+            raise ExtException(parent=err)
 
     def encode_includes(self, src_dir, file_name, dest_dir, parent_id):
         tasks = []
@@ -365,7 +368,7 @@ class MetaObject:
             if product:
                 new_comment.append(product)
             new_comment = ':'.join(new_comment)
-            header[4] = new_comment
+            header[4] = helper.str_encode(new_comment)
 
     def set_product_info(self, src_dir, file_name):
         product_version = self.options.get('product_version', '')

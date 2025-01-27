@@ -141,7 +141,7 @@ class Template2(Simple):
             'header': header_data
         }
         _header = self.get_decode_header(header_data)
-        helper.decode_header(self.header, _header)
+        helper.decode_header(self, _header)
         self.uuid = self.header['uuid']
         self.name = self.header['name']
 
@@ -226,7 +226,7 @@ class Template2(Simple):
     # def encode_header(self):
     #     # raise NotImplemented()
     #     form_header = self.get_decode_header(self.header['header'])
-    #     helper.encode_header(self.header, form_header)
+    #     helper.encode_header(self.header, form_header, options=self.options)
     #     return self.header['header']
     #
     #     header_data = self.header['header']

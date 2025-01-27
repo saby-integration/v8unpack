@@ -16,6 +16,7 @@ class OrganizerFile:
         print(f'{"Организуем код":30}')
         tasks_code_file = []
         tasks_form_elem = []
+        helper.clear_dir(dest_dir)
         cls._unpack(src_dir, os.path.abspath(dest_dir), '', tasks_code_file, tasks_form_elem, index,
                     descent)
         helper.run_in_pool(cls.unpack_code_file, tasks_code_file, pool=pool,
