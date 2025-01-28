@@ -1,6 +1,7 @@
-from .FormElement import FormProps, FormParams, FormCommands, calc_offset, FormElement
+from .FormElement import FormProps, FormParams, FormCommands, FormElement
 from v8unpack.MetaDataObject import helper
 from v8unpack.ext_exception import ExtException
+from v8unpack.helper import calc_offset
 
 
 class FormElements4:

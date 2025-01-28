@@ -64,9 +64,13 @@ class ConfigurationExtension(Configuration):
 
             self.set_product_info(src_dir, file_name)
 
+            # установка режима совместимости
             version = self.get_options('version')
             if version is not None:
                 self.header['header'][0][3][1][1][43] = version
+            prefix = self.get_options('prefix')
+            if prefix is not None:
+                self.header['header'][0][3][1][1][42] = prefix
 
             # gui = self.get_options('gui')
             # if gui is not None:

@@ -1,11 +1,4 @@
-import json
-import os
-
-from .FormElements4.FormElement import FormElement, FormParams, FormProps, FormCommands, calc_offset
 from .FormCore import FormCore, OF
-
-from v8unpack import helper
-from v8unpack.ext_exception import ExtException
 
 
 class Form9(FormCore):
@@ -24,28 +17,28 @@ class Form9(FormCore):
     #         self.header['Тип формы'] = _header_obj[1][3]
     #     except IndexError:
     #         self.header['Тип формы'] = OF
-        # try:
-        #     self.header['Расширенное представление'] = _header_obj[2]
-        # except IndexError:
-        #     pass
-        # try:
-        #     self.header['ХЗ1'] = _header_obj[1][4]
-        # except IndexError:
-        #     pass
+    # try:
+    #     self.header['Расширенное представление'] = _header_obj[2]
+    # except IndexError:
+    #     pass
+    # try:
+    #     self.header['ХЗ1'] = _header_obj[1][4]
+    # except IndexError:
+    #     pass
 
     # def write_decode_object(self, dest_dir, dest_path, file_name):
     #     # if self.header['Тип формы'] == OF:
     #     #     self.obj_version = 802
     #     super().write_decode_object(dest_dir, dest_path, file_name)
 
-        # if self.props:
-        #     helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.options['version']}.json')
-        # if self.commands:
-        #     helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.options['version']}.json')
-        # if self.params:
-        #     helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.options['version']}.json')
-        # if self.command_panels:
-        #     helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.options['version']}.json')
+    # if self.props:
+    #     helper.json_write(self.props, self.new_dest_dir, f'{file_name}.props{self.options['version']}.json')
+    # if self.commands:
+    #     helper.json_write(self.commands, self.new_dest_dir, f'{file_name}.commands{self.options['version']}.json')
+    # if self.params:
+    #     helper.json_write(self.params, self.new_dest_dir, f'{file_name}.params{self.options['version']}.json')
+    # if self.command_panels:
+    #     helper.json_write(self.command_panels, self.new_dest_dir, f'{file_name}.panels{self.options['version']}.json')
 
     # def decode_code(self, src_dir):
     #     if self.header['Тип формы'] == OF:

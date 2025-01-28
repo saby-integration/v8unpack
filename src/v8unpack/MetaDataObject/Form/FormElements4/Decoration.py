@@ -1,4 +1,5 @@
-from .FormElement import FormElement, calc_offset
+from .FormElement import FormElement
+from v8unpack.helper import calc_offset
 
 
 class Decoration(FormElement):

@@ -211,10 +211,10 @@ def main():
     parser.add_argument('--core', help='название общей папки добавляемой в индекс по умолчанию, только для режима -I')
     parser.add_argument('--index', help='путь до json файла с словарем копирования,'
                                         'структура файла: {путь исходника: путь общей папки}')
-    # parser.add_argument('--version', default='803',
-    #                     help="версия сборки, для сборки обработок указывается версия платформы 801/802/803, "
-    #                          " для сборки расширений указывается версия режима совместимости, "
-    #                          "например для 8.3.6 это 80306, подробности в документации на github")
+    parser.add_argument('--version', default='803',
+                        help="версия сборки, необязательно. "
+                             " При сборке расширений указывается если нужно задать версию режима совместимости, "
+                             "например для 8.3.6 это 80306, подробности в документации на github")
     parser.add_argument('--processes', type=int,
                         help="количество процессов которые будут использоваться для работы, "
                              " если не указано, то количество процессов = количеству ядер компьютера. "
@@ -254,13 +254,12 @@ def main():
 
     args = parser.parse_args()
 
-
     options = {}
-    options_name = ['prefix', 'auto_include', 'descent']
+    options_name = ['prefix', 'auto_include', 'descent', 'version']
     for elem in options_name:
-        value = getattr(args, elem)
+        value = getattr(args, elem, None)
         if value:
-            options[elem] = args[elem]
+            options[elem] = value
 
     if args.E is not None:
         extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),

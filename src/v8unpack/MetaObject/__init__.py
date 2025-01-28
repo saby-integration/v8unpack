@@ -374,7 +374,7 @@ class MetaObject:
         product_version = self.options.get('product_version', '')
         self.set_product_version(product_version)
         if file_name:
-            product_info = f'{file_name};{product_version}'
+            product_info = f'{file_name}:{product_version}'
             self.set_product_comment(product_info)
 
     def _decode_html_data(self, src_dir, dest_dir, dest_file_name, *, header_field='html', file_number=0,

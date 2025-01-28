@@ -1,6 +1,7 @@
-from .FormElement import FormElement, check_count_element, calc_offset
+from .FormElement import FormElement, check_count_element
 from v8unpack.helper import FuckingBrackets
 from v8unpack.ext_exception import ExtException
+from v8unpack.helper import calc_offset
 
 
 class Table(FormElement):

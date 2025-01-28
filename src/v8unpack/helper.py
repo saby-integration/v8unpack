@@ -154,7 +154,6 @@ def encode_header(meta_obj, header: list):
         header[2] = str_encode(f"{prefix}{obj['name']}")
 
 
-
 def clear_dir(path: str) -> None:
     shutil.rmtree(path, ignore_errors=True)
     makedirs(path, exist_ok=True)
@@ -514,3 +513,22 @@ def set_options_param(options, param_name, param_value):
         options = {}
     options[param_name] = param_value
     return options
+
+
+def calc_offset(counters, raw_data):
+    # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
+    #  [(3, 1), (1, 0)] (смещение относительно предыдущей записи, количество записей в единице)
+    index = 0
+    for counter_index, size in counters:
+        index += counter_index
+        if size:
+            try:
+                value = int(raw_data[index])
+            except Exception as err:
+                raise ExtException(
+                    message='bad offset',
+                    detail=f'{counter_index}={index}',
+                    dump={'counters': counters, 'value': raw_data[index]}
+                )
+            index += value * size
+    return index

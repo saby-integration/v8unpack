@@ -1,5 +1,5 @@
 from .FormElement import FormElement, FormItemTypes
-from ..FormElements4.FormElement import calc_offset
+from v8unpack.helper import calc_offset
 from v8unpack import helper
 from v8unpack.ext_exception import ExtException
 
