@@ -70,7 +70,7 @@ class ConfigurationExtension(Configuration):
                 self.header['header'][0][3][1][1][43] = version
             prefix = self.get_options('prefix')
             if prefix is not None:
-                self.header['header'][0][3][1][1][42] = prefix
+                self.header['header'][0][3][1][1][42] = helper.str_encode(prefix)
 
             # gui = self.get_options('gui')
             # if gui is not None:
