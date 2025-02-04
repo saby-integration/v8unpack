@@ -112,28 +112,46 @@ def bin_read(path, file_name):
         return file.read()
 
 
-def decode_header(obj: dict, header: list):
+def decode_header(meta_obj, header: list, *, id_in_separate_file=True):
+    obj = meta_obj.header
     try:
         obj['uuid'] = header[1][2]
         uuid.UUID(obj['uuid'])
-
     except (ValueError, IndexError):
         raise ValueError('Заголовок определен не верно')
 
+    prefix = meta_obj.options.get('prefix', '')
     obj['name'] = str_decode(header[2])
+    if prefix and obj['name'].startswith(prefix):
+        obj['name'] = obj['name'][len(prefix):]
+        header[2] = str_encode(obj['name'])
     obj['name2'] = {}
     count_locale = int(header[3][0])
     for i in range(count_locale):
         obj['name2'][str_decode(header[3][i * 2 + 1])] = str_decode(header[3][i * 2 + 2])
-    comment = str_decode(header[4]).split(';')  # удаляем имя файла и номер версии которую добавляем при сборке
-    if len(comment) > 1:
-        comment[0] += ';'
-    comment = comment[0]
-    header[4] = str_encode(comment)
-    obj['comment'] = comment
-    obj['h1_0'] = header[1][0]
-    obj['h0'] = header[0]
-    obj['h5'] = header[5:]
+    # comment = str_decode(header[4]).split(';')  # удаляем имя файла и номер версии которую добавляем при сборке
+    # if len(comment) > 1:
+    #     comment[0] += ';'
+    # comment = comment[0]
+    # header[4] = str_encode(comment)
+    obj['comment'] = str_decode(header[4])
+    # obj['h1_0'] = header[1][0]
+    # obj['h0'] = header[0]
+    # obj['h5'] = header[5:]
+    if id_in_separate_file:
+        header[1][2] = 'в отдельном файле'
+        # header[2] = 'в отдельном файле'
+
+
+def encode_header(meta_obj, header: list):
+    obj = meta_obj.header
+    options = meta_obj.options
+
+    header[1][2] = obj['uuid']
+    # если собирается с параметром префикс и это объект верхнего уровня и это не заимствованный объект
+    if options and meta_obj.parent_id.find('/') == -1 and header[5] == '0':
+        prefix = options.get('prefix', '')
+        header[2] = str_encode(f"{prefix}{obj['name']}")
 
 
 def clear_dir(path: str) -> None:
@@ -220,16 +238,18 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
                     object_task.append(_object_task)
                 elif isinstance(_object_task, dict):
                     parent_id = _object_task['parent_id']
-                    obj_uuid = _object_task['obj_uuid']
-                    obj_type = _object_task['obj_type']
+                    obj_data = _object_task['obj_data']
 
                     if _object_task['file_list']:
                         file_list.extend(_object_task['file_list'])
-                    if parent_id not in include_index:
-                        include_index[parent_id] = {}
-                    if obj_type not in include_index[parent_id]:
-                        include_index[parent_id][obj_type] = []
-                    include_index[parent_id][obj_type].append(obj_uuid)
+                    if obj_data:
+                        obj_uuid = _object_task['obj_uuid']
+                        obj_type = _object_task['obj_type']
+                        if parent_id not in include_index:
+                            include_index[parent_id] = {}
+                        if obj_type not in include_index[parent_id]:
+                            include_index[parent_id][obj_type] = []
+                        include_index[parent_id][obj_type].append((obj_uuid, _object_task['obj_name'], obj_data))
                 elif _object_task is None:
                     pass
                 else:
@@ -463,13 +483,19 @@ def load_json(filename):
 
 def check_index(index_filename):
     if index_filename:
-        index = []
-        _index = load_json(index_filename)
-        sub_index = _index.pop('index.json', None)
+        try:
+            index = []
+            _index = load_json(index_filename)
+            sub_index = _index.pop('index.json', None)
+        except Exception as err:
+            raise ExtException(parent=err, message='Индексный файл не загружен', detail=index_filename)
         if sub_index:
             for elem in sub_index:
-                index.append(load_json(elem))
-        index.append(_index)
+                try:
+                    index.append(load_json(elem))
+                except Exception as err:
+                    raise ExtException(parent=err, message='Вложенный индексный файл не загружен', detail=elem)
+                index.append(_index)
         data = update_dict(*index)
         return data
     return None
@@ -487,3 +513,22 @@ def set_options_param(options, param_name, param_value):
         options = {}
     options[param_name] = param_value
     return options
+
+
+def calc_offset(counters, raw_data):
+    # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
+    #  [(3, 1), (1, 0)] (смещение относительно предыдущей записи, количество записей в единице)
+    index = 0
+    for counter_index, size in counters:
+        index += counter_index
+        if size:
+            try:
+                value = int(raw_data[index])
+            except Exception as err:
+                raise ExtException(
+                    message='bad offset',
+                    detail=f'{counter_index}={index}',
+                    dump={'counters': counters, 'value': raw_data[index]}
+                )
+            index += value * size
+    return index

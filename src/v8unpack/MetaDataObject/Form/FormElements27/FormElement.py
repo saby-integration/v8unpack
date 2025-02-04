@@ -1,7 +1,7 @@
 from enum import Enum
 
-from .... import helper
-from ....ext_exception import ExtException
+from v8unpack import helper
+from v8unpack.ext_exception import ExtException
 
 
 class FormItemTypes(Enum):
@@ -40,6 +40,7 @@ class Anchor(Enum):
 
 
 class FormElement:
+    ver = 27
     name = 'elements'
 
     def __init__(self):
@@ -49,7 +50,7 @@ class FormElement:
     def get_class_form_elem(cls, name):
         index = ['Panel']
         if name in index:
-            return helper.get_class(f'v8unpack.MetaDataObject.versions.Form802Elements.{name}.{name}')
+            return helper.get_class(f'v8unpack.MetaDataObject.Form.FormElements{cls.ver}.{name}.{name}')
         else:
             return FormElement
 
@@ -75,7 +76,7 @@ class FormElement:
             name=name,
             type=metadata_type.name,
             id=elem_id,
-            ver=802
+            ver=cls.ver
         )
         # cls.decode_anchored(elem_id, form.anchored, path, elem_raw_data[3], 12)
         return form.add_elem(page, path, name, elem_data, elem_raw_data)
@@ -140,12 +141,14 @@ class FormElement:
 
 class FormProps:
     name = 'props'
+    name_index = 4
+
 
     @classmethod
     def decode(cls, form, elem_raw_data):
         try:
             elem_data = dict(
-                name=helper.str_decode(elem_raw_data[4]),
+                name=helper.str_decode(elem_raw_data[cls.name_index]),
                 id=elem_raw_data[0][0],
                 raw=elem_raw_data
             )

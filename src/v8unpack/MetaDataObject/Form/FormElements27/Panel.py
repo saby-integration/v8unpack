@@ -1,10 +1,11 @@
 from .FormElement import FormElement, FormItemTypes
-from ..Form803Elements.FormElement import calc_offset
-from .... import helper
-from ....ext_exception import ExtException
+from v8unpack.helper import calc_offset
+from v8unpack import helper
+from v8unpack.ext_exception import ExtException
 
 
 class Panel(FormElement):
+    ver = 27
 
     def __init__(self):
         super().__init__()
@@ -57,7 +58,7 @@ class Panel(FormElement):
 
             self.elements_data[elem_id] = {
                 'id': elem_data['id'],
-                'ver': 802,
+                'ver': self.ver,
                 'page': page_id,
                 'raw': elem_raw_data,
             }
@@ -179,7 +180,8 @@ class Panel(FormElement):
                     elem_id = elem_raw_data[offset][j][1]
                     if int(elem_id) > 0:
                         try:
-                            elem_raw_data[offset][j][1] = self.elements_index[elem_id][len(path):]  # нужно имя относительно панели
+                            elem_raw_data[offset][j][1] = self.elements_index[elem_id][
+                                                          len(path):]  # нужно имя относительно панели
                         except KeyError:  # если такого индекса нет, то это сам элемент - но это не точно
                             elem_raw_data[offset][j][1] = current_elem[len(path):]
                 offset += 1
@@ -282,7 +284,7 @@ class Panel(FormElement):
                 self.pages.append(page_name)
 
                 self.elements_data[elem_id] = {
-                    "ver": 802,
+                    "ver": self.ver,
                     "page_format_version": page_format_version,
                     "raw": raw_page
                 }
@@ -447,7 +449,13 @@ class Panel(FormElement):
             else:
                 for elem in self.elements_tree:
                     page_id = '/'.join(_id)
-                    key = f"{_path}/{elem['page']}/{elem['name']}" if _path else f"{elem['page']}/{elem['name']}"
+                    key = []
+                    if _path:
+                        key.append(_path)
+                    if elem['page']:
+                        key.append(elem['page'])
+                    key.append(elem['name'])
+                    key = '/'.join(key)
                     self.encode_element(page_id, elem, key, result)
 
             raw_data[0] = str(len(result))
@@ -481,7 +489,8 @@ class Panel(FormElement):
                         if anchor_name_is_num(anchor_name):
                             continue
                         else:
-                            elem_raw_data[offset][j][1] = self.elements_index[_path + anchor_name]  # нужно имя относительно панели
+                            elem_raw_data[offset][j][1] = self.elements_index[
+                                _path + anchor_name]  # нужно имя относительно панели
                     offset += 1
 
                 for anchor_border in range(4):

@@ -1,6 +1,5 @@
-from .FormElement import FormElement, calc_offset, check_count_element
-from ....helper import FuckingBrackets
-from ....ext_exception import ExtException
+from .FormElement import FormElement
+from v8unpack.helper import calc_offset
 
 
 class Decoration(FormElement):

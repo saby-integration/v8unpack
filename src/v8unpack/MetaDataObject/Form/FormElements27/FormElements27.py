@@ -1,11 +1,12 @@
 from .FormElement import FormProps
 from .Panel import Panel
-from .... import helper
-from ....ext_exception import ExtException
+from v8unpack import helper
+from v8unpack.ext_exception import ExtException
 
 
-class Form27:
-    version = '802'
+class FormElements27:
+    FormProps = FormProps
+    Panel = Panel
 
     def __init__(self, form):
         self.form = form
@@ -31,9 +32,9 @@ class Form27:
     def elements_tree(self):
         return self.form.elements_tree
 
-    def decode(self, raw_data):
+    def decode(self, src_dir, dest_dir, dest_path, raw_data):
         try:
-            self.form.props = FormProps.decode_list(self.form, raw_data[2][2])
+            self.form.props = self.FormProps.decode_list(self.form, raw_data[2][2])
             self.form.elements_tree, self.form.elements_data = self.decode_elements(raw_data)
         except Exception as err:
             raise ExtException(parent=err)
@@ -47,7 +48,7 @@ class Form27:
                                           f"просьба передать файл формы {self.form.header.get('name')} разработчикам")
             self.create_prop_index_by_elem_id(form_data[2][3])
 
-            elements_tree, elements_data, elements_id = Panel.decode(self, '', form_data[1][2])
+            elements_tree, elements_data, elements_id = self.Panel.decode(self, '', form_data[1][2])
             return elements_tree, elements_data
         except Exception as err:
             raise ExtException(parent=err)
@@ -80,10 +81,13 @@ class Form27:
             raise ExtException(parent=err)
 
     def create_prop_index_by_name(self):
-        self.props_index = {}
-        if self.form.props:
-            for prop in self.form.props:
-                self.props_index[prop['name']] = prop['id']
+        try:
+            self.props_index = {}
+            if self.form.props:
+                for prop in self.form.props:
+                    self.props_index[prop['name']] = prop['id']
+        except Exception as err:
+            raise ExtException(parent=err)
 
     def fill_datasource(self, raw_data):
         raw_data.append(str(len(self.field_data_source)))
@@ -96,13 +100,14 @@ class Form27:
         try:
             # index_element_count = 0
             # if raw_data[index_element_count] == 'Дочерние элементы отдельно':
-            elements = helper.json_read(src_dir, f'{file_name}.elements802.json')
+            # elements = helper.json_read(src_dir, f'{file_name}.elements802.json')
+            elements = helper.json_read(src_dir, f'{file_name}.elem.json')
             self.form.props = elements['props']
             self.form.elements_data = elements['data']
             self.form.elements_tree = elements['tree']
-            FormProps.encode_list(self.form, raw_data[2][2])
+            self.FormProps.encode_list(self.form, raw_data[2][2])
             self.create_prop_index_by_name()
-            Panel.encode(self, '', None, dict(raw=raw_data[1][2]))
+            self.Panel.encode(self, '', None, dict(raw=raw_data[1][2]))
             if self.auto_include:
                 raw_data[2][3] = []
                 self.fill_datasource(raw_data[2][3])

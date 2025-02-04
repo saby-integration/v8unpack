@@ -1,26 +1,8 @@
 from enum import Enum
 
-from .... import helper
-from ....ext_exception import ExtException
-
-
-def calc_offset(counters, raw_data):
-    # counters - позиции указывающие на счетчики, если не 0 то за ним идет столько записей размера size
-    #  [(3, 1), (1, 0)] (смещение относительно предыдущей записи, количество записей в единице)
-    index = 0
-    for counter_index, size in counters:
-        index += counter_index
-        if size:
-            try:
-                value = int(raw_data[index])
-            except Exception as err:
-                raise ExtException(
-                    message='bad offset',
-                    detail=f'{counter_index}={index}',
-                    dump={'counters': counters, 'value': raw_data[index]}
-                )
-            index += value * size
-    return index
+from v8unpack import helper
+from v8unpack.ext_exception import ExtException
+from v8unpack.helper import calc_offset
 
 
 def check_count_element(counters, raw_data):
@@ -97,7 +79,7 @@ class FormElement:
 
             if not isinstance(name, str) or not name:
                 raise ExtException(message='form elem name not string')
-            data = dict(raw=raw_data, ver=803)
+            data = dict(raw=raw_data, ver=4)
             if prop:
                 data['ПутьКДанным'] = prop
             if command:
@@ -164,7 +146,7 @@ class FormElement:
 
     @staticmethod
     def get_class_form_elem(name):
-        return helper.get_class(f'v8unpack.MetaDataObject.versions.Form803Elements.{name}.{name}')
+        return helper.get_class(f'v8unpack.MetaDataObject.Form.FormElements4.{name}.{name}')
 
     @classmethod
     def encode_list(cls, form, items, raw_data, index_element_count, path=''):

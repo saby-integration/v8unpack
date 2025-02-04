@@ -7,8 +7,8 @@ from ..ext_exception import ExtException
 
 
 class CommonPicture(Simple):
-    def __init__(self, *, obj_name=None, options=None):
-        super().__init__(obj_name=obj_name, options=options)
+    def __init__(self, *, meta_obj_class=None, obj_version=None, options=None):
+        super().__init__(meta_obj_class=meta_obj_class, obj_version=obj_version, options=options)
         self.ext_code = {}
         self.data = None
         self.raw_data = None
@@ -24,9 +24,8 @@ class CommonPicture(Simple):
                 bin_data = self._extract_b64_data(self.header['info'][0][2][0])
 
                 extension = helper.get_extension_from_comment(self.header['comment'])
-                _dest_dir = os.path.join(dest_dir, dest_path)
                 if dest_dir:
-                    helper.bin_write(bin_data, _dest_dir, f'{self.header["name"]}.{extension}')
+                    helper.bin_write(bin_data, self.new_dest_dir, f'{self.header["name"]}.{extension}')
         except Exception as err:
             raise ExtException(parent=err)
 

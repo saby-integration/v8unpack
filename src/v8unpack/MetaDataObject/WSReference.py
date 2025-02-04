@@ -15,7 +15,7 @@ class WSReference(Simple):
         super().decode_object(src_dir, file_name, dest_dir, dest_path, version, header_data)
 
         src = os.path.join(src_dir, f'{self.header["uuid"]}.0')
-        dest = os.path.join(dest_dir, dest_path, self.header["name"])
+        dest = os.path.join(self.new_dest_dir, self.header["name"], self.__class__.__name__)
         if not os.path.isdir(src):
             return
         shutil.copytree(src, dest)
@@ -23,7 +23,7 @@ class WSReference(Simple):
     def encode_object(self, src_dir, file_name, dest_dir):
         super().encode_object(src_dir, file_name, dest_dir)
 
-        src = os.path.join(src_dir, self.header["name"])
+        src = os.path.join(src_dir, self.header["name"], self.__class__.__name__)
         if not os.path.isdir(src):
             return
         dir_name = f'{self.header["uuid"]}.0'

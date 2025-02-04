@@ -1,10 +1,10 @@
-from .FormElement import FormProps, FormParams, FormCommands, calc_offset, FormElement
-from ... import helper
-from ....ext_exception import ExtException
+from .FormElement import FormProps, FormParams, FormCommands, FormElement
+from v8unpack.MetaDataObject import helper
+from v8unpack.ext_exception import ExtException
+from v8unpack.helper import calc_offset
 
 
-class Form4:
-    version = '803'
+class FormElements4:
 
     def __init__(self, form):
         self.form = form
@@ -94,7 +94,8 @@ class Form4:
 
     def encode(self, src_dir, file_name, dest_dir, raw_data):
         try:
-            elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
+            # elements = helper.json_read(src_dir, f'{file_name}.elements{self.version}.json')
+            elements = helper.json_read(src_dir, f'{file_name}.elem.json')
             try:
                 self.form.elements_tree = elements.get('tree')
                 self.form.elements_data = elements.get('data')
@@ -103,18 +104,18 @@ class Form4:
                 self.form.commands = elements.get('commands')
             except (KeyError, TypeError):
                 raise ExtException(message='Форма разобрана старым сборщиком (<0.16), разберите её новым сборщиком',
-                                   action='Form803.encode_elements')
+                                   action='Form9of.encode_elements')
 
-            self.form.commands = FormCommands.encode_list(self, src_dir, file_name, self.version, raw_data)
-            self.form.props = FormProps.encode_list(self, src_dir, file_name, self.version, raw_data)
+            self.form.commands = FormCommands.encode_list(self, src_dir, file_name, None, raw_data)
+            self.form.props = FormProps.encode_list(self, src_dir, file_name, None, raw_data)
 
             self.create_prop_index_by_name()
             self.create_commands_index_by_name()
 
             self.encode_elements(src_dir, file_name, dest_dir, raw_data)
-            FormParams.encode_list(self, src_dir, file_name, self.version, raw_data)
+            FormParams.encode_list(self, src_dir, file_name, None, raw_data)
         except Exception as err:
-            raise ExtException(parent=err, action='Form4.encode')
+            raise ExtException(parent=err, action='FormElements4.encode')
 
     def encode_elements(self, src_dir, file_name, dest_dir, raw_data):
         try:

@@ -125,7 +125,7 @@ class OrganizerFormElem:
 
     @staticmethod
     def form_elem_class(version, elem_type):
-        elem_class = helper.get_class(f'v8unpack.MetaDataObject.versions.Form{version}Elements.FormElement.FormElement')
+        elem_class = helper.get_class(f'v8unpack.MetaDataObject.Form.Form{version}Elements.FormElement.FormElement')
         return elem_class.get_class_form_elem(elem_type)
 
     @classmethod

@@ -16,6 +16,7 @@ class OrganizerFile:
         print(f'{"Организуем код":30}')
         tasks_code_file = []
         tasks_form_elem = []
+        helper.clear_dir(dest_dir)
         cls._unpack(src_dir, os.path.abspath(dest_dir), '', tasks_code_file, tasks_form_elem, index,
                     descent)
         helper.run_in_pool(cls.unpack_code_file, tasks_code_file, pool=pool,
@@ -234,7 +235,9 @@ class OrganizerFile:
                 _src_path = os.path.join(src_dir, path)
                 descent_full_src_path, descent_file_name = cls.pack_get_descent_filename(
                     _src_path, entry, descent)
-
+                if os.path.isfile(os.path.join(dest_dir, path, entry)):
+                    # если файл уже есть, значит он был переопределен в индексе и делать ничего не надо
+                    continue
                 if entry[-4:] == '.bsl':
                     tasks_code_file.append((
                         src_dir, path, descent_file_name, dest_dir, path, entry, index_code_areas, descent,

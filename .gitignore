@@ -5,6 +5,7 @@
 
 .tox
 .idea
+v8unpack.exe
 
 __pycache__/
 build/
