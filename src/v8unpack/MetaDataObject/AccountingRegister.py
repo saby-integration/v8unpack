@@ -10,4 +10,8 @@ class AccountingRegister(Container):
 
     @classmethod
     def get_decode_header(cls, header):
-        return header[0][1][15][1]
+        obj_version = int(header[0][1][0])
+        if obj_version > 21:
+            return header[0][1][16][1]
+        else:
+            return header[0][1][15][1]
