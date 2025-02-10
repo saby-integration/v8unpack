@@ -25,10 +25,13 @@ class Configuration(MetaObject):
         '4': '4',
         '9': '9',
         '8': '8',
+        '10': '10',
         'a': 'a',
         'b': 'b',
         'c': 'c',
         'd': 'd',
+        'e': 'e',
+        'f': 'f',
     }
 
     def __init__(self, *, meta_obj_class=None, obj_version=None, options=None):
