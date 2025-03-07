@@ -149,7 +149,7 @@ def encode_header(meta_obj, header: list):
 
     header[1][2] = obj['uuid']
     # если собирается с параметром префикс и это объект верхнего уровня и это не заимствованный объект
-    if options and meta_obj.parent_id.find('/') == -1 and header[5] == '0':
+    if options and meta_obj.parent_id.find('/') == -1 and (len(header) < 6 or header[5] == '0'):
         prefix = options.get('prefix', '')
         header[2] = str_encode(f"{prefix}{obj['name']}")
 
