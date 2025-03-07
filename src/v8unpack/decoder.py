@@ -36,20 +36,21 @@ class Decoder:
                 else:
                     raise Exception(f'Not supported version {_tmp}')
                 try:
-                    options['version'] = obj_version
-                    return available_types[obj_type.name](options=options, obj_version=options['version'])
+                    # if not options.get('version'):
+                    options['obj_version'] = obj_version
+                    return available_types[obj_type.name](options=options, obj_version=options['obj_version'])
                 except KeyError:
                     raise Exception(f'Not supported type {obj_type.name}')
             elif version[0][0][0] == "106":
-                options['version'] = '801'
-                return ExternalDataProcessor(options=options, obj_version=options['version'])
+                options['obj_version'] = '801'
+                return ExternalDataProcessor(options=options, obj_version=options['obj_version'])
         if configinfo:
             if int(configinfo[0][1][0]) >= 216:
                 if len(configinfo[0][1]) == 3:
                     obj_version = configinfo[0][1][2][0]
-                    if obj_version[:3] == '803':
-                        options['version'] = '803'
-                        return ConfigurationExtension(options=options, obj_version=options['version'])
+                    if obj_version.startswith('803'):
+                        options['obj_version'] = obj_version
+                        return ConfigurationExtension(options=options, obj_version=options['obj_version'])
         raise Exception('Не удалось определить парсер')
 
     @classmethod
@@ -178,7 +179,6 @@ def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):
             return os.path.join(dest_dir, '1')
         return container_dest_dir
 
-    version = helper.get_options_param(options, 'version', '803')
     try:
         product_version = helper.txt_read(src_dir, 'version.bin', encoding='utf-8')
         options['product_version'] = product_version

@@ -35,7 +35,7 @@ class MetaDataObject(MetaObject):
         try:
             # version = helper.get_options_param(options, 'version', '803')
             if cls.versions is None:
-                return cls(options=options, obj_version=options['version'])
+                return cls(options=options, obj_version=options['obj_version'])
             obj_version = cls.get_version(header_data, options)
             try:
                 return cls.versions[obj_version](options=options, meta_obj_class=cls, obj_version=obj_version)
