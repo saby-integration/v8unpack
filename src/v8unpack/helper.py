@@ -495,7 +495,7 @@ def check_index(index_filename):
                     index.append(load_json(elem))
                 except Exception as err:
                     raise ExtException(parent=err, message='Вложенный индексный файл не загружен', detail=elem)
-                index.append(_index)
+        index.append(_index)
         data = update_dict(*index)
         return data
     return None
