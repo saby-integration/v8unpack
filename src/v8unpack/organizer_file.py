@@ -36,9 +36,9 @@ class OrganizerFile:
                     new_path = os.path.join(path, entry)
                     cls._unpack(src_dir, dest_dir, new_path, tasks_code_file, tasks_form_elem, index, descent)
                     continue
-                if entry[-4:] == '.bsl':
+                if entry.endswith('.bsl'):
                     tasks_code_file.append((src_dir, path, entry, dest_dir, index, descent))
-                elif entry[-17:] in ['.elements803.json', '.elements802.json']:
+                elif entry.endswith('.elem.json'):
                     tasks_form_elem.append((src_dir, path, entry, dest_dir, index, descent))
                 else:
                     src_path = os.path.join(src_dir, path)
@@ -172,7 +172,7 @@ class OrganizerFile:
                         os.path.dirname(index[entry])
                     )
                     _dest_path = os.path.join(*path)
-                    if entry[-4:] == '.bsl':
+                    if entry.endswith('.bsl'):
                         _src_abs_path = os.path.abspath(_src_path)
                         if os.path.normcase(_src_path).find('\\src\\') >= 0:
                             func_descent_filename = cls.pack_get_descent_filename
@@ -182,7 +182,7 @@ class OrganizerFile:
                             src_dir, _src_path, os.path.basename(index[entry]),
                             dest_dir, _dest_path, entry, index_code_areas,
                             descent, func_descent_filename))
-                    elif entry[-17:] in ['.elements803.json', '.elements802.json']:
+                    elif entry.endswith('.elem.json'):
                         tasks_form_elem.append((
                             src_dir, _src_path, os.path.basename(index[entry]),
                             dest_dir, _dest_path, entry, index_code_areas, descent,
@@ -216,7 +216,7 @@ class OrganizerFile:
         return src_path, src_file_name
 
     @classmethod
-    def list_descent_dir(cls, src_dir, path, descent):
+    def list_descent_dir(cls, src_dir, path, descent) -> list[str]:
         return os.listdir(os.path.join(src_dir, path))
 
     @classmethod
@@ -238,11 +238,11 @@ class OrganizerFile:
                 if os.path.isfile(os.path.join(dest_dir, path, entry)):
                     # если файл уже есть, значит он был переопределен в индексе и делать ничего не надо
                     continue
-                if entry[-4:] == '.bsl':
+                if entry.endswith('.bsl'):
                     tasks_code_file.append((
                         src_dir, path, descent_file_name, dest_dir, path, entry, index_code_areas, descent,
                         cls.pack_get_descent_filename))
-                elif entry[-17:] in ['.elements803.json', '.elements802.json']:
+                elif entry.endswith('.elem.json'):
                     tasks_form_elem.append((
                         src_dir, path, descent_file_name, dest_dir, path, entry, index_code_areas, descent,
                         cls.pack_get_descent_filename))
