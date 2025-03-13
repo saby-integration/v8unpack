@@ -103,7 +103,7 @@ class OrganizerFormElem:
                 else:
                     dest_entry_path, dest_file_name = OrganizerCode.parse_include_path(
                         elem, path, elem, index.get('Области include') if index else None, descent,
-                        file_extension=file_name[-16::])
+                        file_extension=file_name[-9::])
                 dest_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
 
                 helper.json_write(areas[elem], dest_path, dest_file_name)
@@ -137,7 +137,7 @@ class OrganizerFormElem:
             if area_type:
                 area_name = name[8:]
                 _path, _file_name = OrganizerCode.parse_include_path(area_name, src_path, file_name, index_code_areas,
-                                                                     file_extension=file_name[-16::])
+                                                                     file_extension=file_name[-9::])
                 _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
 
                 include_elements = helper.json_read(_src_abs_path, _file_name)

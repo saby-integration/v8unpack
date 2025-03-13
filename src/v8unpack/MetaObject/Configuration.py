@@ -54,7 +54,7 @@ class Configuration(MetaObject):
         self.header['versions'] = helper.brace_file_read(src_dir, 'versions')
         # shutil.copy2(os.path.join(src_dir, 'versions.json'), os.path.join(dest_dir, 'versions.json'))
 
-        self.decode_code(src_dir)
+        self.decode_code(src_dir, uncomment_directive=self.obj_version in ['802', '801'])
         self._decode_html_data(src_dir, dest_dir, 'help', header_field='help', file_number=self.help_file_number)
         self._decode_images(src_dir, dest_dir)
         self._decode_info(src_dir, dest_dir, file_name)
@@ -110,7 +110,7 @@ class Configuration(MetaObject):
         self._encode_images(src_dir, dest_dir)
         self.encode_code(src_dir, _file_name)
         self._encode_info(src_dir, _file_name, dest_dir)
-        self.write_encode_code(dest_dir)
+        self.write_encode_code(dest_dir, comment_directive=self.obj_version in ['802', '801'])
         helper.brace_file_write(self.header['header'], dest_dir, self.header["file_uuid"])
         file_list.append(self.header["file_uuid"])
 
