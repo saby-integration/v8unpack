@@ -25,7 +25,7 @@ class CommonPicture(Simple):
 
                 extension = helper.get_extension_from_comment(self.header['comment'])
                 if dest_dir:
-                    helper.bin_write(bin_data, self.new_dest_dir, f'{self.header["name"]}.{extension}')
+                    helper.bin_write(bin_data, self.new_dest_dir, f'{self.new_dest_file_name}.{extension}')
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -34,7 +34,7 @@ class CommonPicture(Simple):
 
         extension = helper.get_extension_from_comment(self.header['comment'])
         try:
-            bin_data = helper.bin_read(src_dir, f'{self.header["name"]}.{extension}')
+            bin_data = helper.bin_read(src_dir, f'{file_name}.{extension}')
             self.header['info'][0][2][0][0] += b64encode(bin_data).decode(encoding='utf-8')
             file_name = f'{self.header["uuid"]}.0'
             helper.brace_file_write(self.header['info'], dest_dir, file_name)

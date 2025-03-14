@@ -142,7 +142,8 @@ class OrganizerFile:
             src_dir = os.path.abspath(src_dir)
             index_code_areas = index.get('Области include') if index else None
             if index:
-                cls._pack_index(src_dir, dest_dir, tasks_code_file, tasks_form_elem, index, index_code_areas, [''], descent)
+                cls._pack_index(src_dir, dest_dir, tasks_code_file, tasks_form_elem, index, index_code_areas, [''],
+                                descent)
             cls._pack(src_dir, dest_dir, '', tasks_code_file, tasks_form_elem, index, index_code_areas, descent)
             helper.run_in_pool(OrganizerCode.pack, tasks_code_file, pool=pool, title=f'{"Собираем код из файлов":30}')
             helper.run_in_pool(OrganizerFormElem.pack, tasks_form_elem, pool=pool,
@@ -152,7 +153,53 @@ class OrganizerFile:
         print(f'{"Собираем код - готово":30}: {datetime.now() - begin}')
 
     @classmethod
-    def _pack_index(cls, src_dir: str, dest_dir: str, tasks_code_file: list, tasks_form_elem, index: dict, index_code_areas: dict, path: list,
+    def _pack_index_elem(cls, entry: str, src_dir: str, dest_dir: str, tasks_code_file: list, tasks_form_elem,
+                         index_entry: str, index_code_areas: dict, path: list, descent=None):
+        try:
+            _src_path = os.path.join(
+                '..',
+                '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                os.path.dirname(index_entry)
+            )
+            _dest_path = os.path.join(*path)
+            if entry.endswith('.bsl'):
+                _src_abs_path = os.path.abspath(_src_path)
+                if os.path.normcase(_src_path).find('\\src\\') >= 0:
+                    func_descent_filename = cls.pack_get_descent_filename
+                else:
+                    func_descent_filename = OrganizerFile.pack_get_descent_filename
+                tasks_code_file.append((
+                    src_dir, _src_path, os.path.basename(index_entry),
+                    dest_dir, _dest_path, entry, index_code_areas,
+                    descent, func_descent_filename))
+            elif entry.endswith('.elem.json'):
+                tasks_form_elem.append((
+                    src_dir, _src_path, os.path.basename(index_entry),
+                    dest_dir, _dest_path, entry, index_code_areas, descent,
+                    cls.pack_get_descent_filename))
+            else:
+                _dest_path = os.path.join(dest_dir, *path)
+                _src_path = os.path.join(
+                    '..',
+                    '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
+                    index_entry
+                )
+                _src_full_path = os.path.join(
+                    src_dir,
+                    _src_path
+                )
+                _src_path = os.path.dirname(_src_full_path)
+                _src_file_name = os.path.basename(_src_full_path)
+                if os.path.normcase(_src_path).find('\\src\\') >= 0:
+                    _src_path, _src_file_name = cls.pack_get_descent_filename(_src_path, _src_file_name,
+                                                                              descent)
+                cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
+        except Exception as err:
+            raise ExtException(parent=err)
+
+    @classmethod
+    def _pack_index(cls, src_dir: str, dest_dir: str, tasks_code_file: list, tasks_form_elem, index: dict,
+                    index_code_areas: dict, path: list,
                     descent=None):
         for entry in index:
             try:
@@ -160,50 +207,26 @@ class OrganizerFile:
                     continue
                 if not index[entry]:
                     continue
+                if entry == "*":
+                    all_path = index[entry]
+                    all_files = os.listdir(all_path)
+                    for file_name in all_files:
+                        file_path = os.path.join(all_path, file_name)
+                        if not os.path.isfile(file_path):
+                            continue
+                        cls._pack_index_elem(file_name, src_dir, dest_dir, tasks_code_file, tasks_form_elem, file_path,
+                                             index_code_areas, path, descent)
+                    continue
+
                 if isinstance(index[entry], dict):
                     path.append(entry)
-                    cls._pack_index(src_dir, dest_dir, tasks_code_file, tasks_form_elem, index[entry], index_code_areas, path, descent)
+                    cls._pack_index(src_dir, dest_dir, tasks_code_file, tasks_form_elem, index[entry], index_code_areas,
+                                    path, descent)
                     path.pop()
                     pass
                 elif isinstance(index[entry], str):
-                    _src_path = os.path.join(
-                        '..',
-                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
-                        os.path.dirname(index[entry])
-                    )
-                    _dest_path = os.path.join(*path)
-                    if entry.endswith('.bsl'):
-                        _src_abs_path = os.path.abspath(_src_path)
-                        if os.path.normcase(_src_path).find('\\src\\') >= 0:
-                            func_descent_filename = cls.pack_get_descent_filename
-                        else:
-                            func_descent_filename = OrganizerFile.pack_get_descent_filename
-                        tasks_code_file.append((
-                            src_dir, _src_path, os.path.basename(index[entry]),
-                            dest_dir, _dest_path, entry, index_code_areas,
-                            descent, func_descent_filename))
-                    elif entry.endswith('.elem.json'):
-                        tasks_form_elem.append((
-                            src_dir, _src_path, os.path.basename(index[entry]),
-                            dest_dir, _dest_path, entry, index_code_areas, descent,
-                            cls.pack_get_descent_filename))
-                    else:
-                        _dest_path = os.path.join(dest_dir, *path)
-                        _src_path = os.path.join(
-                            '..',
-                            '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
-                            index[entry]
-                        )
-                        _src_full_path = os.path.join(
-                            src_dir,
-                            _src_path
-                        )
-                        _src_path = os.path.dirname(_src_full_path)
-                        _src_file_name = os.path.basename(_src_full_path)
-                        if os.path.normcase(_src_path).find('\\src\\') >= 0:
-                            _src_path, _src_file_name = cls.pack_get_descent_filename(_src_path, _src_file_name,
-                                                                                      descent)
-                        cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
+                    cls._pack_index_elem(entry, src_dir, dest_dir, tasks_code_file, tasks_form_elem, index[entry],
+                                         index_code_areas, path, descent)
                 else:
                     raise Exception('Некорректный формат файла индекса')
             except FileNotFoundError:

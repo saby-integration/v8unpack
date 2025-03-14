@@ -12,7 +12,10 @@ def get(index: dict, path: str, file_name: str):
             _path = path.split('\\')
             for _dir in _path:
                 _index = _index[_dir]
-        return _index[file_name]
+        try:
+            return _index[file_name]
+        except KeyError:
+            return os.path.join(_index['*'], file_name)
     except TypeError:
         raise ExtException(
             message="Ошибка c уровнями вложенности в Index.json",

@@ -308,25 +308,29 @@ class FormProps(_FormRoot):
 
     @classmethod
     def decode(cls, form, raw_data):
-        result = dict(
-            name=helper.str_decode(raw_data[cls.index_name]),
-            id=raw_data[1][0],
-            raw=raw_data
-        )
-        child_count = int(raw_data[cls.child_offset])
-        pattern = raw_data[5]
-        if pattern[1][0] == '"#"' and form.form.parent_container_uuid == pattern[1][1]:
-            pattern[1][1] = "Родитель"
+        try:
+            result = dict(
+                name=helper.str_decode(raw_data[cls.index_name]),
+                id=raw_data[1][0],
+                raw=raw_data
+            )
+            child_count = int(raw_data[cls.child_offset])
+            pattern = raw_data[5]
+            if pattern and len(pattern) > 1 and pattern[1][0] == '"#"' and form.form.parent_container_uuid == \
+                    pattern[1][1]:
+                pattern[1][1] = "Родитель"
 
-        if child_count:
-            result['child'] = []
-            for i in range(child_count):
-                child = raw_data[cls.child_offset + i + 1]
-                result['child'].append(cls.decode_child(child))
-            raw_data[cls.child_offset] = "отдельно"
-            del raw_data[cls.child_offset + 1:cls.child_offset + 1 + child_count]
+            if child_count:
+                result['child'] = []
+                for i in range(child_count):
+                    child = raw_data[cls.child_offset + i + 1]
+                    result['child'].append(cls.decode_child(child))
+                raw_data[cls.child_offset] = "отдельно"
+                del raw_data[cls.child_offset + 1:cls.child_offset + 1 + child_count]
 
-        return result
+            return result
+        except Exception as err:
+            raise ExtException(parent=err)
 
     @classmethod
     def decode_child(cls, raw_data):
@@ -340,7 +344,8 @@ class FormProps(_FormRoot):
     def encode(cls, form, data):
         raw_data = data['raw']
         pattern = raw_data[5]
-        if pattern[1][0] == '"#"' and pattern[1][1] == 'Родитель' and form.form.parent_container_uuid:
+        if pattern and len(pattern) > 1 and pattern[1][0] == '"#"' and \
+                pattern[1][1] == 'Родитель' and form.form.parent_container_uuid:
             pattern[1][1] = form.form.parent_container_uuid
         if data.get('child'):
             child_count = len(data['child'])
