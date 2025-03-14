@@ -5,6 +5,7 @@ from datetime import datetime
 from . import helper
 from .ext_exception import ExtException
 from .organizer_code import OrganizerCode
+from .index import get_dest_path
 from .organizer_form_elem import OrganizerFormElem
 
 
@@ -52,8 +53,7 @@ class OrganizerFile:
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
         try:
-            dest_entry_path, dest_file_name = OrganizerCode.get_dest_path(dest_dir, dest_path, dest_file_name, index,
-                                                                          descent)
+            dest_entry_path, dest_file_name = get_dest_path(dest_dir, dest_path, dest_file_name, index, descent)
             dest_full_path = os.path.abspath(os.path.join(dest_dir, dest_entry_path))
 
             if dest_entry_path:
@@ -85,8 +85,7 @@ class OrganizerFile:
             for elem in code_areas:
                 _file = code_areas[elem]
                 if elem == 'root':
-                    _file['path'], _file['file_name'] = OrganizerCode.get_dest_path(dest_dir, path, file_name, index,
-                                                                                    descent)
+                    _file['path'], _file['file_name'] = get_dest_path(dest_dir, path, file_name, index, descent)
                 else:
                     if _file['area_type'] == 'includr':
                         continue
@@ -201,16 +200,23 @@ class OrganizerFile:
     def _pack_index(cls, src_dir: str, dest_dir: str, tasks_code_file: list, tasks_form_elem, index: dict,
                     index_code_areas: dict, path: list,
                     descent=None):
+        completed_entry = []
         for entry in index:
             try:
                 if entry == 'Области include':
                     continue
                 if not index[entry]:
                     continue
-                if entry == "*":
+                if entry.startswith("*"):
                     all_path = index[entry]
                     all_files = os.listdir(all_path)
+                    excluded = entry.split('-')[1:]
                     for file_name in all_files:
+                        # пропускаем все что были до
+                        if file_name in completed_entry:
+                            continue
+                        if file_name in excluded:
+                            continue
                         file_path = os.path.join(all_path, file_name)
                         if not os.path.isfile(file_path):
                             continue
@@ -225,6 +231,7 @@ class OrganizerFile:
                     path.pop()
                     pass
                 elif isinstance(index[entry], str):
+                    completed_entry.append(entry)
                     cls._pack_index_elem(entry, src_dir, dest_dir, tasks_code_file, tasks_form_elem, index[entry],
                                          index_code_areas, path, descent)
                 else:

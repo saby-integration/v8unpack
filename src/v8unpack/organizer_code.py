@@ -2,7 +2,6 @@ import os
 
 from . import helper
 from .ext_exception import ExtException
-from .index import get as get_from_index
 
 
 class OrganizerCode:
@@ -134,36 +133,3 @@ class OrganizerCode:
         if _path == '..':
             _path = path
         return _path, _file_name
-
-    @staticmethod
-    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict, descent: int = None):
-        try:
-            if index:
-                try:
-                    _res = get_from_index(index, path, file_name)
-                except KeyError:
-                    _res = None
-
-                if _res:
-                    _path = os.path.dirname(_res)
-                    _file = os.path.basename(_res)
-                    _path = os.path.join(
-                        '..',
-                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
-                        _path
-                    )
-
-                    try:
-                        helper.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
-                    except FileExistsError:
-                        pass
-                    return _path, _file
-
-            return path, file_name
-        except Exception as err:
-            raise ExtException(
-                parent=err,
-                message='Ошибка получения пути из index.json',
-                detail=f'{path}\{file_name}',
-                action='CodeOrganizer.get_dest_path',
-            ) from err

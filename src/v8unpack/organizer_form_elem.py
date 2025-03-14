@@ -2,7 +2,7 @@ import os
 
 from . import helper
 from .ext_exception import ExtException, KeyNotFound
-from .index import get as get_from_index
+from .index import get_dest_path
 from .organizer_code import OrganizerCode
 
 
@@ -98,8 +98,7 @@ class OrganizerFormElem:
         try:
             for elem in areas:
                 if elem == 'root':
-                    dest_entry_path, dest_file_name = OrganizerCode.get_dest_path(dest_dir, path, file_name, index,
-                                                                                  descent)
+                    dest_entry_path, dest_file_name = get_dest_path(dest_dir, path, file_name, index, descent)
                 else:
                     dest_entry_path, dest_file_name = OrganizerCode.parse_include_path(
                         elem, path, elem, index.get('Области include') if index else None, descent,
@@ -117,7 +116,7 @@ class OrganizerFormElem:
     @classmethod
     def pack(cls, params):
         src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index_code_areas, \
-        descent, pack_get_descent_filename = params
+            descent, pack_get_descent_filename = params
         elements = helper.json_read(os.path.join(src_dir, src_path), src_file_name)
         cls._pack_get_areas(src_dir, src_path, src_file_name, elements['tree'], '', elements['data'], index_code_areas)
 
@@ -215,36 +214,3 @@ class OrganizerFormElem:
             tmp = ['..' if elem == '' else elem for elem in tmp[:-1]]
             _path = os.path.join(_path, *tmp)
         return _path, _file_name
-
-    @staticmethod
-    def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict, descent: int):
-        try:
-            if index:
-                try:
-                    _res = get_from_index(index, path, file_name)
-                except KeyError:
-                    _res = None
-
-                if _res:
-                    _path = os.path.dirname(_res)
-                    _file = os.path.basename(_res)
-                    _path = os.path.join(
-                        '..',
-                        '' if descent is None else '..',  # в режиме с descent корень находится на уровень выше
-                        _path
-                    )
-
-                    try:
-                        helper.makedirs(os.path.join(dest_dir, _path), exist_ok=True)
-                    except FileExistsError:
-                        pass
-                    return _path, _file
-
-            return path, file_name
-        except Exception as err:
-            raise ExtException(
-                parent=err,
-                message='Ошибка получения пути из index.json',
-                detail=f'{path}/{file_name}',
-                action='CodeOrganizer.get_dest_path',
-            ) from err
