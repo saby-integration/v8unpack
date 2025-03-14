@@ -45,10 +45,12 @@ class MetaDataObject(MetaObject):
             raise ExtException(message='Не смогли получить класс объекта', detail=f'{cls.__name__} {err}')
 
     @classmethod
-    def decode(cls, src_dir: str, file_name: str, dest_dir: str, dest_path: str, options, *, parent_type=None):
+    def decode(cls, src_dir: str, file_name: str, dest_dir: str, dest_path: str, options, *, parent_type=None,
+               parent_container_uuid=None):
         try:
             header_data = cls.brace_file_read(src_dir, file_name)
             self = cls.get_handler(header_data, options)
+            self.parent_container_uuid = parent_container_uuid
             # self = cls()
             # if parent_type:
             #     self.title = parent_type
@@ -106,27 +108,33 @@ class MetaDataObject(MetaObject):
         return header
 
     @classmethod
-    def encode(cls, src_dir, file_name, dest_dir, parent_id, include_index, options):
+    def encode(cls, src_dir, file_name, dest_dir, parent_id, parent_container_uuid, include_index, options):
         # src_file_name = self.get_encode_file_name(file_name)
         src_file_name = cls.__name__
         try:
             # header_data = header['header']
             # self = cls.get_handler(header_data, options)
-            if not include_index:
-                self = cls(options=options)
-                self.parent_id = parent_id
-                current_obj_id = f"{parent_id}/{cls.__name__}/{file_name}"
-                child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, current_obj_id)
-                if child_tasks:
-                    object_task = [self.__class__.__name__, [src_dir, file_name, dest_dir, options, parent_id, {}]]
-                    return object_task, child_tasks
             try:
                 data_id = helper.json_read(src_dir, f'{src_file_name}.id.json')
                 header = cls.read_header(src_dir, src_file_name, data_id)
             except FileNotFoundError:
                 return None, None
+
+            if not include_index:
+                self = cls(options=options)
+                self.parent_id = parent_id
+                self.container_uuid = self.get_container_uuid(header['header'])
+                self.parent_container_uuid = parent_container_uuid
+                current_obj_id = f"{parent_id}/{cls.__name__}/{file_name}"
+                child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, current_obj_id)
+                if child_tasks:
+                    object_task = [self.__class__.__name__,
+                                   [src_dir, file_name, dest_dir, options, parent_id, self.parent_container_uuid, {}]]
+                    return object_task, child_tasks
+
             self = cls.get_handler(header['header'], options)
             self.parent_id = parent_id
+            self.parent_container_uuid = parent_container_uuid
             self.header = header
         except Exception as err:
             raise ExtException(

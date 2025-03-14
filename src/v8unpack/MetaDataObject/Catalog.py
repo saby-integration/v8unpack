@@ -1,7 +1,7 @@
-from ..MetaDataObject.core.Container import Container
+from ..MetaDataObject.core.Container import FormContainer
 
 
-class Catalog(Container):
+class Catalog(FormContainer):
     ext_code = {
         'mgr': '3',  # модуль менеджера Справочника
         'obj': '0',  # модуль объекта Справочника

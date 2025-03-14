@@ -89,11 +89,13 @@ class Decoder:
 
     @classmethod
     def decode_include(cls, params):
-        include_type, (obj_uuid, src_dir, dest_dir, new_dest_path, options) = params
+        include_type, (obj_uuid, src_dir, dest_dir, new_dest_path, parent_container_uuid, options) = params
         try:
             handler = helper.get_class_metadata_object(include_type)
             # handler = handler.get_version(decode_params[4])
-            tasks = handler.decode(obj_uuid, src_dir, dest_dir, new_dest_path, options, parent_type=include_type)
+            tasks = handler.decode(obj_uuid, src_dir, dest_dir, new_dest_path, options,
+                                   parent_container_uuid=parent_container_uuid,
+                                   parent_type=include_type)
             return tasks
         except ExtException as err:
             raise ExtException(
@@ -112,6 +114,7 @@ class Decoder:
         header = helper.json_read(src_dir, f'{_type}.json')
         encoder = cls.get_handler_by_version_file(options=options, **header)
         encoder.header = header
+        encoder.container_uuid = encoder.get_container_uuid(header['header'])
 
         # возвращает список вложенных объектов MetaDataObject
         helper.clear_dir(dest_dir)
@@ -136,7 +139,7 @@ class Decoder:
             if not child_tasks and object_task:
                 _object_task = object_task.pop()
                 for elem in _object_task:
-                    elem[1][5] = include_index.pop(f"{elem[1][4]}/{elem[0]}/{elem[1][1]}")
+                    elem[1][6] = include_index.pop(f"{elem[1][4]}/{elem[0]}/{elem[1][1]}")
                 child_tasks = _object_task
                 title = f'{"Собираем вложенные объекты":30}'
             a = 1
@@ -156,14 +159,14 @@ class Decoder:
 
     @classmethod
     def encode_include(cls, params):
-        include_type, (new_src_dir, entry, dest_dir, options, parent_id, include_index) = params
+        include_type, (new_src_dir, entry, dest_dir, options, parent_id, parent_container_uuid, include_index) = params
         try:
             handler = helper.get_class_metadata_object(include_type)
 
             # handler = handler.get_version(options.get('version', '803')[:3])(options=options)
             # handler.title = include_type
-            object_task, child_tasks = handler.encode(new_src_dir, entry, dest_dir, parent_id, include_index,
-                                                      options=options)
+            object_task, child_tasks = handler.encode(new_src_dir, entry, dest_dir, parent_id, parent_container_uuid,
+                                                      include_index, options=options)
             return object_task, child_tasks
         except Exception as err:
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err

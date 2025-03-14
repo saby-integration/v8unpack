@@ -245,7 +245,7 @@ class _FormRoot:
     index_name = 0
 
     @classmethod
-    def decode(cls, raw_data):
+    def decode(cls, form, raw_data):
         return dict(
             name=helper.str_decode(raw_data[cls.index_name]),
             raw=raw_data
@@ -264,7 +264,7 @@ class _FormRoot:
 
             result = []
             for i in range(element_count):
-                result.append(cls.decode(items[i + index_element_count + 1]))
+                result.append(cls.decode(form, items[i + index_element_count + 1]))
             items[index_element_count] = 'Дочерние элементы отдельно'
             del items[index_element_count + 1:index_element_count + 1 + element_count]
             return result
@@ -307,13 +307,17 @@ class FormProps(_FormRoot):
     child_offset = 13
 
     @classmethod
-    def decode(cls, raw_data):
+    def decode(cls, form, raw_data):
         result = dict(
             name=helper.str_decode(raw_data[cls.index_name]),
             id=raw_data[1][0],
             raw=raw_data
         )
         child_count = int(raw_data[cls.child_offset])
+        pattern = raw_data[5]
+        if pattern[1][0] == '"#"' and form.form.parent_container_uuid == pattern[1][1]:
+            pattern[1][1] = "Родитель"
+
         if child_count:
             result['child'] = []
             for i in range(child_count):
@@ -335,6 +339,9 @@ class FormProps(_FormRoot):
     @classmethod
     def encode(cls, form, data):
         raw_data = data['raw']
+        pattern = raw_data[5]
+        if pattern[1][0] == '"#"' and pattern[1][1] == 'Родитель' and form.form.parent_container_uuid:
+            pattern[1][1] = form.form.parent_container_uuid
         if data.get('child'):
             child_count = len(data['child'])
             raw_data[cls.child_offset] = str(child_count)
@@ -352,7 +359,7 @@ class FormCommands(_FormRoot):
     index_name = 2
 
     @classmethod
-    def decode(cls, raw_data):
+    def decode(cls, form, raw_data):
         result = dict(
             name=helper.str_decode(raw_data[cls.index_name]),
             id=raw_data[1][0],

@@ -59,3 +59,9 @@ class Container(MetaDataObject):
 
     # def get_encode_file_name(self, file_name):
     #     return self.get_obj_name()
+
+
+class FormContainer(Container):
+    @classmethod
+    def get_container_uuid(cls, header_data):
+        return header_data[0][1][1]

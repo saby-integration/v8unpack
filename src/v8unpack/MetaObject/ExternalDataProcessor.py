@@ -31,22 +31,26 @@ class ExternalDataProcessor(MetaObject):
         except FileNotFoundError:
             form1 = None
 
-        self.data['form1'] = form1
+        self.header['form1'] = form1
 
         self.decode_code(src_dir, uncomment_directive=self.obj_version in ['802', '801'])
         pass
         _file_name = self.get_class_name_without_version()
-
+        self.container_uuid = self.get_container_uuid(self.header['header'])
         tasks = self.decode_includes(src_dir, dest_dir, '', self.header['header'])
 
         self.header['obj_version'] = self.obj_version
         helper.json_write(self.header, dest_dir, f'{_file_name}.json')
-        helper.json_write(self.data, dest_dir, f'{_file_name}.data{self.obj_version}.json')
+        # helper.json_write(self.data, dest_dir, f'{_file_name}.data{self.obj_version}.json')
         self.write_decode_code(dest_dir, 'ExternalDataProcessor')
 
         return tasks
         # helper.run_in_pool(self.decode_include, tasks, pool)
         pass
+
+    @classmethod
+    def get_container_uuid(cls, header_data):
+        return header_data[0][3][1][1][1]
 
     @classmethod
     def get_decode_includes(cls, header_data):
@@ -61,10 +65,11 @@ class ExternalDataProcessor(MetaObject):
             _file_name = self.get_class_name_without_version()
             self.header = helper.json_read(src_dir, f'{_file_name}.json')
             helper.check_version(__version__, self.header.get('v8unpack', ''))
-            try:
-                self.data = helper.json_read(src_dir, f'{_file_name}.data{self.obj_version}.json')
-            except FileNotFoundError:
-                self.data = self.encode_empty_data()
+
+            # try:
+            #     self.data = helper.json_read(src_dir, f'{_file_name}.data{self.obj_version}.json')
+            # except FileNotFoundError:
+            #     self.data = self.encode_empty_data()
 
             self.set_product_info(src_dir, file_name)
 
@@ -80,9 +85,9 @@ class ExternalDataProcessor(MetaObject):
             # helper.brace_file_write(self.header['versions'], dest_dir, 'versions')
             helper.brace_file_write(self.header['header'], dest_dir, self.header["file_uuid"])
             file_list.append(self.header["file_uuid"])
-            if self.data.get('form1'):
+            if self.header.get('form1'):
                 file_name = f'{self.header["uuid"]}.1'
-                helper.brace_file_write(self.data['form1'], dest_dir, file_name)
+                helper.brace_file_write(self.header['form1'], dest_dir, file_name)
                 file_list.append(file_name)
             self.encode_code(src_dir, 'ExternalDataProcessor')
             self.write_encode_code(dest_dir, comment_directive=self.obj_version in ['802', '801'])

@@ -1,7 +1,7 @@
-from ..MetaDataObject.core.Container import Container
+from ..MetaDataObject.core.Container import FormContainer
 
 
-class DataProcessor(Container):
+class DataProcessor(FormContainer):
     ext_code = {
         'mgr': '2',  # модуль менеджера
         'obj': '0',  # модуль объекта

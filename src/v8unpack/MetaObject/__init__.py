@@ -25,10 +25,16 @@ class MetaObject:
         self.header = {}
         self.uuid = None
         self.name = None
+        self.container_uuid = None
+        self.parent_container_uuid = None
         self.code = {}
         self.file_list = []
         self.obj_version = obj_version
         self.options = options
+
+    @classmethod
+    def get_container_uuid(cls, header_data):
+        return None
 
     def get_options(self, name, default=None):
         try:
@@ -47,6 +53,7 @@ class MetaObject:
             self.uuid = self.header['uuid']
             self.name = self.header['name']
             self.header['header'] = header_data
+            self.container_uuid = self.get_container_uuid(header_data)
         except Exception as err:
             raise ExtException(parent=err)
 
@@ -97,7 +104,8 @@ class MetaObject:
                     if j == 0:
                         os.mkdir(os.path.join(dest_dir, new_dest_path))
 
-                    tasks.append([metadata_type.name, [src_dir, obj_data, dest_dir, new_dest_path, self.options]])
+                    tasks.append([metadata_type.name,
+                                  [src_dir, obj_data, dest_dir, new_dest_path, self.container_uuid, self.options]])
                     external_obj = True
                 elif isinstance(obj_data, list):
                     if not metadata_type:
@@ -196,16 +204,18 @@ class MetaObject:
                 handler = helper.get_class_metadata_object(entry)
                 _src_dir = os.path.join(src_dir, entry)
                 handler.encode_get_include_obj(_src_dir, dest_dir, handler.__name__, tasks,
-                                               self.options, parent_id, {})
+                                               self.options, parent_id, self.container_uuid, {})
         return tasks
 
     @classmethod
-    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, include_index):
+    def encode_get_include_obj(cls, src_dir, dest_dir, include, tasks, options, parent_id, parent_container_uuid,
+                               include_index):
         entries = os.listdir(src_dir)
         for entry in entries:
             if os.path.isdir(os.path.join(src_dir, entry)):
                 new_src_dir = os.path.join(src_dir, entry)
-                tasks.append([include, [new_src_dir, entry, dest_dir, options, parent_id, include_index]])
+                tasks.append(
+                    [include, [new_src_dir, entry, dest_dir, options, parent_id, parent_container_uuid, include_index]])
         # cls.encode_get_include_obj_from_named_folder(src_dir, dest_dir, include, tasks, options, parent_id,
         #                                              include_index)
 

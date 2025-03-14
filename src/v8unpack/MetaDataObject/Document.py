@@ -1,7 +1,7 @@
-from ..MetaDataObject.core.Container import Container
+from ..MetaDataObject.core.Container import FormContainer
 
 
-class Document(Container):
+class Document(FormContainer):
     help_file_number = 1
     ext_code = {
         'obj': 0,
@@ -9,5 +9,6 @@ class Document(Container):
     }
 
     @classmethod
-    def get_decode_header(cls, header):
-        return header[0][1][9][1]
+    def get_decode_header(cls, header_data):
+        return header_data[0][1][9][1]
+
