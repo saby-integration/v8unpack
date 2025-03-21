@@ -45,7 +45,10 @@ class OrganizerFileCE(OrganizerFile):
         _index = {}
         result = []
         _dir = os.path.join(src_dir, path)
-        entries = os.listdir(_dir)
+        try:
+            entries = os.listdir(_dir)
+        except FileNotFoundError:
+            entries = []
         for entry in entries:
             full_path = os.path.join(_dir, entry)
             if os.path.isdir(full_path):
