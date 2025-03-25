@@ -71,14 +71,20 @@ class MetaDataObject(MetaObject):
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         self.set_write_decode_mode(dest_dir, dest_path)
 
+    def decode_ids(self):
+        return {
+            'uuid': self.header.pop('uuid'),
+            # 'name': self.header.pop('name')
+        }
+
+    def encode_ids(self, data_id):
+        self.header['uuid'] = data_id['uuid']
+
     def write_decode_object(self, dest_dir, dest_path, file_name):
         try:
             dest_full_path = os.path.join(dest_dir, dest_path)
 
-            id_data = {
-                'uuid': self.header.pop('uuid'),
-                # 'name': self.header.pop('name')
-            }
+            id_data = self.decode_ids()
             self.header['obj_version'] = self.obj_version
             helper.json_write(id_data, dest_full_path, f'{file_name}.id.json')
             helper.json_write(self.header, dest_full_path, f'{file_name}.json')
@@ -116,15 +122,21 @@ class MetaDataObject(MetaObject):
             # self = cls.get_handler(header_data, options)
             try:
                 data_id = helper.json_read(src_dir, f'{src_file_name}.id.json')
-                header = cls.read_header(src_dir, src_file_name, data_id)
+                header = helper.json_read(src_dir, f'{src_file_name}.json')
             except FileNotFoundError:
                 return None, None
+            self = cls.get_handler(header['header'], options)
+            self.header = header
+            self.encode_ids(data_id)
+            self.parent_id = parent_id
+            self.container_uuid = self.get_container_uuid(header['header'])
+            self.parent_container_uuid = parent_container_uuid
+
 
             if not include_index:
-                self = cls(options=options)
-                self.parent_id = parent_id
-                self.container_uuid = self.get_container_uuid(header['header'])
-                self.parent_container_uuid = parent_container_uuid
+                # self = cls(options=options)
+                # self.parent_id = parent_id
+                # self.parent_container_uuid = parent_container_uuid
                 current_obj_id = f"{parent_id}/{cls.__name__}/{file_name}"
                 child_tasks = self.encode_includes(src_dir, src_file_name, dest_dir, current_obj_id)
                 if child_tasks:
@@ -132,10 +144,6 @@ class MetaDataObject(MetaObject):
                                    [src_dir, file_name, dest_dir, options, parent_id, self.parent_container_uuid, {}]]
                     return object_task, child_tasks
 
-            self = cls.get_handler(header['header'], options)
-            self.parent_id = parent_id
-            self.parent_container_uuid = parent_container_uuid
-            self.header = header
         except Exception as err:
             raise ExtException(
                 parent=err,

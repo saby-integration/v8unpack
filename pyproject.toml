@@ -1,3 +1,37 @@
+[project]
+name = "v8unpack"
+dynamic = ["version"]
+dependencies = ["tqdm>=4"]
+authors = [
+    { name = "Razgovorov Mikhail", email = "1338833@gmail.com" },
+]
+description = "Unpacking binaries 1C to JSON for GIT"
+keywords = ["1c", "cf", "cfe", "epf", "v8unpack", "saby", "sbis", "сбис", "1с"]
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Natural Language :: Russian',
+    'Programming Language :: Python :: 3',
+    'Topic :: Software Development',
+    "Operating System :: OS Independent"
+]
+license = "MIT"
+
+[tool.setuptools.dynamic]
+version = { attr = "v8unpack.version.__version__" }
+
+[project.scripts]
+v8unpack = "v8unpack:main"
+
+[project.urls]
+Homepage = "https://github.com/saby-integration/v8unpack"
+Issues = "https://github.com/saby-integration/v8unpack/issues"
+
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["v8unpack*"]
