@@ -14,7 +14,7 @@ from .json_container_decoder import JsonContainerDecoder, BigBase64
 
 
 def brace_file_read(path, file_name):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     try:
         for code_page in ['utf-8-sig', 'windows-1251']:
             try:
@@ -32,7 +32,7 @@ def brace_file_read(path, file_name):
 
 
 def brace_file_write(data, path, file_name):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     makedirs(path, exist_ok=True)
     try:
         with open(_path, 'w', encoding='utf-8') as file:
@@ -44,7 +44,7 @@ def brace_file_write(data, path, file_name):
 
 
 def json_read(path, file_name):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     try:
         with open(_path, 'r', encoding='utf-8') as file:
             return json.load(file)
@@ -55,7 +55,7 @@ def json_read(path, file_name):
 
 
 def json_write(data, path, file_name):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     makedirs(path, exist_ok=True)
     try:
         with open(_path, 'w', encoding='utf-8') as file:
@@ -74,7 +74,7 @@ def txt_read(path, file_name, encoding='utf-8-sig'):
 
 
 def txt_read_detect_encoding(path, file_name, encoding=None):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     if encoding is None:
         encoding = detect_by_bom(_path, 'utf-8')
     with open(_path, 'r', encoding=encoding) as file:
@@ -85,7 +85,7 @@ def txt_write(data, path, file_name, encoding='utf-8'):
     try:
         if data is None:
             return
-        _path = os.path.join(path, file_name)
+        _path = os.path.normpath(os.path.join(path, file_name))
         makedirs(path, exist_ok=True)
         for i in range(3):
             try:
@@ -100,14 +100,14 @@ def txt_write(data, path, file_name, encoding='utf-8'):
 
 
 def bin_write(data, path, file_name):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     makedirs(path, exist_ok=True)
     with open(_path, 'wb') as file:
         file.write(data)
 
 
 def bin_read(path, file_name):
-    _path = os.path.join(path, file_name)
+    _path = os.path.normpath(os.path.join(path, file_name))
     with open(_path, 'rb') as file:
         return file.read()
 
