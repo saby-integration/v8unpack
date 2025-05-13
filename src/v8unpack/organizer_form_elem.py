@@ -118,7 +118,12 @@ class OrganizerFormElem:
         src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index_code_areas, \
             descent, pack_get_descent_filename = params
         elements = helper.json_read(os.path.join(src_dir, src_path), src_file_name)
-        cls._pack_get_areas(src_dir, src_path, src_file_name, elements['tree'], '', elements['data'], index_code_areas)
+        try:
+            cls._pack_get_areas(src_dir, src_path, src_file_name, elements['tree'], '', elements['data'],
+                                index_code_areas, descent)
+        except Exception as err:
+            raise ExtException(parent=err, message='Ошибка сборки элементов формы',
+                               detail=f'{os.path.join(src_path, src_file_name)}')
 
         helper.json_write(elements, os.path.join(dest_dir, dest_path), dest_file_name)
 
@@ -128,43 +133,29 @@ class OrganizerFormElem:
         return elem_class.get_class_form_elem(elem_type)
 
     @classmethod
-    def _pack_get_areas(cls, src_dir, src_path, file_name, tree, path, root_data, index_code_areas):
+    def _pack_get_areas(cls, src_dir, src_path, file_name, tree, path, root_data, index_code_areas, descent):
         for elem in tree:
-            name: str = elem['name']
-            new_path = f'{path}/{name}' if path else name
-            area_type = cls.is_area(name)
-            if area_type:
-                area_name = name[8:]
-                _path, _file_name = OrganizerCode.parse_include_path(area_name, src_path, file_name, index_code_areas,
-                                                                     file_extension=file_name[-9::])
-                _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
+            try:
+                name: str = elem['name']
+                new_path = f'{path}/{name}' if path else name
+                area_type = cls.is_area(name)
+                if area_type:
+                    area_name = name[8:]
+                    _path, _file_name = OrganizerCode.parse_include_path(
+                        area_name, src_path, file_name, index_code_areas, descent, file_extension=file_name[-9::])
+                    _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
 
-                include_elements = helper.json_read(_src_abs_path, _file_name)
-                # first_elem_key: str = list(include_elements['data'].keys())[0]
-                # first_elem_data = include_elements['data'].pop(first_elem_key)
-                # new_first_elem_key = first_elem_key
-                # if area_type == 'includr_':
-                #     _path = f'include_{path[8:]}'
-                #     new_first_elem_key = first_elem_key.replace('include_', 'includr_')
-                #     elem_class = cls.form_elem_class(first_elem_data['ver'], elem['type'])
-                #    # name_offset = elem_class.get_name_node_offset(first_elem_data['raw'])
-                #    # first_elem_data['raw'][name_offset] = helper.str_encode(new_first_elem_key[1:])
-                #    elem_class.set_name(new_first_elem_key, first_elem_data['raw'])
-                # root_data[f'{path}/{new_first_elem_key}' if path else new_first_elem_key] = first_elem_data
-                cls._append_area_data(include_elements['tree'], name, root_data, include_elements['data'],
-                                      path, area_type)
-                # if area_type == 'includr_':  # меняем имя ключа у первого элемента
-                #     first_elem_key: str = list(include_elements['data'].keys())[0]
-                #     first_elem_data = include_elements['data'].pop(first_elem_key)
-                #     first_elem_key = first_elem_key.replace('include_', 'includr_')
-                #     include_elements['data'][first_elem_key] = first_elem_data
-
-                # root_data.update(include_elements['data'])
-                elem['child'] = include_elements['tree']
-                continue
-            child = elem.get('child')
-            if child:
-                cls._pack_get_areas(src_dir, src_path, file_name, child, new_path, root_data, index_code_areas)
+                    include_elements = helper.json_read(_src_abs_path, _file_name)
+                    cls._append_area_data(include_elements['tree'], name, root_data, include_elements['data'],
+                                          path, area_type)
+                    elem['child'] = include_elements['tree']
+                    continue
+                child = elem.get('child')
+                if child:
+                    cls._pack_get_areas(src_dir, src_path, file_name, child, new_path, root_data, index_code_areas,
+                                        descent)
+            except Exception as err:
+                raise ExtException(parent=err, message='Ошибка сборки области формы', detail=elem['name'])
 
     @classmethod
     def _append_area_data(cls, tree, path, root_data, data, append_path, area_type=None):
