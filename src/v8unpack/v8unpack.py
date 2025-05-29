@@ -66,8 +66,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, p
         if clear_temp_dir:
             shutil.rmtree(temp_dir, ignore_errors=True)
     except Exception as err:
-        error = ExtException(parent=err)
-        print(f'\n\n{error}')
+        raise ExtException(parent=err)
 
 
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
@@ -119,8 +118,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         print(f'{"Готово":30}: {end - begin0}')
 
     except Exception as err:
-        error = ExtException(parent=err)
-        print(f'\n\n{error}')
+        raise ExtException(parent=err)
 
 
 def build_all(product_file_name: str, product_code: str = None, processes=None):
@@ -142,8 +140,7 @@ def build_all(product_file_name: str, product_code: str = None, processes=None):
             )
         pass
     except Exception as err:
-        error = ExtException(parent=err)
-        print(f'\n\n{error}')
+        raise ExtException(parent=err)
 
 
 def extract_all(product_file_name: str, product_code: str = None, processes=None):
@@ -163,8 +160,7 @@ def extract_all(product_file_name: str, product_code: str = None, processes=None
             )
         pass
     except Exception as err:
-        error = ExtException(parent=err)
-        print(f'\n\n{error}')
+        raise ExtException(parent=err)
 
 
 def update_index_all(product_file_name: str, product_code: str = None, dest_dir: str = None):
@@ -184,8 +180,7 @@ def update_index_all(product_file_name: str, product_code: str = None, dest_dir:
             )
         pass
     except Exception as err:
-        error = ExtException(parent=err)
-        print(f'\n\n{error}')
+        raise ExtException(parent=err)
 
 
 def main():
@@ -261,31 +256,36 @@ def main():
         if value:
             options[elem] = value
 
-    if args.E is not None:
-        extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
-                index=args.index, temp_dir=args.temp, options=options)
-        return
+    try:
+        if args.E is not None:
+            extract(os.path.abspath(args.E[0]), os.path.abspath(args.E[1]),
+                    index=args.index, temp_dir=args.temp, options=options)
+            return
 
-    if args.B is not None:
-        build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
-              index=args.index, temp_dir=args.temp, options=options)
-        return
+        if args.B is not None:
+            build(os.path.abspath(args.B[0]), os.path.abspath(args.B[1]),
+                  index=args.index, temp_dir=args.temp, options=options)
+            return
 
-    if args.BA is not None:
-        build_all(args.BA[0], args.index)
-        return
+        if args.BA is not None:
+            build_all(args.BA[0], args.index)
+            return
 
-    if args.EA is not None:
-        extract_all(args.EA[0], args.index)
-        return
+        if args.EA is not None:
+            extract_all(args.EA[0], args.index)
+            return
 
-    if args.I is not None:
-        update_index(args.I[0], args.index, args.core)
-        return
+        if args.I is not None:
+            update_index(args.I[0], args.index, args.core)
+            return
 
-    if args.IA is not None:
-        update_index_all(args.IA[0], args.index, args.core)
-        return
+        if args.IA is not None:
+            update_index_all(args.IA[0], args.index, args.core)
+            return
+
+    except Exception as err:
+        error = ExtException(parent=err)
+        print(f'\n\n{error}')
 
 
 if __name__ == '__main__':
