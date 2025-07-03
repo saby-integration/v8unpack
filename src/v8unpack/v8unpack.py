@@ -286,6 +286,7 @@ def main():
     except Exception as err:
         error = ExtException(parent=err)
         print(f'\n\n{error}')
+        exit(1)
 
 
 if __name__ == '__main__':
