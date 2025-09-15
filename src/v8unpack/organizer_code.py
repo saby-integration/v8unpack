@@ -94,7 +94,7 @@ class OrganizerCode:
                             area_name_parts = _line[17:].strip().split(' //')
                             include_path = area_name_parts[0]
 
-                            dynamic_directive = area_name_parts[1] if len(area_name_parts) > 1 else dynamic_directive
+                            current_dynamic_directive = area_name_parts[1] if len(area_name_parts) > 1 else dynamic_directive
 
                             _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
                                                                        descent)
@@ -102,7 +102,7 @@ class OrganizerCode:
                             if _src_abs_path.startswith(src_dir) or os.path.normcase(_path).find('\\src\\') >= 0:
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
                             data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
-                                                  pack_get_descent_filename, dynamic_directive)
+                                                  pack_get_descent_filename, current_dynamic_directive)
                     line = file.readline()
                 return data
         except ExtException as err:
