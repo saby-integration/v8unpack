@@ -291,10 +291,7 @@ class FormCore(SimpleNameFolder):
         try:
             form_element_decoder(self).encode(src_dir, file_name, dest_dir, self.form[0][0])
         except Exception as err:
-            raise ExtException(parent=err, message='Ошибка при сборке формы',
-                               detail=f"{os.path.join(src_dir, file_name)}",
-                               action='Form9of.encode_nested_includes'
-                               )
+            raise ExtException(parent=err, action='Сборка формы') from None
 
     def write_encode_object(self, dest_dir):
         try:

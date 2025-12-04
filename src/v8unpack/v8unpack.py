@@ -66,7 +66,7 @@ def extract(in_filename: str, out_dir_name: str, *, temp_dir=None, index=None, p
         if clear_temp_dir:
             shutil.rmtree(temp_dir, ignore_errors=True)
     except Exception as err:
-        raise ExtException(parent=err)
+        raise ExtException(parent=err) from None
 
 
 def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
@@ -118,7 +118,7 @@ def build(in_dir_name: str, out_file_name: str, *, temp_dir=None, index=None,
         print(f'{"Готово":30}: {end - begin0}')
 
     except Exception as err:
-        raise ExtException(parent=err)
+        raise ExtException(parent=err) from None
 
 
 def build_all(product_file_name: str, product_code: str = None, processes=None):
@@ -285,8 +285,8 @@ def main():
 
     except Exception as err:
         error = ExtException(parent=err)
-        print(f'\n\n{error}')
-        exit(1)
+        print(f'\n\nОшибка: {error}')
+        return 1
 
 
 if __name__ == '__main__':

@@ -258,7 +258,7 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
     except ExtException as err:
         raise ExtException(
             parent=err,
-            action=f'run_in_pool {method.__qualname__}') from err
+            action=f'run_in_pool {method.__qualname__}') from None
     # except Exception as err:
     #     raise ExtException(parent=err, detail=f'{method.__qualname__ {err.message}' action=f'run_in_pool {method.__qualname__}') from err
     finally:

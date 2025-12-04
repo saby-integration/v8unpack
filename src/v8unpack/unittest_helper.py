@@ -55,6 +55,7 @@ class HelperTestDecode(unittest.TestCase):
         self.encode_dir_stage1 = self.get_encode_folder(1)
         self.encode_dir_stage2 = self.get_encode_folder(2)
         self.encode_dir_stage3 = self.get_encode_folder(3)
+        self.encode_file_path = os.path.join(self.test_dir, self.src_file)
 
         if index_file_name:
             self.index = helper.check_index(index_file_name)
@@ -147,9 +148,8 @@ class HelperTestDecode(unittest.TestCase):
 
     def encode_stage0(self):
         # helper.clear_dir(os.path.normpath(self.test_dir))
-        encode_file_path = os.path.join(self.test_dir, self.src_file)
         # decode_file_path = os.path.join(self.src_dir, self.src_file)
-        build(self.encode_dir_stage0, encode_file_path, True)
+        build(self.encode_dir_stage0, self.encode_file_path, True)
         # self.assertByteFile(decode_file_path, encode_file_path)
 
     def assert_external_data_processor_decode_stage3(self):

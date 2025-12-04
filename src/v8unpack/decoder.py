@@ -169,7 +169,7 @@ class Decoder:
                                                       include_index, options=options)
             return object_task, child_tasks
         except Exception as err:
-            raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from err
+            raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from None
 
 
 def encode(src_dir, dest_dir, *, pool=None, options=None, file_name=None):

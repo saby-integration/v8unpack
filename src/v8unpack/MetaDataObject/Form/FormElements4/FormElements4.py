@@ -115,7 +115,7 @@ class FormElements4:
             self.encode_elements(src_dir, file_name, dest_dir, raw_data)
             FormParams.encode_list(self, src_dir, file_name, None, raw_data)
         except Exception as err:
-            raise ExtException(parent=err, action='FormElements4.encode')
+            raise ExtException(parent=err)
 
     def encode_elements(self, src_dir, file_name, dest_dir, raw_data):
         try:

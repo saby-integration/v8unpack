@@ -215,7 +215,11 @@ class FormElement:
                                 else:
                                     raise NotImplementedError()
                             else:
-                                raise ExtException(message='Нет свойства', detail=f'{prop} форма {form.form.name}')
+                                raise ExtException(
+                                    message='Нет свойства',
+                                    detail=f'{prop} на форме {form.form.name}',
+                                    action=f'{cls.__name__} FormElement.encode'
+                                )
                     pass
 
                 command = elem_data.get('ИмяКоманды')
@@ -229,7 +233,11 @@ class FormElement:
                             if command_index:
                                 raw_data[command_link_offset] = command_index
                             else:
-                                raise ExtException(message='Нет команды', detail=f'{command} форма {form.form.name}')
+                                raise ExtException(
+                                    message='Нет команды',
+                                    detail=f'{command} в форме {form.form.name}',
+                                    action=f'{cls.__name__} FormElement.encode'
+                                )
                     pass
                 return elem_data['raw']
 

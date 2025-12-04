@@ -169,8 +169,8 @@ class MetaDataObject(MetaObject):
         except Exception as err:
             raise ExtException(
                 parent=err,
-                dump=dict(uuid=self.header['uuid'], src_dir=src_dir, file_name=file_name),
-                action=f'{self.__class__.__name__}.encode') from err
+                dump=dict(uuid=self.header['uuid'], src_dir=src_dir, parent_id=parent_id),
+                action=f'{self.__class__.__name__}.encode') from None
 
     def encode_object(self, src_dir, file_name, dest_dir):
         msg = f'Нет реализации для "{self.__class__.__name__}"'

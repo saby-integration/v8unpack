@@ -62,17 +62,22 @@ class ExtException(Exception):
         if parent:
             if isinstance(parent, ExtException):  # прокидываем ошибку наверх
                 self.add_parent_to_stack(parent)
+                if parent.dump:
+                    for key, value in parent.dump.items():
+                        if key not in self.dump:
+                            self.dump[key] = value
                 if not message:
                     self.message = parent.message
                     self.detail = parent.detail
                     self.code = parent.code
+                if not self.dump:
                     self.dump = parent.dump
             elif isinstance(parent, Exception):
                 if not message:
                     self.message = 'Unknown Error'
                 if not detail:
                     self.detail = str(parent)
-                self.add_sys_exc_to_stack()
+                self.add_sys_exc_to_stack(self.action)
             elif isinstance(parent, dict):
                 self.code = parent.get('code', self._code)
                 self.message = parent.get('message')
@@ -83,8 +88,8 @@ class ExtException(Exception):
 
             else:
                 raise NotImplementedError(f'ExtException parent={type(parent)}')
-        if not self.stack:
-            self.add_sys_exc_to_stack()
+        # if not self.stack and self.skip_traceback >=0:
+        #     self.add_sys_exc_to_stack()
         if not self.message:
             self.message = self._message
         pass
@@ -101,33 +106,34 @@ class ExtException(Exception):
     def add_parent_to_stack(self, parent):
         if not isinstance(parent, ExtException):
             return None
-        self.stack += parent.stack
-        if not parent.action:
+
+        if parent.stack:
+            self.stack.extend(parent.stack)
+
+        if not parent.action or (self.stack and self.stack[-1]['action'] == parent.action):
             return
-        if not self.stack:
+
+        stack1 = dict(action=parent.action)
+        if parent.new_msg:
+            stack1['message'] = parent.message
+            if parent.detail:
+                stack1['detail'] = parent.detail
+        if not parent.stack:
             data = self.get_sys_exc_info()
             if data:
-                parent.dump['traceback'] = data['traceback']
+                stack1['traceback'] = data['traceback']
 
-        _stack = {
-            'action': parent.action
-        }
-        if parent.new_msg:
-            _stack['message'] = parent.message
-            if parent.detail:
-                _stack['detail'] = parent.detail
-        if parent.dump:
-            _stack['dump'] = parent.dump
-        self.stack.append(_stack)
+        self.stack.append(stack1)
 
-    def add_sys_exc_to_stack(self):
+    def add_sys_exc_to_stack(self, action):
         try:
             data = self.get_sys_exc_info()
         except IndexError:
             return
         if not data:
             return
-        data['action'] = self.action
+        if action:
+            data['action'] = action
         self.stack.append(data)
 
     def get_sys_exc_info(self):
@@ -153,9 +159,11 @@ class ExtException(Exception):
     def title(self):
         title = ''
         if self.code:
-            title += f'{self.code}:'
+            title += f'{self.code}: '
 
-        title += f'{self.__class__.__name__} {self.message}'
+        # title += f'{self.__class__.__name__} {self.message}'
+        if self.message:
+            title += str(self.message)
 
         if self.detail:
             title += f' - {self.detail}'
@@ -163,18 +171,30 @@ class ExtException(Exception):
 
     def __str__(self):
         res = f'{self.title}'
+        if self.action:
+            res += f'\n Action: {self.action}; '
         if self.dump:
-            res += f'\nDump: action={self.action}; '
+            res += f'\n Dump:'
             for elem in self.dump:
-                res += f'{elem}={self.dump[elem]}; '
+                res += f'\n  - {elem}={self.dump[elem]}; '
         if self.stack:
             res += '\n Stack:'
             for stack in self.stack:
-                _action = stack.get('action', '')
-                res += f'\n  - {_action}: '
+                _action = stack.get('action', '')  # ← get вместо pop
+                message = stack.get('message', '')  # ← get вместо pop
+                detail = stack.get('detail', '')  # ← get вместо pop
+                res += '\n  -'
+                if _action:
+                    res += f' {_action}'
+                if message:
+                    res += f' {message} {detail}'
+
+                stack_props = ''
                 for elem in stack:
-                    if elem != 'action':
-                        res += f'{elem}={stack[elem]}; '
+                    if elem not in ('action', 'message', 'detail'):
+                        stack_props += f'{elem}={stack[elem]}; '
+                if stack_props:
+                    res += f"({stack_props})"
         return res
 
     def dumps(self):
@@ -199,7 +219,7 @@ class ExtException(Exception):
 
 class HandlerNotFoundError(ExtException):
     _code = 3100
-    _message = "Handler not found",
+    _message = "Handler not found"
 
 
 class UserError(ExtException):
@@ -251,29 +271,29 @@ class AccessDenied(ExtException):
 
 class CancelOperation(ExtException):
     _code = 4999
-    _message = "Cancel operation",
+    _message = "Cancel operation"
 
 
 class NotAvailable(ExtException):
     _code = 5000
-    _message = "Not available",
+    _message = "Not available"
 
 
 class ForeignError(ExtException):
     _code = 6000
-    _message = "Unknown external error",
+    _message = "Unknown external error"
 
 
 class ExtTimeoutError(ExtException):
     _code = 5008
     _http_code = 408
-    _message = "Timeout",
+    _message = "Timeout"
 
 
 class ExtNotImplemented(ExtException):
     _code = 8000
     _http_code = 400
-    _message = "Not implemented",
+    _message = "Not implemented"
 
 
 def dumps_error(err):
