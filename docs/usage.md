@@ -300,7 +300,7 @@ XYYZZ, например 8.3.6 = 80306
 
 
 ## Переиспользование макетов и форм
-
+Важно: для совместимостис linux в индекс файле в путях используйте обычную косую (не двойную обратную).
 
 На последнем шаге разбора утилита копирует файлы по указанным папкам - соответственно
 после редактирования файла нужно разобрать чтобы файлы легли на нужные месте. 
@@ -308,12 +308,12 @@ XYYZZ, например 8.3.6 = 80306
 ```json
 
   {
-    "ExternalDataProcessor.1c": "core\\ExternalDataProcessor.1c",
-    "ExternalDataProcessor.data83.json": "core\\ExternalDataProcessor.data83.json",
-    "ExternalDataProcessor.json": "core\\ExternalDataProcessor.json",
+    "ExternalDataProcessor.1c": "core/ExternalDataProcessor.1c",
+    "ExternalDataProcessor.data83.json": "core/ExternalDataProcessor.data83.json",
+    "ExternalDataProcessor.json": "core/ExternalDataProcessor.json",
     "Form": {
-      "API.1c": "core\\Form\\API.1c",
-      "API.form83.json": "core\\Form\\API.form83.json"
+      "API.1c": "core/Form/API.1c",
+      "API.form83.json": "core/Form/API.form83.json"
     }
   }
  ```
