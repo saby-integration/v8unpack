@@ -75,10 +75,11 @@ class OrganizerCode:
     @classmethod
     def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename,
                   dynamic_directive=None):
+        normcase_src = os.path.normcase('\\src\\')
         try:
             data = ''
             _src_abs_path = os.path.abspath(os.path.join(src_dir, path))
-            if _src_abs_path.startswith(src_dir) or os.path.normcase(path).find('\\src\\') >= 0:
+            if _src_abs_path.startswith(src_dir) or os.path.normcase(path).find(normcase_src) >= 0:
                 _src_abs_path, file_name = pack_get_descent_filename(_src_abs_path, file_name, descent)
 
             with open(os.path.join(_src_abs_path, file_name), 'r', encoding='utf-8') as file:
@@ -99,7 +100,7 @@ class OrganizerCode:
                             _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
                                                                        descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
-                            if _src_abs_path.startswith(src_dir) or os.path.normcase(_path).find('\\src\\') >= 0:
+                            if _src_abs_path.startswith(src_dir) or os.path.normcase(_path).find(normcase_src) >= 0:
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
                             data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
                                                   pack_get_descent_filename, current_dynamic_directive)

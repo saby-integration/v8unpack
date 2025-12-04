@@ -33,7 +33,7 @@ class OrganizerFile:
             try:
                 src_entry_path = os.path.join(src_dir, path, entry)
 
-                if os.path.isdir(src_entry_path):
+                if os.path.isdir(os.path.normcase(src_entry_path)):
                     new_path = os.path.join(path, entry)
                     cls._unpack(src_dir, dest_dir, new_path, tasks_code_file, tasks_form_elem, index, descent)
                     continue
@@ -154,6 +154,7 @@ class OrganizerFile:
     @classmethod
     def _pack_index_elem(cls, entry: str, src_dir: str, dest_dir: str, tasks_code_file: list, tasks_form_elem,
                          index_entry: str, index_code_areas: dict, path: list, descent=None):
+        normcase_src = os.path.normcase('\\src\\')
         try:
             _src_path = os.path.join(
                 '..',
@@ -163,7 +164,7 @@ class OrganizerFile:
             _dest_path = os.path.join(*path)
             if entry.endswith('.bsl'):
                 _src_abs_path = os.path.abspath(_src_path)
-                if os.path.normcase(_src_path).find('\\src\\') >= 0:
+                if os.path.normcase(_src_path).find(normcase_src) >= 0:
                     func_descent_filename = cls.pack_get_descent_filename
                 else:
                     func_descent_filename = OrganizerFile.pack_get_descent_filename
@@ -189,7 +190,7 @@ class OrganizerFile:
                 )
                 _src_path = os.path.dirname(_src_full_path)
                 _src_file_name = os.path.basename(_src_full_path)
-                if os.path.normcase(_src_path).find('\\src\\') >= 0:
+                if os.path.normcase(_src_path).find(normcase_src) >= 0:
                     _src_path, _src_file_name = cls.pack_get_descent_filename(_src_path, _src_file_name,
                                                                               descent)
                 cls._pack_file(_src_path, _src_file_name, _dest_path, entry, descent)
@@ -218,7 +219,7 @@ class OrganizerFile:
                         if file_name in excluded:
                             continue
                         file_path = os.path.join(all_path, file_name)
-                        if not os.path.isfile(file_path):
+                        if not os.path.isfile(os.path.normcase(file_path)):
                             continue
                         cls._pack_index_elem(file_name, src_dir, dest_dir, tasks_code_file, tasks_form_elem, file_path,
                                              index_code_areas, path, descent)
@@ -258,14 +259,14 @@ class OrganizerFile:
             try:
                 src_entry_path = os.path.join(src_dir, path, entry)
 
-                if os.path.isdir(src_entry_path):
+                if os.path.isdir(os.path.normcase(src_entry_path)):
                     cls._pack(src_dir, dest_dir, os.path.join(path, entry), tasks_code_file, tasks_form_elem, index,
                               index_code_areas, descent)
                     continue
                 _src_path = os.path.join(src_dir, path)
                 descent_full_src_path, descent_file_name = cls.pack_get_descent_filename(
                     _src_path, entry, descent)
-                if os.path.isfile(os.path.join(dest_dir, path, entry)):
+                if os.path.isfile(os.path.normcase(os.path.join(dest_dir, path, entry))):
                     # если файл уже есть, значит он был переопределен в индексе и делать ничего не надо
                     continue
                 if entry.endswith('.bsl'):

@@ -185,14 +185,14 @@ class FormElement:
                 elem_data = form.elements_data[key]
             except KeyError as err:
                 raise ExtException(message='Остутствуют данные элемента формы', detail=err)
-            includr_index = key.find('/includr_')
+            includr_index = key.find('includr_')
             if includr_index >= 0:
                 handler = cls.get_class_form_elem(data['type'])
                 name_offset = handler.get_name_node_offset(elem_data['raw'])
                 elem_data['raw'][name_offset] = helper.str_encode(data['name'])
-                return elem_data['raw']
-            include_index = key.find('/include_')
-            if include_index >= 0:
+                # return elem_data['raw']
+            include_index = key.find('include_')
+            if include_index >= 0 or includr_index >= 0:
                 prop = elem_data.get('ПутьКДанным')
                 if prop:
                     raw_data = elem_data['raw']
