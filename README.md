@@ -48,7 +48,9 @@
 
     pip install v8unpack
 
-или [скачайте exe файл](https://github.com/saby-integration/v8unpack/raw/main/exe/v8unpack.exe)
+или [скачайте exe файл](https://github.com/saby-integration/v8unpack/releases/)
+
+собрать exe файл актуальной версии можно запустив build_local.cmd из корня проекта. 
 
 Если работаете с тяжелыми конфигурациями используйте 64-bit питон последних версий.
 
