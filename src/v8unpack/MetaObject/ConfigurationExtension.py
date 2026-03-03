@@ -7,7 +7,7 @@ from ..version import __version__
 
 
 class ConfigurationExtension(Configuration):
-    info = ['6', '8', '9']
+    info = ['8', '9']
     ext_code = {
         'con': '5',
         'app': '6',
