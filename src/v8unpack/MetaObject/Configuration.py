@@ -97,6 +97,11 @@ class Configuration(MetaObject):
         _file_name = self.get_class_name_without_version()
         helper.check_version(__version__, self.header.get('v8unpack', ''))
 
+        # установка режима совместимости
+        version = self.get_options('version')
+        if version is not None:
+            self.header['header'][0][3][1][1][26] = version
+
         if include_index and self.get_options('auto_include'):
             self.fill_header_includes(include_index)  # todo dynamic index
 
