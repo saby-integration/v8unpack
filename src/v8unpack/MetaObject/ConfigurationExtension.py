@@ -68,6 +68,12 @@ class ConfigurationExtension(Configuration):
             version = self.get_options('version')
             if version is not None:
                 self.header['header'][0][3][1][1][43] = version
+            else:
+                try:
+                    self.header['header'][0][3][1][1][43] = self.header['compatibility_version']
+                except KeyError:
+                    pass
+
             prefix = self.get_options('prefix')
             if prefix is not None:
                 self.header['header'][0][3][1][1][42] = helper.str_encode(prefix)

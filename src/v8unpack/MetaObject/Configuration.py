@@ -54,6 +54,13 @@ class Configuration(MetaObject):
         self.header['versions'] = helper.brace_file_read(src_dir, 'versions')
         # shutil.copy2(os.path.join(src_dir, 'versions.json'), os.path.join(dest_dir, 'versions.json'))
 
+        if version is None:
+            self.header['compatibility_version'] = self.header['header'][0][3][1][1][26]
+        else:
+            self.header['compatibility_version'] = version
+            self.header['header'][0][3][1][1][26] = version
+
+
         self.decode_code(src_dir, uncomment_directive=self.obj_version in ['802', '801'])
         self._decode_html_data(src_dir, dest_dir, 'help', header_field='help', file_number=self.help_file_number)
         self._decode_images(src_dir, dest_dir)
@@ -101,6 +108,11 @@ class Configuration(MetaObject):
         version = self.get_options('version')
         if version is not None:
             self.header['header'][0][3][1][1][26] = version
+        else:
+            try:
+                self.header['header'][0][3][1][1][26] = self.header['compatibility_version']
+            except KeyError:
+                pass
 
         if include_index and self.get_options('auto_include'):
             self.fill_header_includes(include_index)  # todo dynamic index
