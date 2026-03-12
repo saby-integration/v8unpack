@@ -29,15 +29,16 @@ class OrganizerFormElem:
         return None
 
     @staticmethod
-    def get_old_path(_elem, _path, _name):
+    def get_old_path(_elem, _path, _name=None):
         page = _elem.get('page')
-        _old_path = ''
+        _old_path = []
         if _path:
-            _old_path = f'{_path}/'
+            _old_path.append(_path)
         if page:
-            _old_path += f'{page}/'
-        _old_path += _name
-        return _old_path
+            _old_path.append(page)
+        if _name:
+            _old_path.append(_name)
+        return '/'.join(_old_path)
 
     @classmethod
     def _unpack_get_areas(cls, tree, path, root_data, areas):
@@ -60,7 +61,8 @@ class OrganizerFormElem:
                     # в пути детей includr не используется.
                     name: str = f'include_{area_name}'
                     old_path = cls.get_old_path(elem, path, name)
-                    cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
+
+                    cls._pop_area_data(area['tree'], old_path, root_data, area['data'], cls.get_old_path(elem, path))
                     elem['child'] = 'В отдельном файле'
                     if area_type == 'include_':  # includr_ только чтение
                         areas[area_name] = area
@@ -80,7 +82,7 @@ class OrganizerFormElem:
                 for elem in tree:
                     name: str = elem['name']
                     old_path = cls.get_old_path(elem, path, name)
-                    new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
+                    new_path = old_path[size_prefix + 1:] if size_prefix else old_path
                     try:
                         data[new_path] = root_data.pop(old_path)
                     except Exception:
@@ -149,7 +151,7 @@ class OrganizerFormElem:
         for elem in tree:
             try:
                 name: str = elem['name']
-                new_path = f'{path}/{name}' if path else name
+                new_path = cls.get_old_path(elem, path, name)
                 area_type = cls.is_area(name)
                 if area_type:
                     area_name = name[8:]
@@ -159,7 +161,7 @@ class OrganizerFormElem:
 
                     include_elements = helper.json_read(_src_abs_path, _file_name)
                     cls._append_area_data(include_elements['tree'], name, root_data, include_elements['data'],
-                                          path, area_type)
+                                          cls.get_old_path(elem, path), area_type)
                     elem['child'] = include_elements['tree']
                     continue
                 child = elem.get('child')
@@ -176,8 +178,8 @@ class OrganizerFormElem:
             if tree:
                 for elem in tree:
                     name: str = elem['name']
-                    old_path = f'{_path}/{name}'
-                    new_path = f'{append_path}/{_path}/{name}' if append_path else f'{_path}/{name}'
+                    old_path = cls.get_old_path(elem, _path, name)
+                    new_path = f'{append_path}/{old_path}' if append_path else old_path
                     try:
                         root_data[new_path] = data.pop(old_path)
                     except Exception:
