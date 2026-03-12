@@ -28,13 +28,25 @@ class OrganizerFormElem:
             return area_type
         return None
 
+    @staticmethod
+    def get_old_path(_elem, _path, _name):
+        page = _elem.get('page')
+        _old_path = ''
+        if _path:
+            _old_path = f'{_path}/'
+        if page:
+            _old_path += f'{page}/'
+        _old_path += _name
+        return _old_path
+
     @classmethod
     def _unpack_get_areas(cls, tree, path, root_data, areas):
+
         try:
             for elem in tree:
                 name: str = elem['name']
                 area_type = cls.is_area(name)
-                old_path = f'{path}/{name}' if path else name
+                old_path = cls.get_old_path(elem, path, name)
                 if area_type:
                     _path = path[len(path):]
                     new_path = f'{_path}/{name}' if _path else name
@@ -47,7 +59,7 @@ class OrganizerFormElem:
                     )
                     # в пути детей includr не используется.
                     name: str = f'include_{area_name}'
-                    old_path = f'{path}/{name}' if path else name
+                    old_path = cls.get_old_path(elem, path, name)
                     cls._pop_area_data(area['tree'], old_path, root_data, area['data'], path)
                     elem['child'] = 'В отдельном файле'
                     if area_type == 'include_':  # includr_ только чтение
@@ -67,7 +79,7 @@ class OrganizerFormElem:
             if tree:
                 for elem in tree:
                     name: str = elem['name']
-                    old_path = f'{path}/{name}'
+                    old_path = cls.get_old_path(elem, path, name)
                     new_path = f'{path[size_prefix + 1:] if size_prefix else path}/{name}'
                     try:
                         data[new_path] = root_data.pop(old_path)
