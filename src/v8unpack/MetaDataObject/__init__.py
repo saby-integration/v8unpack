@@ -42,7 +42,7 @@ class MetaDataObject(MetaObject):
             except KeyError:
                 raise Exception(f'Нет реализации {cls.__name__} для версии "{obj_version}"')
         except Exception as err:
-            raise ExtException(message='Не смогли получить класс объекта', detail=f'{cls.__name__} {err}')
+            raise ExtException(message='Не смогли получить класс объекта', detail=f'{cls.__name__} {err}', action='get_handler')
 
     @classmethod
     def decode(cls, src_dir: str, file_name: str, dest_dir: str, dest_path: str, options, *, parent_type=None,
@@ -66,7 +66,7 @@ class MetaDataObject(MetaObject):
                 message="Ошибка декодирования",
                 detail=f'"{cls.__name__}" файл "{problem_file}" ({dest_path})',
                 action=f'{cls.__name__}.decode'
-            ) from err
+            )
 
     def decode_object(self, src_dir, file_name, dest_dir, dest_path, version, header_data):
         self.set_write_decode_mode(dest_dir, dest_path)
@@ -148,7 +148,7 @@ class MetaDataObject(MetaObject):
             raise ExtException(
                 parent=err,
                 dump=dict(src_dir=src_dir, file_name=file_name),
-                action=f'{cls.__name__}.encode') from err
+                action=f'{cls.__name__}.encode')
 
         try:
             self.name = self.header['name']

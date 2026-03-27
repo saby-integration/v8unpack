@@ -82,4 +82,4 @@ def get_dest_path(dest_dir: str, path: str, file_name: str, index: dict, descent
             message='Ошибка получения пути из index.json',
             detail=f'{path}\{file_name}',
             action='CodeOrganizer.get_dest_path',
-        ) from err
+        )

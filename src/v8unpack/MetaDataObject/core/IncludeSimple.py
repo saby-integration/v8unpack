@@ -28,7 +28,7 @@ class IncludeSimple(MetaDataObject):
             raise ExtException(
                 parent=err,
                 action=f'{cls.__name__}.decode_internal_include'
-            ) from err
+            )
 
     @classmethod
     def get_decode_header(cls, header_data):

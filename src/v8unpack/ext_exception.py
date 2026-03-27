@@ -110,7 +110,7 @@ class ExtException(Exception):
         if parent.stack:
             self.stack.extend(parent.stack)
 
-        if not parent.action or (self.stack and self.stack[-1]['action'] == parent.action):
+        if not parent.action or (self.stack and self.stack[-1].get('action') == parent.action):
             return
 
         stack1 = dict(action=parent.action)

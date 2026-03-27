@@ -62,7 +62,7 @@ class OrganizerCode:
                         self.code_areas[_include_path[-1]]['data'] += line
                     line = file.readline()
                 except Exception as err:
-                    raise ExtException(parent=err, detail=f'in file {file_name} line {line}') from err
+                    raise ExtException(parent=err, detail=f'in file {file_name} line {line}')
         return self.code_areas
 
     @classmethod
@@ -109,12 +109,12 @@ class OrganizerCode:
         except ExtException as err:
             raise ExtException(
                 parent=err,
-                action=f'{cls.__name__}.pack_file {file_name}') from err
+                action=f'{cls.__name__}.pack_file {file_name}')
         except Exception as err:
             raise ExtException(
                 parent=err,
                 action=f'{cls.__name__}.pack_file {file_name}',
-                message='Ошибка упаковки файла', detail=f'{os.path.join(path, file_name)}: {err}') from err
+                message='Ошибка упаковки файла', detail=f'{os.path.join(path, file_name)}: {err}')
 
     @staticmethod
     def parse_include_path(include_path, path, file_name, index_code_areas, descent=None, *, file_extension='bsl'):

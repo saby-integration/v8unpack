@@ -48,7 +48,7 @@ class OrganizerFile:
                 raise ExtException(
                     parent=err,
                     action=f'{cls.__name__}._unpack {path}.{entry}'
-                ) from err
+                )
 
     @classmethod
     def unpack_file(cls, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index, descent=None):
@@ -75,7 +75,7 @@ class OrganizerFile:
             if descent_file_name:
                 shutil.copy(src_full_path, os.path.join(descent_full_dest_path, descent_file_name))
         except Exception as err:
-            raise ExtException(parent=err, action=f'{cls.__name__}.unpack_file {src_file_name}') from err
+            raise ExtException(parent=err, action=f'{cls.__name__}.unpack_file {src_file_name}')
 
     @classmethod
     def unpack_code_file(cls, params):

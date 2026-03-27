@@ -293,7 +293,7 @@ class JsonContainerDecoder:
                 cls.write_data(dest_dir, file_name[:-5], raw_data)
             return raw_data
         except Exception as err:
-            raise ExtException(parent=err, detail=file_name) from err
+            raise ExtException(parent=err, detail=file_name)
 
     def encode_root_object(self, data):
         raw_data = ''

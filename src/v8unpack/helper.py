@@ -201,7 +201,7 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     except ExtException as err:
         raise ExtException(
             parent=err,
-            action=f'run_in_pool {method.__qualname__}') from err
+            action=f'run_in_pool {method.__qualname__}')
     finally:
         close_pool(_pool, pool)
     return result
@@ -455,7 +455,7 @@ def _update_dict(base, new, _path=''):
                     else:
                         raise NotImplementedError()
         except ExtException as err:
-            raise ExtException(parent=err) from err
+            raise ExtException(parent=err)
         except Exception as err:
             raise ExtException(
                 parent=err,
