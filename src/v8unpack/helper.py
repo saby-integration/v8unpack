@@ -179,12 +179,14 @@ def get_pool(*, pool: Pool = None, processes=None) -> Pool:
     if pool is not None:
         return pool
     if processes is None:
-        processes = max(cpu_count() - 2, 1)  # чтобы система совсем не висла
+        processes = max(cpu_count() - 2, 1)
+    if processes <= 1:
+        return None  # sequential execution
     return Pool(processes)
 
 
 def close_pool(local_pool: Pool, pool: Pool = None) -> None:
-    if pool is None:
+    if pool is None and local_pool is not None:
         local_pool.close()
         local_pool.join()
 
@@ -193,11 +195,18 @@ def run_in_pool(method, list_args, pool=None, title=None, need_result=False):
     _pool = get_pool(pool=pool)
     result = []
     try:
-        with tqdm(desc=title, total=len(list_args)) as pbar:
-            for _res in _pool.imap_unordered(method, list_args, chunksize=1):
+        if _pool is None:
+            # Sequential execution (single process or forced sequential)
+            for args in tqdm(list_args, desc=title):
+                _res = method(args)
                 if need_result and _res:
                     result.extend(_res)
-                pbar.update()
+        else:
+            with tqdm(desc=title, total=len(list_args)) as pbar:
+                for _res in _pool.imap_unordered(method, list_args, chunksize=1):
+                    if need_result and _res:
+                        result.extend(_res)
+                    pbar.update()
     except ExtException as err:
         raise ExtException(
             parent=err,
@@ -230,8 +239,10 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
     object_task = []
     child_tasks = []
     try:
-        with tqdm(desc=title, total=len(list_args)) as pbar:
-            for _object_task, _child_tasks in _pool.imap_unordered(method, list_args, chunksize=1):
+        if _pool is None:
+            # Sequential
+            for args in tqdm(list_args, desc=title):
+                _object_task, _child_tasks = method(args)
                 if _child_tasks:
                     child_tasks.extend(_child_tasks)
                 if isinstance(_object_task, list):
@@ -239,22 +250,42 @@ def run_in_pool_encode_include(method, list_args, pool=None, title=None):
                 elif isinstance(_object_task, dict):
                     parent_id = _object_task['parent_id']
                     obj_data = _object_task['obj_data']
-
                     if _object_task['file_list']:
                         file_list.extend(_object_task['file_list'])
                     if obj_data:
                         obj_uuid = _object_task['obj_uuid']
-                        obj_type = _object_task['obj_type']
-                        if parent_id not in include_index:
-                            include_index[parent_id] = {}
-                        if obj_type not in include_index[parent_id]:
-                            include_index[parent_id][obj_type] = []
-                        include_index[parent_id][obj_type].append((obj_uuid, _object_task['obj_name'], obj_data))
-                elif _object_task is None:
-                    pass
-                else:
-                    raise NotImplementedError()
-                pbar.update()
+                        if parent_id is None:
+                            include_index[obj_uuid] = obj_data
+                        else:
+                            if parent_id not in include_index:
+                                include_index[parent_id] = {}
+                            include_index[parent_id][obj_uuid] = obj_data
+        else:
+            with tqdm(desc=title, total=len(list_args)) as pbar:
+                for _object_task, _child_tasks in _pool.imap_unordered(method, list_args, chunksize=1):
+                    if _child_tasks:
+                        child_tasks.extend(_child_tasks)
+                    if isinstance(_object_task, list):
+                        object_task.append(_object_task)
+                    elif isinstance(_object_task, dict):
+                        parent_id = _object_task['parent_id']
+                        obj_data = _object_task['obj_data']
+
+                        if _object_task['file_list']:
+                            file_list.extend(_object_task['file_list'])
+                        if obj_data:
+                            obj_uuid = _object_task['obj_uuid']
+                            obj_type = _object_task['obj_type']
+                            if parent_id not in include_index:
+                                include_index[parent_id] = {}
+                            if obj_type not in include_index[parent_id]:
+                                include_index[parent_id][obj_type] = []
+                            include_index[parent_id][obj_type].append((obj_uuid, _object_task['obj_name'], obj_data))
+                    elif _object_task is None:
+                        pass
+                    else:
+                        raise NotImplementedError()
+                    pbar.update()
     except ExtException as err:
         raise ExtException(
             parent=err,
