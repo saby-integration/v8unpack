@@ -150,7 +150,10 @@ class Container:
         :rtype: datetime
         """
         # TODO проверить работу на *nix, т.к там начало эпохи - другая дата
-        return datetime(1, 1, 1) + timedelta(microseconds=(time * 100))
+        try:
+            return datetime(1, 1, 1) + timedelta(microseconds=(time * 100))
+        except OverflowError:
+            return datetime(9999, 12, 31, 23, 59, 59)
 
     def read_files(self, file):
         """
