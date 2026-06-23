@@ -11,6 +11,7 @@ from .metadata_types import MetaDataTypes
 
 available_types = {
     'ExternalDataProcessor': ExternalDataProcessor,
+    'ExternalReport': ExternalDataProcessor,  # .erf has the same binary format as .epf
     'Configuration': Configuration,
     'ConfigurationExtension': ConfigurationExtension
 }
