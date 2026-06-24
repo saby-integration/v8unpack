@@ -143,9 +143,9 @@ class Document:
         :rtype: int
         """
         if offset is not None:
-            self.container.file.seek(offset)
+            self.container.file.seek(offset + self.container.offset)
         else:
-            offset = file_size(self.container.file)
+            offset = file_size(self.container.file) - self.container.offset
         block_size = file_size(data)
         min_block_size = max(min_block_size, block_size)
         if not next_block_offset:
@@ -162,8 +162,23 @@ class Document:
 
         return offset
 
+    def compress(self, src_fd, dest_fd=None):
+        """Сжимает данные и записывает как блок в контейнер (с block header)."""
+        with tempfile.TemporaryFile() as f:
+            compressor = zlib.compressobj(wbits=-15)
+            src_fd.seek(0)
+            while True:
+                chunk = src_fd.read(BUFFER_CHUNK_SIZE)
+                if not chunk:
+                    f.write(compressor.flush())
+                    break
+                f.write(compressor.compress(chunk))
+            f.seek(0)
+            return self.write(f, min_block_size=self.container.default_block_size)
+
     @classmethod
-    def compress(cls, src_fd, dest_fd):
+    def compress_raw(cls, src_fd, dest_fd):
+        """Сжимает данные в файл (без block header, для промежуточных стадий сборки)."""
         with tempfile.TemporaryFile() as f:
             compressor = zlib.compressobj(wbits=-15)
             src_fd.seek(0)
@@ -174,7 +189,6 @@ class Document:
                     break
                 f.write(compressor.compress(chunk))
             cls.write_block_data(f, dest_fd)
-        # return data_doc_offset
 
     @staticmethod
     def write_block_data(data, dest_file):

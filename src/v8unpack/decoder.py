@@ -170,6 +170,7 @@ class Decoder:
                                                       include_index, options=options)
             return object_task, child_tasks
         except Exception as err:
+            import traceback as _tb; _tb.print_exc()
             raise ExtException(parent=err, action=f'Decoder.encode_include({include_type})') from None
 
 

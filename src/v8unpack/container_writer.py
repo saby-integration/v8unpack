@@ -84,7 +84,7 @@ def calc_sha1(src_folder, dest_folder):
 def compress_and_build_simple_file(src_path, dest_path):
     with open(dest_path, 'w+b') as dest_fd:
         with open(src_path, 'rb') as src_fd:
-            Document.compress(src_fd, dest_fd)
+            Document.compress_raw(src_fd, dest_fd)
 
 
 def compress_and_build(src_dir, dest_dir, *, pool=None, nested=False):
@@ -107,7 +107,7 @@ def compress_and_build(src_dir, dest_dir, *, pool=None, nested=False):
                         with tempfile.TemporaryFile() as tmp:
                             container = Container()
                             container.build(tmp, src_path, nested=True)
-                            Document.compress(tmp, dest_fd)
+                            Document.compress_raw(tmp, dest_fd)
                 else:
                     compress_and_build_simple_file(src_path, dest_path)
                 pbar.update()
