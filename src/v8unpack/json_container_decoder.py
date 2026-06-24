@@ -174,6 +174,9 @@ class JsonContainerDecoder:
             elif self.data == [[]] and self.current_value == '':  # текстовый файл с json
                 self.data = '{\n' + line
                 self.mode = Mode.READ_TEXT_FILE
+            elif self.current_value and len(self.current_value) == 64:  # строка base64 начавшаяся не с новой строки
+                self.mode = Mode.READ_B64
+                self._decode_line_read_b64(line)
             else:
                 raise ExtException(
                     message='Неожиданное начало объекта',

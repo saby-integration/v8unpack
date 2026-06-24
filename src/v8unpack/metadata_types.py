@@ -68,6 +68,7 @@ class MetaDataTypes(Enum):
     ExchangePlanCommand = 'd5207c64-11d5-4d46-bba2-55b7b07ff4eb'
     ExchangePlanForm = '87c509ab-3d38-4d67-b379-aca796298578'  # План обмена Form
     ExternalDataProcessor = 'c3831ec8-d8d5-4f93-8a22-f9bfae07327f'  # Внешняя обработка
+    ExternalReport = 'e41aff26-25cf-4bb6-b6c1-3f478a75f374'  # Внешний отчёт
     ExternalDataSource = '5274d9fc-9c3a-4a71-8f5e-a0db8ab23de5'  # ВнешнийИсточникДанных
     ExternalDataSourceCube = '2bb208ca-e441-4023-9ab9-32a7807a85d0'  # ВнешнийИсточникДанных Куб
     ExternalDataSourceCubeForm = '3448e506-5add-4fce-a604-7305466b2d8e'  # ВнешнийИсточникДанных Куб
