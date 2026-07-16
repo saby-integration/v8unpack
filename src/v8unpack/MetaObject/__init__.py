@@ -46,6 +46,10 @@ class MetaObject:
     def get_decode_header(cls, header_data):
         return header_data[0][1][1]
 
+    def version_not_support_directives(self):
+        old_version = ['802', '801']
+        return self.obj_version in old_version or self.get_options('version', '803') in old_version
+
     def decode_header(self, header_data, *, id_in_separate_file=True):
         try:
             header = self.get_decode_header(header_data)

@@ -127,6 +127,10 @@ class JsonContainerDecoder:
         return self.data
 
     def decode_line(self, line):
+        if line.endswith('\r\n'):
+            line = line[:-2] + '\n'
+        elif line.endswith('\r'):
+            line = line[:-1] + '\n'
         handler = getattr(self, f'_decode_line_{self.mode.name.lower()}')
         return handler(line)
 
@@ -319,14 +323,13 @@ class JsonContainerDecoder:
                 raw_data += self.encode_object(elem, False)
                 if i == data_len - 1:
                     raw_data += '\n'
-                    self.params_in_line = 0
-                pass
+                self.params_in_line = 0
             elif isinstance(elem, str):
                 if elem.startswith('#base64:'):
                     j = 72
                     raw_data += f'{elem[0:j]}'
                     while j <= len(elem):
-                        raw_data += f'\r\n{elem[j: j + 64]}'
+                        raw_data += f'\n{elem[j: j + 64]}'
                         j += 64
                 elif elem.startswith('##base64:'):  # b64 в одну строку
                     raw_data += elem[1:]
@@ -346,7 +349,7 @@ class JsonContainerDecoder:
                             if _first:
                                 _first = False
                             else:
-                                raw_data += '\r\n'
+                                raw_data += '\n'
 
                             if j > 64:
                                 raw_data += elem[:64]

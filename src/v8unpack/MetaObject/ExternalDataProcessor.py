@@ -33,7 +33,7 @@ class ExternalDataProcessor(MetaObject):
 
         self.header['form1'] = form1
 
-        self.decode_code(src_dir, uncomment_directive=self.obj_version in ['802', '801'])
+        self.decode_code(src_dir, uncomment_directive=self.version_not_support_directives())
         pass
         _file_name = self.get_class_name_without_version()
         self.container_uuid = self.get_container_uuid(self.header['header'])
@@ -90,7 +90,7 @@ class ExternalDataProcessor(MetaObject):
                 helper.brace_file_write(self.header['form1'], dest_dir, file_name)
                 file_list.append(file_name)
             self.encode_code(src_dir, 'ExternalDataProcessor')
-            self.write_encode_code(dest_dir, comment_directive=self.obj_version in ['802', '801'])
+            self.write_encode_code(dest_dir, comment_directive=self.version_not_support_directives())
 
             file_list.append('versions')
             file_list.extend(self.file_list)
