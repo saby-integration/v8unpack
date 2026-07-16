@@ -470,7 +470,7 @@ def _update_dict(base, new, _path=''):
 
 def load_json(filename):
     try:
-        with open(filename, 'r', encoding='utf-8') as f:
+        with open(os.path.normpath(filename), 'r', encoding='utf-8') as f:
             data = json.load(f)
         if not isinstance(data, dict):
             raise Exception(f'Index file not dict ({filename})\n')
