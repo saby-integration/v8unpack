@@ -108,6 +108,7 @@ class MetaDataTypes(Enum):
     TaskForm = '3f58cbfb-4172-4e54-be49-561a579bb38b'
     Template = '3daea016-69b7-4ed4-9453-127911372fe6'  # Макет внешней обработки
     WebService = '8657032e-7740-4e1d-a3ba-5dd6e8afb78f'  # Веб-сервис
+    WebSocketClient = 'a7641777-7813-45c6-96ef-9d51587a6ac6'  # WebSocketКлиент
     WSReference = 'd26096fb-7a5d-4df9-af63-47d04771fa9b'  # WS-ссылки
     XDTOPackage = 'cc9df798-7c94-4616-97d2-7aa0b7bc515e'  # ПакетXDTO
 
