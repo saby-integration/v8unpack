@@ -152,7 +152,8 @@ class Document:
         if offset is not None:
             self.container.file.seek(offset)
         else:
-            offset = file_size(self.container.file)
+            self.container.file.seek(0, 2)
+            offset = self.container.file.tell()
         block_size = file_size(data)
         min_block_size = max(min_block_size, block_size)
         if not next_block_offset:
@@ -171,6 +172,8 @@ class Document:
 
     @classmethod
     def compress(cls, src_fd, dest_fd):
+        dest_fd.seek(0, 2)
+        offset = dest_fd.tell()
         with tempfile.TemporaryFile() as f:
             compressor = zlib.compressobj(wbits=-15)
             src_fd.seek(0)
@@ -181,7 +184,7 @@ class Document:
                     break
                 f.write(compressor.compress(chunk))
             cls.write_block_data(f, dest_fd)
-        return 0
+        return offset
 
     @staticmethod
     def write_block_data(data, dest_file):
