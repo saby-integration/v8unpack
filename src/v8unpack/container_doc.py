@@ -12,6 +12,7 @@ from struct import pack
 from struct import unpack
 
 from .helper import file_size
+import time
 
 Header = collections.namedtuple('Header', 'first_empty_block_offset, default_block_size, count_files')
 Block = collections.namedtuple('Block', 'doc_size, current_block_size, next_block_offset, data')
@@ -123,9 +124,15 @@ class Document:
         return Block(doc_size, current_block_size, next_block_offset, data)
 
     def write_header(self, file, file_name):
-        modify_time = epoch2int(os.stat(file.fileno()).st_mtime)
-        # В *nix это не время создания файла.
-        creation_time = epoch2int(os.stat(file.fileno()).st_ctime)
+        if isinstance(file, io.BytesIO):
+            modify_time = time.time()
+            creation_time = time.time()
+        else:
+            modify_time = os.stat(file.fileno()).st_mtime
+            # В *nix это не время создания файла.
+            creation_time = os.stat(file.fileno()).st_ctime
+        modify_time = epoch2int(modify_time)
+        creation_time = epoch2int(creation_time)
         buffer = b''.join([pack('QQi', creation_time, modify_time, 0), file_name.encode('utf-16-le'), b'\x00' * 4])
         attribute_doc_offset = self.write(io.BytesIO(buffer))
         return attribute_doc_offset
@@ -174,7 +181,7 @@ class Document:
                     break
                 f.write(compressor.compress(chunk))
             cls.write_block_data(f, dest_fd)
-        # return data_doc_offset
+        return 0
 
     @staticmethod
     def write_block_data(data, dest_file):
