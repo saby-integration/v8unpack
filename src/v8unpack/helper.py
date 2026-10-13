@@ -18,7 +18,7 @@ def brace_file_read(path, file_name):
     try:
         for code_page in ['utf-8-sig', 'windows-1251']:
             try:
-                with open(_path, 'r', encoding=code_page) as file:
+                with open(_path, 'r', encoding=code_page, newline='\n') as file:
                     decoder = JsonContainerDecoder(src_dir=path, file_name=file_name)
                     data = decoder.decode_file(file)
                     return data

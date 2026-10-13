@@ -45,7 +45,7 @@ class JsonContainerDecoder:
         read_as_byte = True
         for code_page in ['utf-8-sig', 'windows-1251']:
             try:
-                with open(os.path.join(src_dir, file_name), 'r', encoding=code_page) as entry_file:  # replace BOM
+                with open(os.path.join(src_dir, file_name), 'r', encoding=code_page, newline='\n') as entry_file:  # replace BOM
                     try:
                         if entry_file.read(1) == '{':
                             entry_file.seek(0)
@@ -127,15 +127,11 @@ class JsonContainerDecoder:
         return self.data
 
     def decode_line(self, line):
-        if line.endswith('\r\n'):
-            line = line[:-2] + '\n'
-        elif line.endswith('\r'):
-            line = line[:-1] + '\n'
         handler = getattr(self, f'_decode_line_{self.mode.name.lower()}')
         return handler(line)
 
     def _decode_line_read_b64(self, line):
-        if line == '\n':
+        if line.rstrip('\r\n') == '':
             return
         self.decode_b64_line(line, 0)
 
@@ -165,13 +161,13 @@ class JsonContainerDecoder:
         elif line[0] == '}':
             self._end_current_object()
             self.decode_object(line[1:])
-        elif line[0] == '\n' and self.current_value and len(self.current_value) == 64:
+        elif line[0] in '\r\n' and self.current_value and len(self.current_value) == 64:
             # self.current_value = self.current_value
             self.mode = Mode.READ_B64
             return
         else:
             if not self.data and self.current_value is None:
-                if line == '\n':
+                if line.rstrip('\r\n') == '':
                     return
                 self.data = line
                 self.mode = Mode.READ_TEXT_FILE
@@ -197,7 +193,7 @@ class JsonContainerDecoder:
                 elif char == '}':
                     self._end_current_object()
                 elif char == '"':
-                    if line.endswith(',"\n') and i == len(line) - 2:
+                    if line.rstrip('\r\n').endswith(',"') and i == len(line.rstrip('\r\n')) - 1:
                         self.mode = Mode.BEGIN_READ_MULTI_STRING_VALUE
                         self._add_to_current_value(line[i:])
                         break
@@ -205,7 +201,7 @@ class JsonContainerDecoder:
                         self.mode = Mode.BEGIN_READ_STRING_VALUE
                         self._add_to_current_value(char)
                     pass
-                elif char == '\n':
+                elif char in '\r\n':
                     break
                 else:
                     self._add_to_current_value(char)
@@ -375,7 +371,7 @@ class JsonContainerDecoder:
 
     @staticmethod
     def write_data(dest_dir, file_name, data):
-        with open(os.path.join(dest_dir, file_name), 'w', encoding='utf-8-sig') as f:  # replace BOM
+        with open(os.path.join(dest_dir, file_name), 'w', encoding='utf-8-sig', newline='\n') as f:  # replace BOM
             return f.write(data)
 
 
