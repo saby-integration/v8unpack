@@ -45,7 +45,7 @@ class JsonContainerDecoder:
         read_as_byte = True
         for code_page in ['utf-8-sig', 'windows-1251']:
             try:
-                with open(os.path.join(src_dir, file_name), 'r', encoding=code_page, newline='\n') as entry_file:  # replace BOM
+                with open(os.path.join(src_dir, file_name), 'r', encoding=code_page, newline='') as entry_file:  # replace BOM
                     try:
                         if entry_file.read(1) == '{':
                             entry_file.seek(0)
@@ -186,6 +186,7 @@ class JsonContainerDecoder:
         self.decode_object(line)
 
     def decode_object(self, line):
+        content = line.rstrip('\r\n')
         for i, char in enumerate(line):
             if self.mode == Mode.READ_PARAM:
                 if char == ',':
@@ -193,7 +194,7 @@ class JsonContainerDecoder:
                 elif char == '}':
                     self._end_current_object()
                 elif char == '"':
-                    if line.rstrip('\r\n').endswith(',"') and i == len(line.rstrip('\r\n')) - 1:
+                    if content.endswith(',"') and i == len(content) - 1:
                         self.mode = Mode.BEGIN_READ_MULTI_STRING_VALUE
                         self._add_to_current_value(line[i:])
                         break
@@ -237,7 +238,7 @@ class JsonContainerDecoder:
             self.decode_object(line[end_pos + 1:])
             return True
         else:
-            self.current_value += line[start_pos:-1]
+            self.current_value += line[start_pos:].rstrip('\r\n')
             return False
 
     def _decode_line_begin_read_multi_string_value(self, line):
