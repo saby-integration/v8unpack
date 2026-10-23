@@ -335,7 +335,7 @@ class JsonContainerDecoder:
                     is_base64 = False
                     if j > 64:  # base64 нужно переносить
                         try:
-                            b64decode(elem)
+                            b64decode(elem, validate=True)
                             is_base64 = True
                         except ValueError:
                             pass
