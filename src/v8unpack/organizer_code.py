@@ -21,6 +21,7 @@ class OrganizerCode:
     def unpack(cls, params):
         src_dir, path, file_name, dest_dir, index, descent = params
         self = cls()
+        skip_area = None
         self.code_areas = {'root': dict(data='')}
         _path = ['']
         _include_path = ['root']
@@ -40,15 +41,19 @@ class OrganizerCode:
                                 area_name_parts = _line[17:].strip().split(' //')
                                 key = area_name_parts[0]
 
-                                # if key in self.code_areas:
-                                #     raise Exception(
-                                #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
+                                if skip_area or key in self.code_areas:  # такая область уже была пропускаем
+                                    if skip_area is None:
+                                        skip_area = len(_include_path)
+                                    #     raise Exception(
+                                    #         f'В {path}{file_name} ссылка на один и тот же файл у разных областей {key}')
+                                else:
+                                    self.code_areas[key] = dict(data='', area_type=area_type)
                                 self.code_areas[_include_path[-1]]['data'] += line
-                                self.code_areas[key] = dict(data='', area_type=area_type)
                                 _include_path.append(key)
                                 _path.append(key)
                             else:
-                                self.code_areas[_include_path[-1]]['data'] += line
+                                if skip_area is None:
+                                    self.code_areas[_include_path[-1]]['data'] += line
                                 _path.append('')
 
                         elif _line.startswith('#КонецОбласти'):
@@ -56,10 +61,14 @@ class OrganizerCode:
                                 _include_path.pop()
                             _path.pop()
                             self.code_areas[_include_path[-1]]['data'] += line
+                            if skip_area and len(_include_path) == skip_area:
+                                skip_area = None
                         else:
-                            self.code_areas[_include_path[-1]]['data'] += line
+                            if skip_area is None:
+                                self.code_areas[_include_path[-1]]['data'] += line
                     else:
-                        self.code_areas[_include_path[-1]]['data'] += line
+                        if skip_area is None:
+                            self.code_areas[_include_path[-1]]['data'] += line
                     line = file.readline()
                 except Exception as err:
                     raise ExtException(parent=err, detail=f'in file {file_name} line {line}')
@@ -68,13 +77,15 @@ class OrganizerCode:
     @classmethod
     def pack(cls, params):
         src_dir, src_path, src_file_name, dest_dir, dest_path, dest_file_name, index_code_areas, \
-        descent, pack_get_descent_filename = params
-        data = cls.pack_file(src_dir, src_path, src_file_name, index_code_areas, descent, pack_get_descent_filename)
+            descent, pack_get_descent_filename = params
+        includes = []
+        data = cls.pack_file(src_dir, src_path, src_file_name, index_code_areas, descent, pack_get_descent_filename,
+                             includes)
         helper.txt_write(data, os.path.join(dest_dir, dest_path), dest_file_name)
 
     @classmethod
     def pack_file(cls, src_dir, path, file_name, index_code_areas, descent, pack_get_descent_filename,
-                  dynamic_directive=None):
+                  includes, dynamic_directive=None):
         normcase_src = os.path.normcase('\\src\\')
         try:
             data = ''
@@ -95,15 +106,18 @@ class OrganizerCode:
                             area_name_parts = _line[17:].strip().split(' //')
                             include_path = area_name_parts[0]
 
-                            current_dynamic_directive = area_name_parts[1] if len(area_name_parts) > 1 else dynamic_directive
+                            current_dynamic_directive = area_name_parts[1] if len(
+                                area_name_parts) > 1 else dynamic_directive
 
                             _path, _file_name = cls.parse_include_path(include_path, path, file_name, index_code_areas,
                                                                        descent)
                             _src_abs_path = os.path.abspath(os.path.join(src_dir, _path))
                             if _src_abs_path.startswith(src_dir) or os.path.normcase(_path).find(normcase_src) >= 0:
                                 _path, _file_name = pack_get_descent_filename(_src_abs_path, _file_name, descent)
-                            data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
-                                                  pack_get_descent_filename, current_dynamic_directive)
+                            if include_path not in includes:
+                                data += cls.pack_file(src_dir, _path, _file_name, index_code_areas, descent,
+                                                      pack_get_descent_filename, includes, current_dynamic_directive)
+                                includes.append(include_path)
                     line = file.readline()
                 return data
         except ExtException as err:
