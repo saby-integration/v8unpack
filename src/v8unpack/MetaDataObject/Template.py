@@ -1,7 +1,9 @@
 from ..MetaDataObject import MetaDataObject
 
 import os
+import re
 import shutil
+import struct
 from base64 import b64decode
 from enum import Enum
 
@@ -23,6 +25,19 @@ class TmplType(Enum):
     graphic_scheme = "8"
     extension = "9"
     # todo добавить остальные типы макетов и их сериализацию
+
+
+# Служебный хвост (пустая схема) файла макета схемы компоновки данных.
+# Платформа пишет его всегда, в исходниках он сохраняется в отдельный файл,
+# здесь используется как значение по умолчанию, если файл не найден.
+SKD_TAIL = (
+    b'\xef\xbb\xbf<?xml version="1.0" encoding="UTF-8"?>\r\n'
+    b'<SchemaFile xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" '
+    b'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\r\n'
+    b'\t<dataCompositionSchema xmlns="http://v8.1c.ru/8.1/data-composition-system/schema"/>\r\n'
+    b'</SchemaFile>'
+)
+SKD_XML_HEAD = b'<?xml'
 
 
 class Template2(Simple):
@@ -72,18 +87,19 @@ class Template2(Simple):
         return []
 
     def decode_active_doc_data(self, src_dir, dest_dir, write):
-        self.decode_scheme_data(src_dir, dest_dir, write)
+        self._decode_bin_data(src_dir, dest_dir, write)
 
     def decode_geographic_data(self, src_dir, dest_dir, write):
-        self.decode_scheme_data(src_dir, dest_dir, write)
+        self._decode_bin_data(src_dir, dest_dir, write)
 
     def decode_design_data(self, src_dir, dest_dir, write):
-        self.decode_scheme_data(src_dir, dest_dir, write)
+        self._decode_bin_data(src_dir, dest_dir, write)
 
     def decode_graphic_scheme_data(self, src_dir, dest_dir, write):
-        self.decode_scheme_data(src_dir, dest_dir, write)
+        self._decode_bin_data(src_dir, dest_dir, write)
 
-    def decode_scheme_data(self, src_dir, dest_dir, write, *, extension='bin'):
+    def _decode_bin_data(self, src_dir, dest_dir, write, *, extension='bin'):
+        """Типы макетов, которые сохраняются в неизменном виде (mxl, бинарники, xml без заголовка)."""
         try:
             shutil.copy2(
                 os.path.join(src_dir, f'{self.header["uuid"]}.0'),
@@ -91,10 +107,67 @@ class Template2(Simple):
             )
         except FileNotFoundError:
             return
-            # self.decode_text_data(src_dir, dest_dir, write) ??? что это
 
     def decode_table_data(self, src_dir, dest_dir, write):
-        self.decode_scheme_data(src_dir, dest_dir, write, extension='mxl')
+        self._decode_bin_data(src_dir, dest_dir, write, extension='mxl')
+
+    def decode_scheme_data(self, src_dir, dest_dir, write):
+        """Макет схемы компоновки данных раскладываем на xml документы.
+
+        Файл макета состоит из заголовка (u32 flags, u32 count, (count + 1) * u64 sizes)
+        и склеенных xml документов: схема, count настроек и служебный хвост.
+        Схема пишется в '<имя>.xml', настройки в '<имя>.settingsN.xml', хвост в '<имя>.tail.xml'.
+        """
+        file_name = f'{self.header["uuid"]}.0'
+        try:
+            self.data = helper.bin_read(src_dir, file_name)
+        except FileNotFoundError:
+            return
+        if not write:
+            return
+        parts = self._skd_split(self.data)
+        if parts is None:
+            # не удалось разобрать - сохраняем как есть, чтобы не потерять данные
+            self._decode_bin_data(src_dir, dest_dir, write)
+            return
+        for part_name, part_data in zip(self._skd_part_names(len(parts) - 2), parts):
+            helper.bin_write(part_data, self.new_dest_dir, f'{self.new_dest_file_name}.{part_name}')
+
+    @classmethod
+    def _skd_split(cls, data):
+        """Разбирает файл макета схемы компоновки данных на список xml документов."""
+        try:
+            if len(data) < 8:
+                return None
+            flags, count = struct.unpack('<II', data[:8])
+            if flags != 0 or count > 100000:
+                return None
+            head_size = 8 + 8 * (count + 1)
+            if len(data) < head_size:
+                return None
+            sizes = struct.unpack(f'<{count + 1}Q', data[8:head_size])
+            if sum(sizes) > len(data) - head_size:
+                return None
+            parts = []
+            pos = head_size
+            for size in sizes:
+                parts.append(data[pos:pos + size])
+                pos += size
+            parts.append(data[pos:])
+            for part in parts:
+                if not part.lstrip(b'\xef\xbb\xbf').startswith(SKD_XML_HEAD):
+                    return None
+            return parts
+        except Exception:
+            return None
+
+    @staticmethod
+    def _skd_part_names(count):
+        names = ['xml']
+        for number in range(1, count + 1):
+            names.append(f'settings{number}.xml')
+        names.append('tail.xml')
+        return names
 
     def decode_text_data(self, src_dir, dest_dir, write):
         try:
@@ -158,21 +231,21 @@ class Template2(Simple):
         # helper.json_write(self.raw_header, dest_dir, f'{self.header["uuid"]}.bin')
 
     def encode_active_doc_data(self, src_dir, file_name, dest_dir):
-        self.encode_scheme_data(src_dir, file_name, dest_dir)
+        self._encode_bin_data_file(src_dir, file_name, dest_dir)
 
     def encode_table_data(self, src_dir, file_name, dest_dir):
-        self.encode_scheme_data(src_dir, file_name, dest_dir, extension='mxl')
+        self._encode_bin_data_file(src_dir, file_name, dest_dir, extension='mxl')
 
     def encode_geographic_data(self, src_dir, file_name, dest_dir):
-        self.encode_scheme_data(src_dir, file_name, dest_dir)
+        self._encode_bin_data_file(src_dir, file_name, dest_dir)
 
     def encode_design_data(self, src_dir, file_name, dest_dir):
-        self.encode_scheme_data(src_dir, file_name, dest_dir)
+        self._encode_bin_data_file(src_dir, file_name, dest_dir)
 
     def encode_graphic_scheme_data(self, src_dir, file_name, dest_dir):
-        self.encode_scheme_data(src_dir, file_name, dest_dir)
+        self._encode_bin_data_file(src_dir, file_name, dest_dir)
 
-    def encode_scheme_data(self, src_dir, file_name, dest_dir, *, extension='bin'):
+    def _encode_bin_data_file(self, src_dir, file_name, dest_dir, *, extension='bin'):
         try:
             dest_file_name = f'{self.header["uuid"]}.0'
             shutil.copy2(
@@ -182,6 +255,52 @@ class Template2(Simple):
             self.file_list.append(dest_file_name)
         except FileNotFoundError:
             self.encode_text_data(src_dir, file_name, dest_dir)
+
+    def encode_scheme_data(self, src_dir, file_name, dest_dir):
+        """Собирает макет схемы компоновки данных из xml документов.
+
+        Если xml не найдены (старые исходники), собирает как раньше - из бинарного файла.
+        """
+        if self._skd_merge(src_dir, file_name, dest_dir):
+            return
+        self._encode_bin_data_file(src_dir, file_name, dest_dir)
+
+    def _skd_merge(self, src_dir, file_name, dest_dir):
+        schema_file = f'{file_name}.xml'
+        if not os.path.isfile(os.path.normcase(os.path.join(src_dir, schema_file))):
+            return False
+        parts = [helper.bin_read(src_dir, schema_file)]
+        for number in self._skd_settings_numbers(src_dir, file_name):
+            parts.append(helper.bin_read(src_dir, f'{file_name}.settings{number}.xml'))
+        tail_file = f'{file_name}.tail.xml'
+        if os.path.isfile(os.path.normcase(os.path.join(src_dir, tail_file))):
+            parts.append(helper.bin_read(src_dir, tail_file))
+        else:
+            parts.append(SKD_TAIL)
+
+        dest_file_name = f'{self.header["uuid"]}.0'
+        helper.bin_write(self._skd_pack(parts), dest_dir, dest_file_name)
+        self.file_list.append(dest_file_name)
+        return True
+
+    @staticmethod
+    def _skd_settings_numbers(src_dir, file_name):
+        numbers = []
+        for name in os.listdir(src_dir):
+            match = re.fullmatch(rf'{re.escape(file_name)}\.settings(\d+)\.xml', name)
+            if match:
+                numbers.append(int(match.group(1)))
+        return sorted(numbers)
+
+    @classmethod
+    def _skd_pack(cls, parts):
+        """Собирает файл макета схемы компоновки данных из списка xml документов."""
+        count = len(parts) - 2  # схема + настройки, последний документ (хвост) без размера
+        if count < 0:
+            raise Exception('Некорректный набор частей макета схемы компоновки данных')
+        head = struct.pack('<II', 0, count)
+        head += b''.join(struct.pack('<Q', len(part)) for part in parts[:-1])
+        return head + b''.join(parts)
 
     def encode_text_data(self, src_dir, file_name, dest_dir):
         try:
